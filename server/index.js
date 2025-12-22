@@ -18,7 +18,7 @@ app.use(cookieParser());
 // ✅ CORS FIX — allow frontend (React) to talk to backend
 app.use(
     cors({
-        origin: "http://localhost:3000", // your frontend URL
+        origin: "https://abc-aneesh-buisness-console.vercel.app", 
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
         credentials: true,
     })
