@@ -1,0 +1,254 @@
+/* ============================================================
+   🧾 ORDERS PAGE — GOLD LUXURY THEME
+   ============================================================ */
+
+.order-page {
+    min-height: 100vh;
+    background: linear-gradient(
+        180deg,
+        #fffdf7 0%,
+        #fdf6e3 40%,
+        #fbf0cc 100%
+    );
+
+    color: #4b3b09;
+}
+
+/* ============================================================
+   🏷 PAGE HEADER
+   ============================================================ */
+
+.order-page h4 {
+    letter-spacing: 0.3px;
+}
+
+.text-gold {
+    color: #b8962e;
+}
+
+/* ============================================================
+   🟦 INFO SECTIONS (FORM BLOCKS)
+   ============================================================ */
+
+.info-section {
+    background: linear-gradient(
+        145deg,
+        #fffdf7,
+        #fbf2d7
+    );
+
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+
+    box-shadow:
+        inset 0 0 10px rgba(255, 240, 190, 0.6),
+        0 6px 18px rgba(212, 175, 55, 0.18);
+}
+
+.section-title {
+    font-weight: 700;
+    color: #7a5a00;
+    margin-bottom: 12px;
+}
+
+/* ============================================================
+   📦 INFO BOX (FIELD CONTAINER)
+   ============================================================ */
+
+.info-box {
+    background: #fffefa;
+    border-radius: 14px;
+    padding: 10px 12px;
+
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: inset 0 0 6px rgba(255, 230, 170, 0.4);
+}
+
+.info-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7a5a00;
+    margin-bottom: 4px;
+}
+
+/* ============================================================
+   🖼 IMAGE PANEL (RIGHT SIDE)
+   ============================================================ */
+
+.image-panel {
+    background: linear-gradient(
+        160deg,
+        #fffdf6,
+        #f9edc8
+    );
+
+    border-radius: 18px;
+    padding: 14px;
+
+    border: 1px solid rgba(212, 175, 55, 0.45);
+
+    box-shadow:
+        inset 0 0 10px rgba(255, 240, 190, 0.55),
+        0 8px 20px rgba(212, 175, 55, 0.25);
+}
+
+.image-panel-title {
+    font-weight: 700;
+    color: #7a5a00;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   🖼 IMAGE CARD / PREVIEW
+   ============================================================ */
+
+.image-card {
+    display: block;
+    border-radius: 14px;
+    overflow: hidden;
+
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    margin-top: 8px;
+
+    box-shadow:
+        0 4px 10px rgba(212, 175, 55, 0.35);
+}
+
+.image-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ============================================================
+   📤 IMAGE UPLOAD BOX
+   ============================================================ */
+
+.image-upload-box input[type="file"] {
+    background: #fffdfa;
+    border-radius: 10px;
+    border: 1px dashed rgba(212, 175, 55, 0.55);
+    padding: 6px;
+}
+
+/* ============================================================
+   🧾 MODALS — CONSISTENT LOOK
+   ============================================================ */
+
+.custom-modal {
+    background: linear-gradient(
+        160deg,
+        #fffdf7,
+        #f9edc8
+    );
+    border-radius: 20px;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+/* ============================================================
+   🟡 GOLD BUTTON OVERRIDE (SAFE)
+   ============================================================ */
+
+.order-page .btn-gold {
+    background: linear-gradient(
+        135deg,
+        #d4af37,
+        #f7e08b,
+        #e3b94c
+    );
+    border: 1px solid #caa145;
+    color: #4b3b09;
+    font-weight: 700;
+}
+
+/* ============================================================
+   📱 RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .order-page {
+        padding: 12px;
+    }
+
+    .image-panel {
+        margin-top: 12px;
+    }
+}
+
+/* ============================================================
+   🌙 DARK SILVER THEME — ORDERS PAGE
+============================================================ */
+
+/* Page Background */
+body.theme-dark .order-page {
+    background: radial-gradient(
+        circle at top left,
+        #1b1b1b,
+        #242424,
+        #2d2d2d
+    ) !important;
+    color: #e5e5e5;
+}
+
+/* Page Title */
+body.theme-dark .order-page .text-gold {
+    color: #e5e5e5 !important;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+/* Info Sections */
+body.theme-dark .order-page .info-section {
+    background: linear-gradient(
+        135deg,
+        #2b2b2b,
+        #1f1f1f,
+        #262626
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        inset 0 0 12px rgba(255, 255, 255, 0.05),
+        0 6px 22px rgba(0, 0, 0, 0.6);
+}
+
+/* Info Boxes */
+body.theme-dark .order-page .info-box {
+    background: #1f1f1f;
+    border-color: #555;
+    color: #dedede;
+}
+
+/* Labels */
+body.theme-dark .order-page .info-label {
+    color: #efefef;
+}
+
+/* Image Panel */
+body.theme-dark .order-page .image-panel {
+    background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.6),
+        inset 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+/* Image Cards */
+body.theme-dark .order-page .image-card {
+    border-color: #555;
+}
+
+/* Inputs */
+body.theme-dark .order-page input,
+body.theme-dark .order-page select,
+body.theme-dark .order-page textarea {
+    background: #1f1f1f;
+    color: #e5e5e5;
+    border-color: #555;
+}

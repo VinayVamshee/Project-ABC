@@ -1,0 +1,160 @@
+/* ============================================================
+   GOLD THEME — SOLD PAGE (DEFAULT)
+============================================================ */
+
+.sold-page {
+  padding: 10px;
+  height: 100vh;
+  background: radial-gradient(circle at top left, #fff9e1, #fff5d2, #fff1c4, #fae9b5),
+    linear-gradient(to bottom right, #fff8de, #fff4cc);
+}
+
+.sold-page .text-gold {
+  color: #b4880b !important;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(212, 175, 55, 0.35);
+}
+
+/* Panel Wrapper */
+.sold-page .overview-panel {
+  background: radial-gradient(circle at top left, #fff8e0, #fff5d1, #fff1c5);
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  padding: 20px;
+  box-shadow: 0 6px 22px rgba(212, 175, 55, 0.22), inset 0 0 18px rgba(255, 240, 180, 0.4);
+}
+
+/* Buttons */
+.sold-receipt-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: linear-gradient(to right, #d4af37, #f8dc78, #d4af37);
+  color: #3a2d00;
+  border: 1px solid #b8901a;
+  font-weight: 700;
+  transition: 0.25s ease;
+}
+
+.sold-receipt-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+.sold-addpayment-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dcdcdc, #f2f2f2);
+  border: 1px solid #b2b2b2;
+  color: #333;
+  font-weight: 700;
+}
+
+.sold-addpayment-btn:hover {
+  box-shadow: 0 3px 10px rgba(150, 150, 150, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Info Section */
+.sold-page .info-section {
+  background: linear-gradient(135deg, #fff4d6, #ffefc1, #fff2d2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: inset 0 0 12px rgba(255, 230, 170, 0.45),
+    0 1px 6px rgba(180, 140, 60, 0.2);
+}
+
+.sold-page .section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #b4880b;
+  border-bottom: 2px solid #e0c675;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+}
+
+.sold-page .info-box {
+  background: white;
+  border: 1px solid #e9d49a;
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 8px rgba(255, 245, 220, 0.45);
+}
+
+.sold-page .info-label {
+  color: #b3870c;
+  font-weight: 600;
+}
+
+.sold-page .info-value {
+  color: #342b00;
+}
+
+
+/* ============================================================
+   DARK SILVER THEME (theme-dark)
+============================================================ */
+
+/* Page Background */
+body.theme-dark .sold-page {
+  background: radial-gradient(circle at top left, #1b1b1b, #242424, #2d2d2d) !important;
+  color: #e5e5e5;
+}
+
+/* Title */
+body.theme-dark .sold-page .text-gold {
+  color: #e5e5e5 !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+/* Panel Wrapper */
+body.theme-dark .sold-page .overview-panel {
+  background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6),
+    inset 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+/* View / Receipt button */
+body.theme-dark .sold-receipt-btn {
+  background: linear-gradient(to right, #9e9e9e, #d4d4d4, #9e9e9e);
+  color: #000;
+  border: 1px solid #7a7a7a;
+}
+
+body.theme-dark .sold-receipt-btn:hover {
+  box-shadow: 0 5px 14px rgba(255, 255, 255, 0.25);
+}
+
+/* Add Payment */
+body.theme-dark .sold-addpayment-btn {
+  background: linear-gradient(135deg, #3c3c3c, #2f2f2f);
+  color: #eee;
+  border: 1px solid #777;
+}
+
+body.theme-dark .sold-addpayment-btn:hover {
+  box-shadow: 0 5px 12px rgba(255, 255, 255, 0.12);
+}
+
+/* Info Section */
+body.theme-dark .sold-page .info-section {
+  background: linear-gradient(135deg, #2b2b2b, #1f1f1f, #262626);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+body.theme-dark .sold-page .info-box {
+  background: #1f1f1f;
+  border-color: #555;
+  color: #dedede;
+}
+
+body.theme-dark .sold-page .info-label {
+  color: #efefef;
+}
+
+body.theme-dark .sold-page .info-value {
+  color: #cecece;
+}
+

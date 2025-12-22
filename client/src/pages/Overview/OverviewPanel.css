@@ -1,0 +1,994 @@
+/* ============================================
+   LUXURY GOLD JEWELLERY UI — OVERVIEW PANEL
+   ============================================ */
+
+/* PANEL WRAPPER */
+.overview-panel {
+  background: radial-gradient(circle at top left, #fff8e0, #fff5d1, #fff1c5);
+  padding: 18px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow:
+    0 6px 22px rgba(212, 175, 55, 0.22),
+    inset 0 0 18px rgba(255, 240, 180, 0.4);
+  overflow-x: auto;
+}
+
+/* GOLD TITLE */
+.text-gold {
+  color: #b4880b !important;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* TABLE GRID */
+.overview-grid {
+  border: 1px solid rgba(212, 175, 55, 0.55);
+  border-radius: 12px;
+  overflow-x: scroll;
+  width: 100%;
+  box-shadow:
+    0 3px 12px rgba(212, 175, 55, 0.25),
+    inset 0 0 10px rgba(255, 235, 170, 0.45);
+}
+
+/* ROW STRUCTURE */
+.overview-row {
+  display: grid;
+  grid-template-columns: 60px repeat(auto-fit, minmax(150px, 1fr));
+  border-bottom: 1px solid rgba(212, 175, 55, 0.20);
+  background: linear-gradient(to right, #fffdf8, #fff8e6);
+  transition: 0.2s ease-in-out;
+}
+
+.overview-row:hover {
+  background: linear-gradient(to right, #fff5ce, #fff1c3);
+  box-shadow: inset 0 0 14px rgba(212, 175, 55, 0.3);
+}
+
+/* HEADER */
+.overview-row.header {
+  background: linear-gradient(to right, #fce9b6, #fff6d5, #f9e0a2);
+  color: #725700;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+}
+
+/* CELL */
+.cell {
+  padding: 12px 14px;
+  border-right: 1px solid rgba(212, 175, 55, 0.18);
+  white-space: nowrap;
+  overflow-x: scroll;
+  text-overflow: ellipsis;
+  color: #4d3a00;
+}
+
+.cell:last-child {
+  border-right: none;
+}
+
+/* INDEX NUMBER CELL */
+.cell.index {
+  text-align: center;
+  font-weight: 900;
+  color: #a87a12;
+  background: linear-gradient(to bottom, #fff2b8, #ffe799);
+  border-right: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* ===============================
+   BUTTON STYLING
+   =============================== */
+
+/* Base small button */
+.btn-sm {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+/* Gold Outline */
+.btn-outline-gold {
+  border: 1px solid #c39824;
+  color: #a5790f;
+  background: linear-gradient(to right, #fffbe2, #fff4c6);
+}
+
+.btn-outline-gold:hover {
+  background: linear-gradient(to right, #d4af37, #f0d178);
+  color: #3a2a00;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.55);
+}
+
+/* Red Outline */
+.btn-outline-danger {
+  border: 1px solid #d9534f;
+  color: #c33c36;
+  background: #fff5f5;
+}
+
+.btn-outline-danger:hover {
+  background: #d9534f;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(217, 83, 79, 0.4);
+}
+
+/* Premium Gold Button */
+.btn-gold {
+  position: relative;
+  background: linear-gradient(to right, #d4af37, #f8dc78, #d4af37);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid #b8901a;
+  overflow: hidden;
+}
+
+/* Shine Line */
+.btn-gold::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -80%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: skewX(-25deg);
+  opacity: 0;
+}
+
+.btn-gold:hover::before {
+  animation: shine-gold 0.9s ease forwards;
+  opacity: 1;
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.45);
+}
+
+@keyframes shine-gold {
+  0% {
+    left: -80%;
+  }
+
+  100% {
+    left: 130%;
+  }
+}
+
+/* ===============================
+   INFO MODAL CONTENT
+   =============================== */
+
+.info-section {
+  background: linear-gradient(135deg, #fff4d6, #ffefc1, #fff2d2);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow:
+    0 3px 18px rgba(212, 175, 55, 0.2),
+    inset 0 0 14px rgba(255, 235, 180, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #b4880b;
+  border-bottom: 2px solid #e0c675;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+}
+
+/* GRID INSIDE INFO */
+.info-box {
+  background: #ffffff;
+  border: 1px solid #e9d49a;
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow:
+    0 1px 6px rgba(200, 165, 60, 0.2),
+    inset 0 0 8px rgba(255, 245, 220, 0.45);
+}
+
+.info-label {
+  color: #b3870c;
+  font-weight: 600;
+}
+
+.info-value {
+  margin-top: 6px;
+  color: #282100;
+}
+
+/* ===============================
+   IMAGE FRAMES
+   =============================== */
+.preview-image,
+.preview-image-lg {
+  border: 2px solid #d4af37;
+  box-shadow:
+    0 3px 12px rgba(212, 175, 55, 0.35),
+    inset 0 0 10px rgba(255, 240, 200, 0.7);
+  background: #fff8e1;
+  transition: transform 0.2s ease;
+  border-radius: 10px;
+}
+
+.preview-image-lg {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+}
+
+.preview-image:hover,
+.preview-image-lg:hover {
+  transform: scale(1.08);
+}
+
+/* ===============================
+   STATUS BADGES (Premium Look)
+   =============================== */
+
+.status-select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none !important;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Silver Style */
+.status-pending {
+  background: linear-gradient(135deg, #cfd1d4, #e7e9eb, #bcbec0);
+  border: 1px solid #a8a9ab;
+  color: #333;
+}
+
+/* Gold Style */
+.status-completed {
+  background: linear-gradient(135deg, #d4af37, #f4d77f, #bf8f18);
+  border: 1px solid #b5891d;
+  color: #442f00;
+}
+
+/* Red Style */
+.status-cancelled {
+  background: linear-gradient(135deg, #cf4a45, #e06b67);
+  border: 1px solid #b1332f;
+}
+
+/* PAGINATION */
+.pagination-bar {
+  background: #fff8e5;
+  padding: 10px 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.pagination-select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: #fffdf3;
+  color: #6a5605;
+  font-weight: 600;
+  box-shadow: inset 0 0 6px rgba(255, 220, 160, 0.3);
+}
+
+.page-btn {
+  background: linear-gradient(135deg, #f5e2aa, #d4af37);
+  border: 1px solid #b8962c;
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: #4b3b09;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.45);
+}
+
+.page-info {
+  color: #4b3b09;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+.total-row {
+  background: #fff8db !important;
+  border-top: 2px solid #d4af37 !important;
+}
+
+.total-row .cell {
+  font-weight: 600;
+  color: #b78e0d;
+  background: #fff8db;
+}
+
+.total-row:hover {
+  background: #fff8db !important;
+}
+
+/* ============================================================
+   DARK SILVER THEME — OVERVIEW PANEL
+   Activated when <body class="theme-dark">
+   ============================================================ */
+
+/* PANEL WRAPPER */
+body.theme-dark .overview-panel {
+  background: radial-gradient(circle at top left, #2e2e2e, #272727, #222);
+  padding: 18px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(180, 180, 180, 0.4);
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.45),
+    inset 0 0 22px rgba(255, 255, 255, 0.04);
+  overflow-x: auto;
+}
+
+/* TITLE */
+body.theme-dark .text-gold {
+  color: #dedede !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.25);
+}
+
+/* TABLE GRID */
+body.theme-dark .overview-grid {
+  border: 1px solid #555;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1e1e1e;
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.55),
+    inset 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+/* ROWS */
+body.theme-dark .overview-row {
+  background: linear-gradient(to right, #2e2e2e, #262626);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .overview-row:hover {
+  background: linear-gradient(to right, #333, #2a2a2a);
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* HEADER */
+body.theme-dark .overview-row.header {
+  background: linear-gradient(to right, #3c3c3c, #2e2e2e, #3a3a3a);
+  color: #f2f2f2;
+  font-weight: 700;
+  border-bottom: 2px solid #666;
+}
+
+/* CELLS */
+body.theme-dark .cell {
+  color: #e2e2e2;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.theme-dark .cell.index {
+  background: linear-gradient(to bottom, #3d3d3d, #333);
+  color: #ededed;
+  border-right: 1px solid #555;
+}
+
+/* TOTAL ROW */
+body.theme-dark .total-row {
+  background: #333 !important;
+  border-top: 2px solid #777 !important;
+}
+
+body.theme-dark .total-row .cell {
+  color: #eaeaea;
+  background: #333 !important;
+}
+
+/* ===============================
+   BUTTONS
+   =============================== */
+
+body.theme-dark .btn-sm {
+  font-weight: 600;
+  border-radius: 8px;
+  transition: 0.25s ease;
+}
+
+/* Silver outline */
+body.theme-dark .btn-outline-gold {
+  border: 1px solid #bbb;
+  color: #e5e5e5;
+  background: #303030;
+}
+
+body.theme-dark .btn-outline-gold:hover {
+  background: #cfcfcf;
+  color: #111;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* Danger */
+body.theme-dark .btn-outline-danger {
+  border: 1px solid #d9534f;
+  background: #2b0000;
+  color: #ffb3b3;
+}
+
+body.theme-dark .btn-outline-danger:hover {
+  background: #d9534f;
+  color: #fff;
+}
+
+/* Silver Premium Button */
+body.theme-dark .btn-gold {
+  background: linear-gradient(135deg, #a6a6a6, #c9c9c9, #a6a6a6);
+  border: 1px solid #cdcdcd;
+  color: #111;
+}
+
+body.theme-dark .btn-gold:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Shine animation tint */
+body.theme-dark .btn-gold::before {
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+/* ===============================
+   INFO PANEL
+   =============================== */
+
+body.theme-dark .info-section {
+  background: linear-gradient(135deg, #2c2c2c, #242424);
+  border: 1px solid #555;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.55),
+    inset 0 0 14px rgba(255, 255, 255, 0.05);
+}
+
+body.theme-dark .info-box {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  box-shadow:
+    0 1px 4px rgba(255, 255, 255, 0.04),
+    inset 0 0 6px rgba(255, 255, 255, 0.04);
+}
+
+body.theme-dark .info-label {
+  color: #e0e0e0;
+}
+
+body.theme-dark .info-value {
+  color: #f4f4f4;
+}
+
+/* ===============================
+   IMAGES
+   =============================== */
+body.theme-dark .preview-image,
+body.theme-dark .preview-image-lg {
+  border: 2px solid #aaa;
+  background: #222;
+  box-shadow:
+    0 3px 10px rgba(255, 255, 255, 0.05),
+    inset 0 0 10px rgba(255, 255, 255, 0.06);
+}
+
+/* ===============================
+   PAGINATION
+   =============================== */
+
+body.theme-dark .pagination-bar {
+  background: #2f2f2f;
+  border: 1px solid #555;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .pagination-select {
+  background: #232323;
+  color: #f5f5f5;
+  border: 1px solid #777;
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.05);
+}
+
+body.theme-dark .page-btn {
+  background: linear-gradient(135deg, #505050, #707070);
+  border: 1px solid #999;
+  color: #eee;
+}
+
+body.theme-dark .page-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7a7a7a, #9e9e9e);
+  box-shadow: 0 3px 10px rgba(255, 255, 255, 0.25);
+}
+
+body.theme-dark .page-info {
+  color: #ddd;
+}
+
+
+/* =========================
+   FORCE TABLE CELL BACKGROUNDS
+   ========================= */
+
+/* Light (gold) theme: make TH/TD use the luxury cream background */
+.overview-panel table.overview-table thead th,
+.overview-panel table.overview-table tbody td {
+  background: transparent;
+  /* let row/bg show through by default */
+}
+
+/* give rows a subtle cream card look while keeping header distinct */
+.overview-panel table.overview-table tbody tr td {
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(255, 248, 230, 0.9));
+}
+
+/* header cells slightly stronger */
+.overview-panel table.overview-table thead th {
+  background: linear-gradient(180deg, #fbe9b8, #f6e1a8);
+}
+
+/* totals row should be clearly highlighted */
+.overview-panel table.overview-table .total-row td {
+  background: linear-gradient(180deg, #fff8db, #fff4c8) !important;
+}
+
+/* Keep hover effect consistent (lighter cream) */
+.overview-panel table.overview-table tbody tr:hover td {
+  background: linear-gradient(90deg, #fff6d7, #fff2c9);
+}
+
+/* If Bootstrap still forces a white background (stubborn rules), fallback with higher specificity */
+.overview-panel table.overview-table tbody td,
+.overview-panel table.overview-table thead th {
+  background-color: transparent !important;
+}
+
+/* Now explicitly set the desired 'card' bg color for cells (final override)
+   This ensures the visible background is our cream gradient rather than white. */
+.overview-panel table.overview-table tbody td {
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(255, 248, 230, 0.92)) !important;
+}
+
+/* =========================
+   DARK THEME OVERRIDES
+   (applies when <body class="theme-dark">)
+   ========================= */
+
+body.theme-dark .overview-panel table.overview-table thead th,
+body.theme-dark .overview-panel table.overview-table tbody td {
+  background: transparent;
+  /* baseline */
+}
+
+/* dark rows (table body) */
+body.theme-dark .overview-panel table.overview-table tbody tr td {
+  background: linear-gradient(180deg, #1f1f1f, #171717);
+  color: #e6e6e6;
+}
+
+/* dark header */
+body.theme-dark .overview-panel table.overview-table thead th {
+  background: linear-gradient(180deg, #393939, #2f2f2f);
+  color: #f2f2f2;
+}
+
+/* dark hover - subtle brightening */
+body.theme-dark .overview-panel table.overview-table tbody tr:hover td {
+  background: linear-gradient(90deg, #2a2a2a, #242424);
+}
+
+/* dark totals row */
+body.theme-dark .overview-panel table.overview-table .total-row td {
+  background: linear-gradient(180deg, #2c2c2c, #242424) !important;
+  color: #fff2d1;
+}
+
+/* fallback stronger override if other rules still win */
+body.theme-dark .overview-panel table.overview-table tbody td {
+  background: linear-gradient(180deg, #1f1f1f, #171717) !important;
+}
+
+/* ==========================
+   PAYMENTS HISTORY MODAL
+   ========================== */
+
+/* Modal content wrapper (used in your JSX: .custom-modal) */
+.custom-modal {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: linear-gradient(180deg, #fffefc, #fffaf0);
+  box-shadow:
+    0 12px 40px rgba(212, 175, 55, 0.12),
+    inset 0 0 18px rgba(255, 245, 205, 0.25);
+}
+
+/* Modal header */
+.custom-modal .modal-header {
+  background: linear-gradient(90deg, #f8e8b0, #f4df9c);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.45);
+  color: #5b3f00;
+  padding: 16px 20px;
+}
+
+.custom-modal .modal-title {
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  color: #6a4a00;
+}
+
+/* Modal body */
+.custom-modal .modal-body {
+  padding: 18px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 250, 235, 0.6));
+}
+
+/* Footer */
+.custom-modal .modal-footer {
+  background: linear-gradient(90deg, #fff9e6, #fff6d9);
+  border-top: 1px solid rgba(212, 175, 55, 0.12);
+  padding: 12px 20px;
+}
+
+/* Summary blocks inside modal */
+.custom-modal .small.text-muted {
+  color: #8b7b4a;
+}
+
+.custom-modal .fw-semibold {
+  color: #3f2b00;
+  font-weight: 700;
+}
+
+/* Payments table styling */
+.payments-table {
+  background: transparent;
+  border-collapse: separate;
+  width: 100%;
+  min-width: 480px;
+  /* keeps columns stable */
+}
+
+.payments-table thead th {
+  background: linear-gradient(180deg, #fbf3d1, #f9e9b2);
+  color: #5a3b00;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  white-space: nowrap;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payments-table tbody td {
+  padding: 9px 10px;
+  color: #3b2a00;
+  border-top: 1px solid rgba(212, 175, 55, 0.06);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Right align numeric column */
+.payments-table td.text-end,
+.payments-table th.text-end {
+  text-align: right;
+}
+
+/* Totals row */
+.payments-table tfoot tr th,
+.payments-table tfoot tr td {
+  font-weight: 700;
+  color: #b78e0d;
+  background: #fff8db;
+  padding: 10px;
+  border-top: 2px solid rgba(212, 175, 55, 0.28);
+}
+
+/* Sticky table header for long lists */
+.table-responsive .payments-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Buttons in modal */
+.custom-modal .btn-outline-gold {
+  border: 1px solid #c39824;
+  background: linear-gradient(to right, #fffbe2, #fff4c6);
+  color: #a5790f;
+  font-weight: 700;
+}
+
+.custom-modal .btn-gold {
+  background: linear-gradient(to right, #d4af37, #f8dc78, #d4af37);
+  color: #fff;
+}
+
+/* Scrollbar for the table area (nice thumb) */
+.table-responsive::-webkit-scrollbar {
+  height: 10px;
+}
+
+/* .table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(180, 140, 30, 0.32);
+  border-radius: 8px;
+} */
+
+/* ==========================
+   DARK THEME VARIANTS
+   Activated when <body class="theme-dark">
+   ========================== */
+body.theme-dark .custom-modal {
+  background: linear-gradient(180deg, #2f2f2f, #232323);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.6),
+    inset 0 0 18px rgba(255, 255, 255, 0.02);
+}
+
+body.theme-dark .custom-modal .modal-header {
+  background: linear-gradient(90deg, #383838, #2e2e2e);
+  color: #e9e9e9;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+body.theme-dark .custom-modal .modal-title {
+  color: #f5f5f5;
+}
+
+body.theme-dark .custom-modal .modal-body {
+  background: transparent;
+}
+
+body.theme-dark .custom-modal .modal-footer {
+  background: transparent;
+}
+
+body.theme-dark .custom-modal .small.text-muted {
+  color: #bdbdbd;
+}
+
+body.theme-dark .custom-modal .fw-semibold {
+  color: #fff;
+}
+
+body.theme-dark .payments-table thead th {
+  background: linear-gradient(180deg, #3a3a3a, #2c2c2c);
+  color: #e8e8e8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+body.theme-dark .payments-table tbody td {
+  color: #eaeaea;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+body.theme-dark .payments-table tfoot tr th,
+body.theme-dark .payments-table tfoot tr td {
+  background: #2b2b2b !important;
+  color: #efecec !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* small screens: make layout breathe */
+@media (max-width: 540px) {
+
+  .custom-modal .modal-header,
+  .custom-modal .modal-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .custom-modal .modal-body {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .payments-table {
+    min-width: 360px;
+  }
+}
+
+/* ===== INFO BOX ===== */
+.info-section {
+  padding: 14px 0;
+}
+
+.section-title {
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--gold-text, #725700);
+}
+
+.info-box {
+  background: linear-gradient(to bottom right, #fffdf8, #fff7e6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  padding: 14px;
+  height: 100%;
+  transition: 0.2s ease;
+}
+
+.info-box:hover {
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.25);
+}
+
+.info-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8b6b12;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #3f2e00;
+  word-break: break-word;
+}
+
+/* ===== IMAGE PANEL ===== */
+.image-panel {
+  background: linear-gradient(to bottom, #fffaf0, #fff4dc);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
+  padding: 14px;
+  top: 90px;
+}
+
+.image-panel-title {
+  font-weight: 700;
+  color: #725700;
+  margin-bottom: 12px;
+}
+
+/* Image cards */
+.image-card {
+  display: block;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 22px rgba(212, 175, 55, 0.35);
+}
+
+.image-label {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+/* ===== DARK THEME ===== */
+body.theme-dark .info-box {
+  background: linear-gradient(to bottom right, #1c1c1c, #222);
+  border-color: rgba(180, 180, 180, 0.25);
+}
+
+body.theme-dark .info-value {
+  color: #e6e6e6;
+}
+
+body.theme-dark .image-panel {
+  background: linear-gradient(to bottom, #1b1b1b, #222);
+}
+
+body.theme-dark .image-label {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ===============================
+   STATUS FILTER BUTTONS (PREMIUM)
+   =============================== */
+
+.status-filter {
+  align-items: center;
+}
+
+/* BASE */
+.status-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: #aaa;
+  transition: all 0.2s ease;
+}
+
+.status-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ACTIVE GLOW */
+.status-btn.active {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.15),
+    0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* ===============================
+   PENDING — SILVER / NEUTRAL
+   =============================== */
+.status-pending {
+  border-color: #9e9e9e;
+  color: #9e9e9e;
+}
+
+.status-pending:hover,
+.status-pending.active {
+  background: linear-gradient(135deg,
+      rgba(200, 200, 200, 0.35),
+      rgba(160, 160, 160, 0.25));
+  color: #2e2e2e;
+}
+
+/* ===============================
+   PARTIAL — GOLD / AMBER
+   =============================== */
+.status-partial {
+  border-color: #ffb300;
+  color: #ffb300;
+}
+
+.status-partial:hover,
+.status-partial.active {
+  background: linear-gradient(135deg,
+      rgba(255, 193, 7, 0.45),
+      rgba(255, 160, 0, 0.35));
+  color: #3a2a00;
+}
+
+/* ===============================
+   PAID — GREEN (SUCCESS)
+   =============================== */
+.status-paid {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.status-paid:hover,
+.status-paid.active {
+  background: linear-gradient(135deg,
+      rgba(76, 175, 80, 0.45),
+      rgba(56, 142, 60, 0.35));
+  color: #0f2e14;
+}

@@ -1,0 +1,285 @@
+/* ============================================================
+   🌤 TOP PANEL — ONE LINE LUXURY BAR
+   ============================================================ */
+
+.top-header .flex-grow-1 {
+    flex: 1;
+    min-width: 0;
+}
+
+.top-panel {
+
+    padding: 5px 0px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    
+    border-radius: 16px;
+    
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+/* Custom Scrollbar */
+.top-panel::-webkit-scrollbar {
+    height: 6px;
+}
+
+.top-panel::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #d4af37, #f7d87a);
+    border-radius: 10px;
+}
+
+/* ============================================================
+   🔍 SEARCH BOX
+   ============================================================ */
+.search-box input {
+    width: 220px;
+    min-width: 220px;
+    border-radius: 12px;
+
+    background: #fffdfa;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    color: #4a3a0a;
+    padding: 7px 12px;
+
+    box-shadow: inset 0 0 6px rgba(255, 230, 180, 0.35);
+    transition: 0.25s ease;
+}
+
+.search-box input:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.55);
+}
+
+/* ============================================================
+   🟡 GOLD BUTTON
+   ============================================================ */
+.btn-gold {
+    background: linear-gradient(135deg, #d4af37, #f7e08b, #e3b94c);
+    border: 1px solid #caa145;
+    color: #4b3b09;
+    font-weight: 700;
+
+    padding: 6px 16px;
+    border-radius: 12px;
+    transition: 0.25s ease;
+    white-space: nowrap;
+
+    box-shadow:
+        inset 0 0 6px rgba(255, 240, 180, 0.5),
+        0 3px 6px rgba(212, 175, 55, 0.25);
+}
+
+.btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 14px rgba(212, 175, 55, 0.55),
+        inset 0 0 10px rgba(255, 245, 200, 0.65);
+}
+
+/* ============================================================
+   ⚪ INPUTS & DROPDOWNS — PREMIUM
+   ============================================================ */
+.top-panel select,
+.top-panel input.form-control {
+    background: #fffdf7;
+    color: #4b3b09;
+
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    border-radius: 12px;
+
+    padding: 7px 10px;
+    min-width: 180px;
+    max-width: 260px;
+
+    transition: 0.25s ease;
+    box-shadow: inset 0 0 5px rgba(255, 220, 160, 0.3);
+}
+
+.top-panel select:focus,
+.top-panel input.form-control:focus {
+    border-color: #d4af37;
+    box-shadow:
+        0 0 12px rgba(212, 175, 55, 0.45),
+        inset 0 0 8px rgba(255, 240, 190, 0.5);
+}
+
+/* ============================================================
+   🎯 FILTER TAGS — GOLDEN PILLS
+   ============================================================ */
+.filter-tags {
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.filter-tag {
+    background: linear-gradient(135deg, #fff7da, #f3e3b9, #fffaf0);
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    
+    padding: 6px 14px;
+    border-radius: 40px;
+    
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    color: #5c4807;
+    font-weight: 600;
+    font-size: 14px;
+
+    box-shadow:
+        inset 0 0 8px rgba(255, 240, 190, 0.6),
+        0 2px 6px rgba(212, 175, 55, 0.25);
+
+    animation: fadeIn 0.2s ease-out;
+}
+
+.filter-tag .remove-tag {
+    cursor: pointer;
+    font-weight: bold;
+    color: #a7770d;
+    margin-left: 4px;
+    transition: 0.2s ease;
+}
+
+.filter-tag .remove-tag:hover {
+    color: #d4af37;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ============================================================
+   ⬆ SORT SELECTS
+   ============================================================ */
+.sort-select {
+    background: #fffdf2;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 12px;
+
+    padding: 6px 12px;
+    min-width: 150px;
+    color: #4b3b09;
+
+    transition: 0.25s ease;
+    box-shadow: inset 0 0 5px rgba(255, 230, 170, 0.35);
+}
+
+.sort-select:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
+}
+
+/* ============================================================
+   🏷 STATUS FILTER BUTTONS (SOLD + ORDERS)
+   ============================================================ */
+
+.status-filter {
+    display: flex;
+    gap: 8px;
+}
+
+/* BASE STATUS BUTTON */
+.status-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: 0.25s ease;
+    white-space: nowrap;
+    background: #f4f4f4;
+    color: #444;
+}
+
+/* ACTIVE STATE */
+.status-btn.active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* ================= SOLD STATUSES ================= */
+
+/* SOLD → PENDING */
+.status-btn.status-pending {
+    background: linear-gradient(135deg, #fff2cc, #ffe08a);
+    color: #7a5a00;
+    border-color: #e6c35c;
+}
+
+.status-btn.status-pending.active {
+    box-shadow: 0 4px 12px rgba(230, 195, 92, 0.6);
+}
+
+/* SOLD → PARTIAL */
+.status-btn.status-partial {
+    background: linear-gradient(135deg, #e0f0ff, #b8ddff);
+    color: #0b4a7a;
+    border-color: #8fc2f0;
+}
+
+.status-btn.status-partial.active {
+    box-shadow: 0 4px 12px rgba(143, 194, 240, 0.6);
+}
+
+/* SOLD → PAID */
+.status-btn.status-paid {
+    background: linear-gradient(135deg, #d9f7df, #a7e9b3);
+    color: #0b5a2a;
+    border-color: #7bd293;
+}
+
+.status-btn.status-paid.active {
+    box-shadow: 0 4px 12px rgba(123, 210, 147, 0.6);
+}
+
+/* ================= ORDER STATUSES ================= */
+
+/* ORDER → PENDING */
+.status-btn.status-pending {
+    background: linear-gradient(135deg, #fff1cc, #ffd36a);
+    color: #7a4f00;
+    border-color: #e3b94c;
+}
+
+/* ORDER → COMPLETED */
+.status-btn.status-completed {
+    background: linear-gradient(135deg, #d7f5e1, #9be2b0);
+    color: #0b5a2a;
+    border-color: #6fd19a;
+}
+
+.status-btn.status-completed.active {
+    box-shadow: 0 4px 12px rgba(111, 209, 154, 0.65);
+}
+
+/* ORDER → CANCELLED */
+.status-btn.status-cancelled {
+    background: linear-gradient(135deg, #ffdede, #ffb3b3);
+    color: #7a0b0b;
+    border-color: #ff8c8c;
+}
+
+.status-btn.status-cancelled.active {
+    box-shadow: 0 4px 12px rgba(255, 140, 140, 0.65);
+}
+
+/* HOVER EFFECT */
+.status-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}

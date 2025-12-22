@@ -1,0 +1,482 @@
+/* -------------------------------------------
+   SETTINGS PAGE — GOLD SHIMMER AESTHETIC ✨
+-------------------------------------------- */
+
+:root {
+    --soft-gold: #c9a73b;
+    --light-gold: #f1d577;
+    --dark-gold: #947a26;
+    --gold-shadow: rgba(201, 167, 59, 0.35);
+    --cream-bg: #faf8f2;
+}
+
+/* Background shimmer animation */
+@keyframes subtle-gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Smooth floating animation */
+@keyframes floatUp {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Page layout */
+.settings-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fffefb, #f9f7ef, #fff8e7);
+    background-size: 200% 200%;
+    animation: subtle-gradient-shift 12s ease infinite;
+    padding: 2rem;
+    color: #2e2e2e;
+    font-family: "Poppins", sans-serif;
+    transition: all 0.4s ease;
+}
+
+/* Polished gold button */
+.btn-gold {
+    background: linear-gradient(135deg, var(--soft-gold), var(--light-gold));
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    padding: 9px 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    letter-spacing: 0.4px;
+    box-shadow: 0 3px 10px rgba(201, 167, 59, 0.25);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.btn-gold::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    transform: skewX(-25deg);
+    transition: 0.8s;
+}
+
+.btn-gold:hover::after {
+    left: 125%;
+}
+
+.btn-gold:hover {
+    box-shadow: 0 0 15px var(--gold-shadow);
+    transform: translateY(-2px);
+}
+
+/* Modal */
+.custom-modal {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background: linear-gradient(to bottom right, #ffffff, #fffbf2);
+    animation: floatUp 2s ease-in-out infinite;
+}
+
+/* Modal header/footer */
+.modal-header,
+.modal-footer {
+    background: linear-gradient(to right, #fff2bf, #fffaf0);
+    border: none;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #7b6625;
+    letter-spacing: 0.4px;
+}
+
+/* Form labels */
+.form-label {
+    font-weight: 500;
+    color: #3b3b3b;
+}
+
+/* Section box (Inventory/Orders/Sold) */
+.show-box {
+    background: linear-gradient(145deg, #ffffff, #fffaf0);
+    border-radius: 12px;
+    padding: 18px;
+    width: 220px;
+    border: 1px solid rgba(201, 167, 59, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+    transition: all 0.35s ease;
+    cursor: pointer;
+}
+
+.show-box:hover {
+    border-color: var(--light-gold);
+    box-shadow: 0 4px 20px var(--gold-shadow);
+    transform: translateY(-3px);
+    background: linear-gradient(145deg, #fff8e0, #ffffff);
+    cursor: pointer;
+}
+
+/* Checkbox accent */
+.form-check-input:checked {
+    background-color: var(--soft-gold);
+    border-color: var(--soft-gold);
+}
+
+/* Inputs focus */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--light-gold);
+    box-shadow: 0 0 6px var(--gold-shadow);
+}
+
+/* -------------------------------------------
+   EXISTING FIELD CARDS
+-------------------------------------------- */
+
+.existing-fields {
+    background: linear-gradient(to bottom right, #ffffff, #faf9f5);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.12);
+}
+
+.field-card {
+    background: linear-gradient(145deg, #ffffff, #fff8eb);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 14px;
+    padding: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+}
+
+.field-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 22px rgba(212, 175, 55, 0.3);
+    animation: floatUp 2s ease-in-out infinite;
+}
+
+/* Header */
+.serial-display {
+    font-weight: 700;
+    color: #b8912c;
+    font-size: 1.2rem;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    transition: 0.3s ease;
+}
+
+.field-card:hover .serial-display {
+    color: #e8c96b;
+    transform: scale(1.1);
+}
+
+.field-label {
+    color: #2c2c2c;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.field-divider {
+    border: none;
+    border-top: 1px solid rgba(212, 175, 55, 0.25);
+    margin: 8px 0;
+}
+
+/* Body */
+.field-info {
+    font-size: 0.82rem;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.field-info span {
+    color: #c39e30;
+    font-weight: 600;
+}
+
+/* Options */
+.option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 8px;
+    max-height: 100px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.option-item {
+    background: linear-gradient(to right, #fff6dd, #fff8ee);
+    border-left: 3px solid var(--soft-gold);
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    color: #3a3a3a;
+    font-weight: 500;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.15);
+    transition: 0.25s ease;
+}
+
+.option-item:hover {
+    background: linear-gradient(to right, #fff2bf, #fff8e4);
+
+}
+
+/* Footer Buttons */
+.btn-gold-outline-sm,
+.btn-danger-outline-sm {
+    border-radius: 8px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+.btn-gold-outline-sm {
+    border: 1px solid var(--soft-gold);
+    color: var(--soft-gold);
+    background: transparent;
+}
+
+.btn-gold-outline-sm:hover {
+    background: var(--soft-gold);
+    color: #fff;
+    box-shadow: 0 0 8px var(--gold-shadow);
+}
+
+.btn-danger-outline-sm {
+    border: 1px solid #d9534f;
+    color: #d9534f;
+}
+
+.btn-danger-outline-sm:hover {
+    background: #d9534f;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(217, 83, 79, 0.35);
+}
+
+/* Add a subtle shimmer when hovering over cards */
+/* .field-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.078) 50%,
+            transparent 100%);
+    transform: rotate(25deg);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+} */
+
+.field-card:hover::before {
+    opacity: 1;
+    animation: shimmer 1.8s infinite linear;
+    cursor: pointer;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) rotate(25deg);
+    }
+
+    100% {
+        transform: translateX(100%) rotate(25deg);
+    }
+}
+
+/* General gold text */
+.text-gold {
+    color: var(--soft-gold);
+}
+
+/* ============================================================
+   DARK SILVER THEME — SETTINGS PAGE OVERRIDES
+   Activated when <body class="theme-dark">
+   ============================================================ */
+
+/* Page Background */
+body.theme-dark .settings-page {
+    background: linear-gradient(135deg, #1d1d1d, #222, #191919);
+    color: #e5e5e5;
+    animation: none;
+}
+
+/* Gold Button → Silver Button */
+body.theme-dark .btn-gold {
+    background: linear-gradient(135deg, #9d9d9d, #cfcfcf);
+    color: #000;
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .btn-gold:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+/* Modal */
+body.theme-dark .custom-modal {
+    background: linear-gradient(145deg, #2a2a2a, #1b1b1b);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .modal-header,
+body.theme-dark .modal-footer {
+    background: linear-gradient(to right, #2f2f2f, #222, #1a1a1a);
+}
+
+/* Modal title */
+body.theme-dark .modal-title {
+    color: #e2e2e2;
+}
+
+/* Inputs */
+body.theme-dark .form-control,
+body.theme-dark .form-select {
+    background: #262626;
+    color: #e6e6e6;
+    border: 1px solid rgba(200, 200, 200, 0.2);
+}
+
+body.theme-dark .form-control:focus,
+body.theme-dark .form-select:focus {
+    border-color: #e0e0e0;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+/* Labels */
+body.theme-dark .form-label {
+    color: #dcdcdc;
+}
+
+/* Checkbox */
+body.theme-dark .form-check-input {
+    background: transparent;
+    border-color: #ccc;
+}
+
+body.theme-dark .form-check-input:checked {
+    background-color: #e0e0e0;
+    border-color: #fff;
+}
+
+/* Show Box (Inventory / Orders / Sold) */
+body.theme-dark .show-box {
+    background: linear-gradient(145deg, #2e2e2e, #242424);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e5e5e5;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .show-box:hover {
+    border-color: #d0d0d0;
+    background: linear-gradient(145deg, #3a3a3a, #272727);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+/* Existing Fields Container */
+body.theme-dark .existing-fields {
+    background: linear-gradient(to bottom right, #242424, #2d2d2d);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Field Card */
+body.theme-dark .field-card {
+    background: linear-gradient(145deg, #2d2d2d, #232323);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ddd;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .field-card:hover {
+    background: linear-gradient(145deg, #353535, #272727);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.75);
+}
+
+/* Serial number in card */
+body.theme-dark .serial-display {
+    color: #d0d0d0;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.15);
+}
+
+/* Field label */
+body.theme-dark .field-label {
+    color: #e8e8e8;
+}
+
+/* Divider */
+body.theme-dark .field-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Field Key/Value */
+body.theme-dark .field-info {
+    color: #e0e0e0;
+}
+
+body.theme-dark .field-info span {
+    color: #cfcfcf;
+}
+
+/* Options */
+body.theme-dark .option-item {
+    background: linear-gradient(to right, #333, #2a2a2a);
+    border-left-color: #bfbfbf;
+    color: #e8e8e8;
+}
+
+body.theme-dark .option-item:hover {
+    background: linear-gradient(to right, #404040, #303030);
+}
+
+/* Footer buttons */
+body.theme-dark .btn-gold-outline-sm {
+    border-color: #cfcfcf;
+    color: #cfcfcf;
+}
+
+body.theme-dark .btn-gold-outline-sm:hover {
+    background: #d0d0d0;
+    color: #000;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+body.theme-dark .btn-danger-outline-sm {
+    border-color: #d66;
+    color: #d66;
+}
+
+body.theme-dark .btn-danger-outline-sm:hover {
+    background: #d9534f;
+    color: #fff;
+}
+
+/* Gold text → Silver */
+body.theme-dark .text-gold {
+    color: #dcdcdc;
+}

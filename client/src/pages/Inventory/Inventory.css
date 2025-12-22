@@ -1,0 +1,112 @@
+/* ============================================================
+   DARK SILVER THEME — OVERRIDES
+   Activated when <body class="theme-dark">
+   ============================================================ */
+
+.inventory-page {
+  height: 100vh;
+  padding: 20px;
+  background: radial-gradient(circle at top left, #fff9e1, #fff5d2, #fff1c4, #fae9b5),
+    linear-gradient(to bottom right, #fff8de, #fff4cc);
+}
+
+body.theme-dark .inventory-page {
+  background: radial-gradient(circle at top left, #1b1b1b, #242424, #2d2d2d) !important;
+  color: #e5e5e5;
+}
+
+/* Title */
+body.theme-dark .text-gold {
+  color: #e5e5e5 !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+/* Button */
+body.theme-dark .btn-gold {
+  background: linear-gradient(to right, #9e9e9e, #d4d4d4, #9e9e9e);
+  border: 1px solid #7a7a7a;
+  color: #000;
+}
+
+body.theme-dark .btn-gold:hover {
+  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.2),
+    inset 0 0 8px rgba(200, 200, 200, 0.5);
+}
+
+/* Header */
+body.theme-dark .top-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 5px;
+}
+
+/* Modal */
+body.theme-dark .custom-modal {
+  background: linear-gradient(135deg, #2b2b2b, #1d1d1d, #262626);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.7);
+}
+
+body.theme-dark .modal-header {
+  background: linear-gradient(
+    to right,
+    #333,
+    #2a2a2a,
+    #1d1d1d
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Inputs */
+body.theme-dark .form-control,
+body.theme-dark .form-select {
+  background: #2a2a2a;
+  color: #e8e8e8;
+  border: 1px solid rgba(180, 180, 180, 0.25);
+}
+
+body.theme-dark .form-control:focus,
+body.theme-dark .form-select:focus {
+  border-color: #cfcfcf;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.18);
+}
+
+/* Checkbox */
+body.theme-dark .form-check-input {
+  border: 1px solid #cfcfcf !important;
+  background-color: transparent;
+}
+
+body.theme-dark .form-check-input:checked {
+  background-color: #d0d0d0 !important;
+  border-color: #f0f0f0 !important;
+}
+
+/* Image preview */
+body.theme-dark .img-thumbnail {
+  border: 2px solid #bfbfbf;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .img-thumbnail:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.85);
+}
+
+/* Dividers */
+body.theme-dark hr {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Labels */
+body.theme-dark .form-label {
+  color: #dcdcdc;
+}
+
+/* Section Titles */
+body.theme-dark .text-gold-section {
+  color: #e2e2e2;
+}
