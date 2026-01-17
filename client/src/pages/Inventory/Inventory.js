@@ -218,7 +218,7 @@ export default function Inventory() {
             alert("Failed to sell item");
         }
     };
-    
+
     // ✅ Fetch all input fields
     const fetchFields = async () => {
         try {
@@ -467,18 +467,32 @@ export default function Inventory() {
 
                                                                     {/* SELECT / MCQ */}
                                                                     {field.type === "select" && (
-                                                                        <select
-                                                                            className="form-select"
-                                                                            value={formValues[field._id] || ""}
-                                                                            onChange={(e) => handleChange(field._id, e.target.value)}
-                                                                        >
-                                                                            <option value="">Select {field.label}</option>
+                                                                        <div className="border rounded p-2" style={{ height: '40px', overflow: 'scroll' }}>
                                                                             {field.selectOptions?.map(opt => (
-                                                                                <option key={opt._id} value={opt.label}>
-                                                                                    {opt.label}
-                                                                                </option>
+                                                                                <div key={opt._id} className="form-check">
+                                                                                    <input
+                                                                                        className="form-check-input"
+                                                                                        type="checkbox"
+                                                                                        id={`${field._id}-${opt._id}`}
+                                                                                        checked={(formValues[field._id] || []).includes(opt.label)}
+                                                                                        onChange={(e) => {
+                                                                                            const prev = formValues[field._id] || [];
+                                                                                            const updated = e.target.checked
+                                                                                                ? [...prev, opt.label]
+                                                                                                : prev.filter(v => v !== opt.label);
+
+                                                                                            handleChange(field._id, updated);
+                                                                                        }}
+                                                                                    />
+                                                                                    <label
+                                                                                        className="form-check-label"
+                                                                                        htmlFor={`${field._id}-${opt._id}`}
+                                                                                    >
+                                                                                        {opt.label}
+                                                                                    </label>
+                                                                                </div>
                                                                             ))}
-                                                                        </select>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -676,7 +690,7 @@ export default function Inventory() {
                                         ))}
                                     </div>
 
-                                    <hr/>
+                                    <hr />
 
                                     {/* FINANCIAL SECTION */}
                                     <h6 className="text-gold mb-3">Pricing & Payments</h6>
