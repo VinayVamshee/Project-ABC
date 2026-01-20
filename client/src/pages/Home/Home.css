@@ -25,7 +25,7 @@
   display: inline-block;
   white-space: nowrap;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 50px;
   animation: marquee-scroll 12s linear infinite;
 }
 
