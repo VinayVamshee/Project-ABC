@@ -14,9 +14,12 @@ export default function Home() {
 
   return (
     <div className="home-container text-center">
-      {/* Marquee */}
+
+      {/* Scrolling Header (Marquee Replacement) */}
       <div className="home-marquee">
-        <marquee scrollamount="7">ABC - Aneesh Business Console</marquee>
+        <div className="marquee-text">
+          ABC - Aneesh Business Console
+        </div>
       </div>
 
       {/* Cards */}
@@ -34,6 +37,7 @@ export default function Home() {
           ))}
         </div>
       </div>
+
     </div>
   );
 }

@@ -21,6 +21,23 @@
   letter-spacing: 1px;
 }
 
+.marquee-text {
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 18px;
+  animation: marquee-scroll 12s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
 /* Cards */
 .home-card {
   background-color: #f2f2f2;
