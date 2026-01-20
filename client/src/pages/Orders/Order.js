@@ -427,34 +427,34 @@ export default function Order() {
                                   )}
 
                                   {/* SELECT / MCQ */}
-                                {field.type === "select" && (
-                                                                        <div className="border rounded p-2" style={{ height: '40px', overflow: 'scroll' }}>
-                                                                            {field.selectOptions?.map(opt => (
-                                                                                <div key={opt._id} className="form-check">
-                                                                                    <input
-                                                                                        className="form-check-input"
-                                                                                        type="checkbox"
-                                                                                        id={`${field._id}-${opt._id}`}
-                                                                                        checked={(formValues[field._id] || []).includes(opt.label)}
-                                                                                        onChange={(e) => {
-                                                                                            const prev = formValues[field._id] || [];
-                                                                                            const updated = e.target.checked
-                                                                                                ? [...prev, opt.label]
-                                                                                                : prev.filter(v => v !== opt.label);
+                                  {field.type === "select" && (
+                                    <div className="border rounded p-2" style={{ height: '40px', overflow: 'scroll' }}>
+                                      {field.selectOptions?.map(opt => (
+                                        <div key={opt._id} className="form-check">
+                                          <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id={`${field._id}-${opt._id}`}
+                                            checked={(formValues[field._id] || []).includes(opt.label)}
+                                            onChange={(e) => {
+                                              const prev = formValues[field._id] || [];
+                                              const updated = e.target.checked
+                                                ? [...prev, opt.label]
+                                                : prev.filter(v => v !== opt.label);
 
-                                                                                            handleChange(field._id, updated);
-                                                                                        }}
-                                                                                    />
-                                                                                    <label
-                                                                                        className="form-check-label"
-                                                                                        htmlFor={`${field._id}-${opt._id}`}
-                                                                                    >
-                                                                                        {opt.label}
-                                                                                    </label>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
+                                              handleChange(field._id, updated);
+                                            }}
+                                          />
+                                          <label
+                                            className="form-check-label"
+                                            htmlFor={`${field._id}-${opt._id}`}
+                                          >
+                                            {opt.label}
+                                          </label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
 
                                   {/* CHECKBOX */}
                                   {field.type === "checkbox" && (
