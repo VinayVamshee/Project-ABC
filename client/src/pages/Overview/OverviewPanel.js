@@ -381,7 +381,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
             </h5> */}
 
             <div className="table-responsive overview-table-wrapper" style={{ height: '93%', overflowX: 'scroll' }}>
-                <table className="table table-bordered table-hover align-middle overview-table">
+                <table className="table table-hover align-middle overview-table">
 
                     {/* HEADER */}
                     <thead className="table-light">
@@ -563,14 +563,14 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                                 });
 
                                 return (
-                                    <td key={field._id} className="fw-bold text-gold text-end">
+                                    <td key={field._id} className="fw-bold text-gold">
                                         {displayTotal}
                                     </td>
                                 );
                             })}
 
                             {section === "inventory" && (
-                                <td className="fw-bold text-gold text-end">
+                                <td className="fw-bold text-gold">
                                     {formatIndianNumber(
                                         paginatedItems.reduce(
                                             (sum, item) => sum + Number(item.baseCostPrice || 0),

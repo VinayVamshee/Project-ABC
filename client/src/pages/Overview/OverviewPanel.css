@@ -542,7 +542,7 @@ body.theme-dark .page-info {
 
 /* give rows a subtle cream card look while keeping header distinct */
 .overview-panel table.overview-table tbody tr td {
-  background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(255, 248, 230, 0.9));
+  background: linear-gradient(180deg, rgba(134, 100, 14, 0.95), rgba(255, 248, 230, 0.9));
 }
 
 /* header cells slightly stronger */

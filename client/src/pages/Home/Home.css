@@ -4,20 +4,24 @@
 
 /* Background & Text */
 .home-container {
-  background: linear-gradient(to right, #e6e6e6, #f8f8f8);
+  /* background: linear-gradient(to right, #e6e6e6, #f8f8f8); */
+  background: url('./jewelry.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #2e2e2e;
   min-height: 100vh;
 }
 
 /* Marquee Bar */
 .home-marquee {
-  background: linear-gradient(to right, #c0c0c0, #e6e6e6);
+  /* background: linear-gradient(to right, #c0c0c0, #e6e6e6); */
   color: #d4af37;
   font-weight: bold;
   font-size: 3.2rem;
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
   padding: 2px 0;
-  border-bottom: 2px solid #d4af37;
+  border-bottom: 2px solid #d4af3721;
   letter-spacing: 1px;
 }
 
@@ -38,25 +42,50 @@
   }
 }
 
+.card-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+
+  padding-right: 10%;
+  height: 50vh;
+}
+
 /* Cards */
 .home-card {
-  background-color: #f2f2f2;
-  border: 2px solid #d4af37;
-  border-radius: 10px;
-  color: #2e2e2e;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+
+  padding: 10px;
+  border: 1px solid #d4af373a;
+  border-radius: 15px;
   transition: all 0.3s ease;
-  padding: 40px 20px;
-  box-shadow: none;
+
+}
+
+.home-card h5 {
+  font-size: 0px;
+  text-decoration: none;
+  color: black;
+  transition: 0.5s all ease;
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
 .home-card:hover {
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
-  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.785);
+  box-shadow: 2px 5px 8px rgba(255, 255, 255, 0.421);
+}
+
+.home-card:hover h5 {
+  font-size: x-large;
 }
 
 .home-icon {
   color: #d4af37;
-  margin-bottom: 15px;
 }
 
 /* Mobile Adjustments */
