@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import api from "../../api/axios";
 import "./OverviewPanel.css";
 
-export default function OverviewPanel({ section, items, onRefresh, onSell }) {
+export default function OverviewPanel({ section, items, onRefresh, onSell, onEdit }) {
 
     const formatIndianNumber = (value, { isCurrency = false } = {}) => {
         const num = Number(value);
@@ -349,7 +349,12 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
             );
         }
 
+        if (Array.isArray(f.value)) {
+            return <span>{f.value.join(" ")}</span>; // 👈 FIX
+        }
+
         return <span>{f.value || "-"}</span>;
+
     };
 
     // const getFieldsForFullInfo = (item) => {
@@ -387,6 +392,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                     <thead className="table-light">
                         <tr>
                             <th>#</th>
+                            <th>Product ID</th>
 
                             {overviewFields.map(field => (
                                 <th key={field._id}>{field.label}</th>
@@ -410,6 +416,9 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                         {paginatedItems.map((item, index) => (
                             <tr key={item._id}>
                                 <td><strong>{index + 1}</strong></td>
+                                <td className="text-nowrap">
+                                    {item.productID || "-"}
+                                </td>
 
                                 {overviewFields.map(field => {
                                     const raw = getFieldValue(item, field._id);
@@ -424,9 +433,11 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                                     const isNumeric =
                                         field.type === "number" || field.type === "currency" || isBackendCurrency;
 
-                                    const displayValue = isNumeric
-                                        ? formatIndianNumber(raw, { isCurrency })
-                                        : raw;
+                                    const displayValue = Array.isArray(raw)
+                                        ? raw.join(" ")
+                                        : isNumeric
+                                            ? formatIndianNumber(raw, { isCurrency })
+                                            : raw;
 
                                     return (
                                         <td key={field._id} className="text-nowrap">
@@ -443,13 +454,21 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                                         </td>
 
                                         <td className="text-center">
-                                            <div className="d-flex gap-2 justify-content-center">
+                                            <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                                <button
+                                                    className="btn-sm btn-outline-gold"
+                                                    onClick={() => onEdit(item)}  
+                                                >
+                                                    Edit
+                                                </button>
+
                                                 <button
                                                     className="btn-sm btn-gold"
                                                     onClick={() => onSell(item)}
                                                 >
                                                     Sell
                                                 </button>
+
                                                 <button
                                                     className="btn-sm btn-outline-danger"
                                                     onClick={() => handleRemove(item._id)}
@@ -460,6 +479,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell }) {
                                         </td>
                                     </>
                                 )}
+
 
                                 {/* ORDER STATUS + ACTIONS */}
                                 {section === "orders" && (

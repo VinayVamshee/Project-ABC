@@ -36,8 +36,8 @@ inventorySchema.pre("validate", async function (next) {
         { new: true, upsert: true }
       );
 
-      const nextNumber = counter.seq.toString().padStart(7, "0");
-      this.productID = `PRD_ID_${nextNumber}`;
+      const nextNumber = counter.seq.toString().padStart(4, "0");
+      this.productID = `PRD_${nextNumber}`;
       console.log("✅ Product ID generated:", this.productID);
       next();
     } catch (err) {

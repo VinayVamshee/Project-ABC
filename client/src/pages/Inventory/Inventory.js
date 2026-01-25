@@ -10,6 +10,37 @@ export default function Inventory() {
     const [formValues, setFormValues] = useState({});
     const [inventoryItems, setInventoryItems] = useState([]); // fetched saved inventory items
 
+    const [editItem, setEditItem] = useState(null);
+    const [editValues, setEditValues] = useState({});
+    const [editBaseCostPrice, setEditBaseCostPrice] = useState("");
+
+    const openEditModal = (item) => {
+        setEditItem(item);
+
+        const prefilled = {};
+
+        // fill existing values
+        item.fields.forEach(f => {
+            const id = f.fieldRef?._id || f.fieldRef;
+            prefilled[id] = f.value;
+        });
+
+        // ensure ALL fields exist (even empty ones)
+        inventoryFields.forEach(f => {
+            if (!(f._id in prefilled)) {
+                prefilled[f._id] = f.type === "select" ? [] : "";
+            }
+        });
+
+        setEditValues(prefilled);
+        setEditBaseCostPrice(item.baseCostPrice || 0);
+
+        new window.bootstrap.Modal(
+            document.getElementById("editInventoryModal")
+        ).show();
+    };
+
+
     const [baseCostPrice, setBaseCostPrice] = useState("");
 
     // at top inside Inventory component
@@ -274,8 +305,9 @@ export default function Inventory() {
     const handleSave = async () => {
         // 🔒 Basic validation
         if (!baseCostPrice || Number(baseCostPrice) <= 0) {
-            alert("Please enter a valid Buying Cost Price.");
-            return;
+            // alert("Please enter a valid Buying Cost Price.");
+            // return;
+            setBaseCostPrice(0);
         }
 
         const formattedFields = Object.entries(formValues).map(([fieldRef, value]) => ({
@@ -324,6 +356,30 @@ export default function Inventory() {
             console.error("Error uploading image:", error);
             alert("Image upload failed");
             return null;
+        }
+    };
+
+    const handleUpdateInventory = async () => {
+        if (!editItem) return;
+
+        const fieldsPayload = Object.entries(editValues).map(
+            ([fieldRef, value]) => ({ fieldRef, value })
+        );
+
+        try {
+            const res = await api.put(`/inventory/${editItem._id}`, {
+                fields: fieldsPayload,
+                baseCostPrice: Number(editBaseCostPrice)
+            });
+
+            if (res.data.success) {
+                alert("Inventory updated successfully");
+                document.querySelector("#editInventoryModal .btn-close")?.click();
+                fetchInventoryItems();
+            }
+        } catch (err) {
+            console.error("Update failed", err);
+            alert("Failed to update inventory");
         }
     };
 
@@ -563,6 +619,180 @@ export default function Inventory() {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            <div
+                className="modal fade"
+                id="editInventoryModal"
+                tabIndex="-1"
+            >
+                <div className="modal-dialog modal-xl">
+                    <div className="modal-content custom-modal">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Edit Inventory Item</h5>
+                            <button className="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div className="modal-body">
+                            {editItem && (
+                                <div className="container-fluid">
+                                    <div className="row g-4">
+
+                                        {/* ================= LEFT SIDE ================= */}
+                                        <div className="col-lg-8">
+
+                                            {/* COST */}
+                                            <div className="info-section mb-4 p-2">
+                                                <h5 className="section-title">🟧 Cost Details</h5>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={editBaseCostPrice}
+                                                    onChange={(e) => setEditBaseCostPrice(e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* PRODUCT DETAILS */}
+                                            <div className="info-section p-2">
+                                                <h5 className="section-title">🟦 Product Details</h5>
+
+                                                <div className="row g-3">
+                                                    {inventoryFields
+                                                        .filter(f => f.type !== "file")
+                                                        .map(field => (
+                                                            <div key={field._id} className="col-md-6">
+                                                                <div className="info-box">
+                                                                    <div className="info-label">{field.label}</div>
+
+                                                                    {/* TEXT */}
+                                                                    {field.type === "text" && (
+                                                                        <input
+                                                                            className="form-control"
+                                                                            value={editValues[field._id] || ""}
+                                                                            onChange={(e) =>
+                                                                                setEditValues(p => ({ ...p, [field._id]: e.target.value }))
+                                                                            }
+                                                                        />
+                                                                    )}
+
+                                                                    {/* NUMBER */}
+                                                                    {field.type === "number" && (
+                                                                        <input
+                                                                            type="number"
+                                                                            className="form-control"
+                                                                            value={editValues[field._id] || ""}
+                                                                            onChange={(e) =>
+                                                                                setEditValues(p => ({ ...p, [field._id]: e.target.value }))
+                                                                            }
+                                                                        />
+                                                                    )}
+
+                                                                    {/* CHECKBOX */}
+                                                                    {field.type === "checkbox" && (
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="form-check-input"
+                                                                            checked={!!editValues[field._id]}
+                                                                            onChange={(e) =>
+                                                                                setEditValues(p => ({ ...p, [field._id]: e.target.checked }))
+                                                                            }
+                                                                        />
+                                                                    )}
+
+                                                                    {/* SELECT */}
+                                                                    {field.type === "select" && (
+                                                                        <div className="border rounded p-2">
+                                                                            {field.selectOptions?.map(opt => (
+                                                                                <div key={opt._id} className="form-check">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        className="form-check-input"
+                                                                                        checked={(editValues[field._id] || []).includes(opt.label)}
+                                                                                        onChange={(e) => {
+                                                                                            const prev = editValues[field._id] || [];
+                                                                                            const updated = e.target.checked
+                                                                                                ? [...prev, opt.label]
+                                                                                                : prev.filter(v => v !== opt.label);
+
+                                                                                            setEditValues(p => ({ ...p, [field._id]: updated }));
+                                                                                        }}
+                                                                                    />
+                                                                                    <label className="form-check-label">{opt.label}</label>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ================= RIGHT SIDE — IMAGES ================= */}
+                                        <div className="col-lg-4">
+                                            <div className="image-panel sticky-top">
+                                                <h6 className="image-panel-title">🖼 Images</h6>
+
+                                                {inventoryFields
+                                                    .filter(f => f.type === "file")
+                                                    .map(field => (
+                                                        <div key={field._id} className="image-upload-box">
+                                                            <div className="info-label">{field.label}</div>
+
+                                                            {/* EXISTING IMAGE PREVIEW */}
+                                                            {editValues[field._id] && (
+                                                                <a
+                                                                    href={editValues[field._id]}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="image-card mb-2"
+                                                                >
+                                                                    <img src={editValues[field._id]} alt={field.label} />
+                                                                </a>
+                                                            )}
+
+                                                            {/* UPLOAD / REPLACE */}
+                                                            <input
+                                                                type="file"
+                                                                className="form-control"
+                                                                accept="image/*"
+                                                                onChange={async (e) => {
+                                                                    const file = e.target.files[0];
+                                                                    if (!file) return;
+
+                                                                    setEditValues(p => ({ ...p, [field._id]: "Uploading..." }));
+                                                                    const url = await uploadToImgBB(file);
+                                                                    setEditValues(p => ({ ...p, [field._id]: url || "" }));
+                                                                }}
+                                                            />
+
+                                                            {/* EMPTY PLACEHOLDER */}
+                                                            {!editValues[field._id] && (
+                                                                <div className="small text-muted mt-1">No image uploaded</div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button className="btn btn-gold" onClick={handleUpdateInventory}>
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
             {/* SELL Modal */}
             <div className="modal fade" id="sellModal" tabIndex="-1" aria-hidden="true">
@@ -841,6 +1071,7 @@ export default function Inventory() {
                 fields={fields}
                 onSell={openSellModal}  // <-- must pass this
                 onRefresh={fetchInventoryItems}
+                onEdit={openEditModal}
             />
         </div>
     );
