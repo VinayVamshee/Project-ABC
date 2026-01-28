@@ -992,3 +992,81 @@ body.theme-dark .image-label {
       rgba(56, 142, 60, 0.35));
   color: #0f2e14;
 }
+
+/* Modal shell */
+.login-modal {
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+}
+
+/* Divider */
+.login-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(0, 0, 0, 0.15),
+    transparent
+  );
+  margin: 0 3rem;
+}
+
+/* Form */
+.login-form {
+  max-width: 520px;
+}
+
+/* Inputs */
+.login-form .form-control,
+.login-form .input-group-text {
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.login-form .input-group-text {
+  background: #f4f6f8;
+  border-right: none;
+}
+
+.login-form .form-control {
+  border-left: none;
+}
+
+.login-form .form-control:focus {
+  box-shadow: none;
+  border-color: #0d6efd;
+}
+
+/* Links */
+.login-link {
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #0d6efd;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+/* Button */
+.login-btn {
+  border-radius: 14px;
+  padding: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Checkbox */
+.form-check-input {
+  cursor: pointer;
+}
+
+/* Small screens */
+@media (max-width: 576px) {
+  .modal-body,
+  .modal-header {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+}

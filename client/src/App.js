@@ -1,12 +1,13 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import "./App.css"
-import Home from './pages/Home/Home';
-import Settings from './pages/Settings/Settings';
-import Inventory from './pages/Inventory/Inventory';
-import OverviewPanel from './pages/Overview/OverviewPanel';
-import Order from './pages/Orders/Order';
-import Sold from './pages/Sold/Sold';
-import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
+import Home from "./pages/Home/Home";
+import Settings from "./pages/Settings/Settings";
+import Inventory from "./pages/Inventory/Inventory";
+import OverviewPanel from "./pages/Overview/OverviewPanel";
+import Order from "./pages/Orders/Order";
+import Sold from "./pages/Sold/Sold";
+import { useEffect } from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
 
@@ -33,12 +34,56 @@ function App() {
       {/* ROUTES */}
       <BrowserRouter>
         <Routes>
+
+          {/* ✅ PUBLIC */}
           <Route path="/" element={<Home />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/overview" element={<OverviewPanel />} />
-          <Route path="/orders" element={<Order />} />
-          <Route path="/sold" element={<Sold />} />
+
+          {/* 🔐 PROTECTED */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute>
+                <Inventory />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/overview"
+            element={
+              <ProtectedRoute>
+                <OverviewPanel />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Order />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sold"
+            element={
+              <ProtectedRoute>
+                <Sold />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </BrowserRouter>
 

@@ -7,6 +7,7 @@ import inputFieldRoutes from "./routes/inputFieldRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js"
 import orderRoutes from "./routes/orderRoutes.js"
 import soldRoutes from "./routes/soldRoutes.js"
+import authRoutes from "./routes/auth.routes.js"
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/fields", inputFieldRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/sold", soldRoutes);
+app.use("/api/auth", authRoutes);
 
 // Default route
 app.get("/", (req, res) => {
