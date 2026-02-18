@@ -3,6 +3,7 @@ import api from "../../api/axios";
 import OverviewPanel from "../Overview/OverviewPanel";
 import "./Inventory.css";
 import TopPanel from "../TopPanel/TopPanel";
+import { notify } from "../../components/Toast/toast"
 
 export default function Inventory() {
     const [fields, setFields] = useState([]); // all fetched fields
@@ -13,6 +14,10 @@ export default function Inventory() {
     const [editItem, setEditItem] = useState(null);
     const [editValues, setEditValues] = useState({});
     const [editBaseCostPrice, setEditBaseCostPrice] = useState("");
+
+    const [isSavingInventory, setIsSavingInventory] = useState(false);
+    const [isUpdatingInventory, setIsUpdatingInventory] = useState(false);
+    const [isSelling, setIsSelling] = useState(false);
 
     const openEditModal = (item) => {
         setEditItem(item);
@@ -215,7 +220,9 @@ export default function Inventory() {
     };
 
     const handleConfirmSell = async () => {
-        if (!sellModalItem) return;
+
+        if (!sellModalItem || isSelling) return;
+        setIsSelling(true);
 
         const productFieldsPayload = Object.entries(sellProductValues).map(([fieldRef, value]) => ({
             fieldRef,
@@ -238,7 +245,7 @@ export default function Inventory() {
             });
 
             if (res.data.success) {
-                alert("Item Sold Successfully!");
+                notify.success("Item sold successfully");
 
                 document.querySelector("#sellModal .btn-close")?.click();
                 fetchInventoryItems();
@@ -246,7 +253,9 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error("SELL ERROR:", error);
-            alert("Failed to sell item");
+            notify.error("Failed to sell item");
+        } finally {
+            setIsSelling(false);
         }
     };
 
@@ -271,7 +280,7 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error("Error fetching fields:", error);
-            alert("Failed to fetch input fields");
+            notify.error("Failed to fetch input fields");
         }
     };
 
@@ -284,7 +293,7 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error("Error fetching inventory items:", error);
-            alert("Failed to load inventory items");
+            notify.error("Failed to load inventory items");
         }
     };
 
@@ -303,6 +312,10 @@ export default function Inventory() {
 
     // ✅ Handle submit
     const handleSave = async () => {
+
+        if (isSavingInventory) return;
+        setIsSavingInventory(true);
+
         // 🔒 Basic validation
         if (!baseCostPrice || Number(baseCostPrice) <= 0) {
             // alert("Please enter a valid Buying Cost Price.");
@@ -322,7 +335,7 @@ export default function Inventory() {
             });
 
             if (res.data.success) {
-                alert("Inventory item added successfully!");
+                notify.success("Inventory item added successfully");
                 setFormValues({});
                 setBaseCostPrice("");                   // reset cost input
                 fetchInventoryItems();
@@ -330,7 +343,9 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error("Error saving inventory item:", error);
-            alert("Failed to add inventory item");
+            notify.error("Failed to add inventory item");
+        } finally {
+            setIsSavingInventory(false);
         }
     };
 
@@ -354,13 +369,15 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error("Error uploading image:", error);
-            alert("Image upload failed");
+            notify.error("Image upload failed");
             return null;
         }
     };
 
     const handleUpdateInventory = async () => {
-        if (!editItem) return;
+        if (!editItem || isUpdatingInventory) return;
+
+        setIsUpdatingInventory(true);
 
         const fieldsPayload = Object.entries(editValues).map(
             ([fieldRef, value]) => ({ fieldRef, value })
@@ -373,13 +390,15 @@ export default function Inventory() {
             });
 
             if (res.data.success) {
-                alert("Inventory updated successfully");
+                notify.success("Inventory updated successfully");
                 document.querySelector("#editInventoryModal .btn-close")?.click();
                 fetchInventoryItems();
             }
         } catch (err) {
             console.error("Update failed", err);
-            alert("Failed to update inventory");
+            notify.error("Failed to update inventory");
+        } finally {
+            setIsUpdatingInventory(false);
         }
     };
 
@@ -612,8 +631,12 @@ export default function Inventory() {
                             <button className="btn btn-secondary" data-bs-dismiss="modal">
                                 Cancel
                             </button>
-                            <button className="btn btn-gold" onClick={handleSave}>
-                                Save Item
+                            <button
+                                className="btn btn-gold"
+                                onClick={handleSave}
+                                disabled={isSavingInventory}
+                            >
+                                {isSavingInventory ? "Saving..." : "Save Item"}
                             </button>
                         </div>
                     </div>
@@ -785,8 +808,12 @@ export default function Inventory() {
                             <button className="btn btn-secondary" data-bs-dismiss="modal">
                                 Cancel
                             </button>
-                            <button className="btn btn-gold" onClick={handleUpdateInventory}>
-                                Save Changes
+                            <button
+                                className="btn btn-gold"
+                                onClick={handleUpdateInventory}
+                                disabled={isUpdatingInventory}
+                            >
+                                {isUpdatingInventory ? "Saving..." : "Save Changes"}
                             </button>
                         </div>
                     </div>
@@ -1058,7 +1085,14 @@ export default function Inventory() {
 
                         <div className="modal-footer">
                             <button id="closeSellModalBtn" type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" className="btn btn-primary" onClick={handleConfirmSell}>Confirm Sell</button>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={handleConfirmSell}
+                                disabled={isSelling}
+                            >
+                                {isSelling ? "Processing..." : "Confirm Sell"}
+                            </button>
                         </div>
                     </div>
                 </div>

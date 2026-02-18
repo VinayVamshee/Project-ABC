@@ -9,6 +9,9 @@ import Sold from "./pages/Sold/Sold";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// 🔔 Toast Provider
+import ToastProvider from "./components/Toast/ToastProvider";
+
 function App() {
 
   // Load saved theme
@@ -29,74 +32,76 @@ function App() {
   const isDark = document.body.classList.contains("theme-dark");
 
   return (
-    <div className="App">
+    <ToastProvider>
+      <div className="App">
 
-      {/* ROUTES */}
-      <BrowserRouter>
-        <Routes>
+        {/* ROUTES */}
+        <BrowserRouter>
+          <Routes>
 
-          {/* ✅ PUBLIC */}
-          <Route path="/" element={<Home />} />
+            {/* ✅ PUBLIC */}
+            <Route path="/" element={<Home />} />
 
-          {/* 🔐 PROTECTED */}
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
+            {/* 🔐 PROTECTED */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/inventory"
-            element={
-              <ProtectedRoute>
-                <Inventory />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/overview"
-            element={
-              <ProtectedRoute>
-                <OverviewPanel />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/overview"
+              element={
+                <ProtectedRoute>
+                  <OverviewPanel />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <Order />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <Order />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/sold"
-            element={
-              <ProtectedRoute>
-                <Sold />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/sold"
+              element={
+                <ProtectedRoute>
+                  <Sold />
+                </ProtectedRoute>
+              }
+            />
 
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
 
-      {/* 🌗 Floating Theme Toggle Button */}
-      <button
-        className="floating-theme-toggle"
-        onClick={toggleTheme}
-        title="Toggle Theme"
-      >
-        {isDark ? "🌕" : "🌑"}
-      </button>
+        {/* 🌗 Floating Theme Toggle Button */}
+        <button
+          className="floating-theme-toggle"
+          onClick={toggleTheme}
+          title="Toggle Theme"
+        >
+          {isDark ? "🌕" : "🌑"}
+        </button>
 
-    </div>
+      </div>
+    </ToastProvider>
   );
 }
 
