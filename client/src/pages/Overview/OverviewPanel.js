@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../../api/axios";
 import "./OverviewPanel.css";
+import Barcode from "../../components/Barcode";
 
 export default function OverviewPanel({ section, items, onRefresh, onSell, onEdit }) {
 
@@ -357,6 +358,12 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
 
     };
 
+    const printBarcode = (productID) => {
+        const url = `${api.defaults.baseURL}/inventory/barcode/${productID}`;
+        const win = window.open(url, "_blank");
+        win?.print();
+    };
+
     // const getFieldsForFullInfo = (item) => {
     //     if (!item) return [];
 
@@ -457,7 +464,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                             <div className="d-flex gap-2 justify-content-center flex-wrap">
                                                 <button
                                                     className="btn-sm btn-outline-gold"
-                                                    onClick={() => onEdit(item)}  
+                                                    onClick={() => onEdit(item)}
                                                 >
                                                     Edit
                                                 </button>
@@ -546,65 +553,69 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                         ))}
                     </tbody>
 
-                    <tfoot>
-                        <tr className="total-row">
-                            <td className="text-gold fw-bold">Total</td>
+                   <tfoot>
+  <tr className="total-row">
 
-                            {overviewFields.map((field) => {
-                                const type = field.type;
-                                const subType = field.numberSubType;
+    {/* # column */}
+    <td className="text-gold fw-bold">Total</td>
 
-                                const isCurrency =
-                                    type === "currency" ||
-                                    subType === "currency" ||
-                                    ["sellingPrice", "discount", "finalPrice"].includes(field.label);
+    {/* Product ID column */}
+    <td>—</td>
 
-                                const isBackendCurrency =
-                                    ["sellingPrice", "discount", "finalPrice", "inventoryPrice", "profit", "totalPaid"]
-                                        .includes(field._id);
+    {/* Dynamic overview fields */}
+    {overviewFields.map((field) => {
+      const type = field.type;
+      const subType = field.numberSubType;
 
-                                const isWeight = type === "weight" || subType === "weight";
-                                const isQuantity = subType === "quantity";
+      const isBackendCurrency =
+        ["sellingPrice", "discount", "finalPrice", "inventoryPrice", "profit", "totalPaid"]
+          .includes(field._id);
 
-                                const shouldSum = isCurrency || isWeight || isQuantity || isBackendCurrency;
+      const isCurrency =
+        type === "currency" || subType === "currency" || isBackendCurrency;
 
-                                if (!shouldSum) {
-                                    return <td key={field._id}>—</td>;
-                                }
+      const isWeight = type === "weight" || subType === "weight";
+      const isQuantity = subType === "quantity";
 
-                                const sum = paginatedItems.reduce((acc, item) => {
-                                    const raw = getFieldValue(item, field._id);
-                                    const n = Number(raw);
-                                    return !isNaN(n) ? acc + n : acc;
-                                }, 0);
+      const shouldSum = isCurrency || isWeight || isQuantity || isBackendCurrency;
 
-                                const displayTotal = formatIndianNumber(sum, {
-                                    isCurrency: isCurrency || isBackendCurrency,
-                                });
+      if (!shouldSum) {
+        return <td key={field._id}>—</td>;
+      }
 
-                                return (
-                                    <td key={field._id} className="fw-bold text-gold">
-                                        {displayTotal}
-                                    </td>
-                                );
-                            })}
+      const sum = paginatedItems.reduce((acc, item) => {
+        const raw = getFieldValue(item, field._id);
+        const n = Number(raw);
+        return !isNaN(n) ? acc + n : acc;
+      }, 0);
 
-                            {section === "inventory" && (
-                                <td className="fw-bold text-gold">
-                                    {formatIndianNumber(
-                                        paginatedItems.reduce(
-                                            (sum, item) => sum + Number(item.baseCostPrice || 0),
-                                            0
-                                        ),
-                                        { isCurrency: true }
-                                    )}
-                                </td>
-                            )}
-                            {section === "orders" && <td>—</td>}
+      return (
+        <td key={field._id} className="fw-bold text-gold">
+          {formatIndianNumber(sum, { isCurrency })}
+        </td>
+      );
+    })}
 
-                            <td>—</td>
-                        </tr>
-                    </tfoot>
+    {/* Inventory Cost Price */}
+    {section === "inventory" && (
+      <td className="fw-bold text-gold">
+        {formatIndianNumber(
+          paginatedItems.reduce(
+            (sum, item) => sum + Number(item.baseCostPrice || 0),
+            0
+          ),
+          { isCurrency: true }
+        )}
+      </td>
+    )}
+
+    {/* Orders Status column */}
+    {section === "orders" && <td>—</td>}
+
+    {/* Full Info column */}
+    <td>—</td>
+  </tr>
+</tfoot>
                 </table>
             </div>
 
@@ -870,6 +881,29 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                                     );
                                                 })()}
                                             </div>
+                                            {/* ================= BARCODE SECTION ================= */}
+                                            {section === "inventory" && selectedItem?.productID && (
+                                                <div className="mt-4 p-2 border-top">
+                                                    <div className="fw-semibold small text-muted mb-2">
+                                                        🏷 Barcode
+                                                    </div>
+
+                                                    <div className="d-flex flex-column align-items-center gap-2">
+                                                        <Barcode value={selectedItem.productID} />
+
+                                                        <div className="small text-muted">
+                                                            {selectedItem.productID}
+                                                        </div>
+
+                                                        <button
+                                                            className="btn btn-sm btn-outline-secondary"
+                                                            onClick={() => printBarcode(selectedItem.productID)}
+                                                        >
+                                                            🖨 Print Barcode
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                     </div>

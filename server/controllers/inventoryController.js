@@ -1,4 +1,5 @@
 import Inventory from "../models/Inventory.js";
+import bwipjs from "bwip-js";
 
 /* -----------------------------------------------------
    🆕 CREATE Inventory Item
@@ -132,9 +133,9 @@ export const deleteInventoryItem = async (req, res) => {
     );
 
     if (!updated)
-    return res
-      .status(404)
-      .json({ success: false, message: "Inventory item not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Inventory item not found" });
 
     res.status(200).json({
       success: true,
@@ -146,5 +147,25 @@ export const deleteInventoryItem = async (req, res) => {
       success: false,
       message: "Server error while updating inventory stock state",
     });
+  }
+};
+
+export const getBarcodeImage = async (req, res) => {
+  const { productID } = req.params;
+
+  try {
+    const png = await bwipjs.toBuffer({
+      bcid: "code128",
+      text: productID,
+      scale: 4,        // 🔥 higher = sharper print
+      height: 15,
+      includetext: true,
+      textxalign: "center",
+    });
+
+    res.set("Content-Type", "image/png");
+    res.send(png);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to generate barcode" });
   }
 };

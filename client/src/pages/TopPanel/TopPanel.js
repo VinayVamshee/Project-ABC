@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./TopPanel.css";
 
 export default function TopPanel({
@@ -16,6 +16,11 @@ export default function TopPanel({
     const [sortOrder, setSortOrder] = useState("asc");
 
     const [statusFilter, setStatusFilter] = useState(""); // pending | partial | paid
+
+    const searchInputRef = useRef(null);
+    const barcodeBufferRef = useRef("");
+    const lastScanTimeRef = useRef(0);
+    const scanTimerRef = useRef(null);
 
     // ----------------------------------
     // Extract fields for current section
@@ -90,6 +95,53 @@ export default function TopPanel({
         setFilters(prev => prev.filter((_, i) => i !== index));
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            const now = Date.now();
+
+            // Reset buffer if pause is long (human typing)
+            if (now - lastScanTimeRef.current > 100) {
+                barcodeBufferRef.current = "";
+            }
+
+            lastScanTimeRef.current = now;
+
+            // Only capture printable characters
+            if (e.key.length === 1) {
+                barcodeBufferRef.current += e.key;
+            }
+
+            // Clear previous timer safely
+            if (scanTimerRef.current) {
+                clearTimeout(scanTimerRef.current);
+            }
+
+            // Scanner finishes quickly → finalize scan
+            scanTimerRef.current = setTimeout(() => {
+                const scanned = barcodeBufferRef.current.trim();
+
+                if (scanned.length >= 5 && searchInputRef.current) {
+                    searchInputRef.current.value = scanned;
+
+                    // 🔥 trigger existing onChange logic
+                    searchInputRef.current.dispatchEvent(
+                        new Event("input", { bubbles: true })
+                    );
+                }
+
+                barcodeBufferRef.current = "";
+            }, 80);
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            if (scanTimerRef.current) {
+                clearTimeout(scanTimerRef.current);
+            }
+        };
+    }, []);
+
     return (
         <div className="top-panel d-flex align-items-center gap-3 flex-wrap">
 
@@ -102,6 +154,15 @@ export default function TopPanel({
                     onChange={(e) => onSearchChange?.(e.target.value)}
                 />
             </div>
+
+            <button
+                className="btn btn-outline-primary"
+                onClick={() => {
+                    searchInputRef.current?.focus();
+                }}
+            >
+                📷 Scan by Barcode
+            </button>
 
             {/* 📌 FIELD SELECT */}
             <select

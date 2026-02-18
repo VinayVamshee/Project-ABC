@@ -5,12 +5,13 @@ import {
   getInventoryItemById,
   updateInventoryItem,
   deleteInventoryItem,
+  getBarcodeImage,
 } from "../controllers/inventoryController.js";
-
 const router = express.Router();
 
 // Routes
 router.post("/", createInventoryItem);
+router.get("/barcode/:productID", getBarcodeImage);
 router.get("/", getAllInventoryItems);
 router.get("/:id", getInventoryItemById);
 router.put("/:id", updateInventoryItem);
