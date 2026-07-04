@@ -17,9 +17,21 @@ app.use(express.json());
 app.use(cookieParser());
 
 // ✅ CORS FIX — allow frontend (React) to talk to backend
+const allowedOrigins = [
+    "https://abc-aneesh-buisness-console.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: "https://abc-aneesh-buisness-console.vercel.app",
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(null, false);
+            }
+        },
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
         credentials: true,
     })

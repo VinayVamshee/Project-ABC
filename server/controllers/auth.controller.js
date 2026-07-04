@@ -27,12 +27,13 @@ export const login = async (req, res) => {
   }
 
   // Create JWT
+  const jwtSecret = process.env.JWT_SECRET;
   const token = jwt.sign(
     {
       username: staticUser.username,
       role: staticUser.role,
     },
-    process.env.JWT_SECRET,
+    jwtSecret,
     { expiresIn: "1d" }
   );
 

@@ -143,189 +143,200 @@ export default function TopPanel({
     }, []);
 
     return (
-        <div className="top-panel d-flex align-items-center gap-3 flex-wrap">
+        <div className="top-panel">
+            <div className="top-panel-row top-panel-main">
+                <div className="search-box">
+                    <input
+                        ref={searchInputRef}
+                        type="text"
+                        className="form-control"
+                        placeholder={`Search in ${section}`}
+                        onChange={(e) => onSearchChange?.(e.target.value)}
+                    />
+                </div>
 
-            {/* 🔍 SEARCH */}
-            <div className="search-box">
-                <input
-                    type="text"
-                    className="form-control"
-                    placeholder={`Search in ${section}`}
-                    onChange={(e) => onSearchChange?.(e.target.value)}
-                />
-            </div>
+                <select
+                    className="form-select filter-field-select"
+                    value={selectedField?._id || ""}
+                    onChange={(e) => {
+                        const f = pageFields.find(x => x._id === e.target.value);
+                        setSelectedField(f || null);
+                        setFilterValue("");
+                    }}
+                >
+                    <option value="">Select Field</option>
+                    {pageFields.map((f) => (
+                        <option key={f._id} value={f._id}>
+                            {f.label}
+                        </option>
+                    ))}
+                </select>
 
-            <button
-                className="btn btn-outline-primary"
-                onClick={() => {
-                    searchInputRef.current?.focus();
-                }}
-            >
-                📷 Scan by Barcode
-            </button>
-
-            {/* 📌 FIELD SELECT */}
-            <select
-                className="form-select"
-                value={selectedField?._id || ""}
-                onChange={(e) => {
-                    const f = pageFields.find(x => x._id === e.target.value);
-                    setSelectedField(f || null);
-                    setFilterValue("");
-                }}
-            >
-                <option value="">Select Field</option>
-                {pageFields.map((f) => (
-                    <option key={f._id} value={f._id}>
-                        {f.label}
-                    </option>
-                ))}
-            </select>
-
-            {/* ✏ FILTER INPUT (DYNAMIC & CORRECT) */}
-            {selectedField && (
-                <>
-                    {/* TEXT */}
-                    {selectedField.type === "text" && (
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder={`Enter ${selectedField.label}`}
-                            value={filterValue}
-                            onChange={(e) => setFilterValue(e.target.value)}
-                        />
-                    )}
-
-                    {/* NUMBER / CURRENCY / WEIGHT */}
-                    {["number", "currency", "weight"].includes(selectedField.type) && (
-                        <input
-                            type="number"
-                            className="form-control"
-                            placeholder={`Enter ${selectedField.label}`}
-                            value={filterValue}
-                            onChange={(e) => setFilterValue(e.target.value)}
-                        />
-                    )}
-
-                    {/* CHECKBOX */}
-                    {selectedField.type === "checkbox" && (
-                        <select
-                            className="form-select"
-                            value={filterValue}
-                            onChange={(e) => setFilterValue(e.target.value)}
-                        >
-                            <option value="">Select</option>
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    )}
-
-                    {/* SELECT / MCQ */}
-                    {(selectedField.type === "select" || selectedField.type === "mcq") && (
-                        <select
-                            className="form-select"
-                            value={filterValue}
-                            onChange={(e) => setFilterValue(e.target.value)}
-                        >
-                            <option value="">Select {selectedField.label}</option>
-
-                            {selectedField.selectOptions?.map(opt => (
-                                <option key={opt._id} value={opt.label}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
-                    )}
-
-                    {/* FALLBACK */}
-                    {!["text", "number", "currency", "weight", "checkbox", "select", "mcq"]
-                        .includes(selectedField.type) && (
+                {selectedField && (
+                    <>
+                        {selectedField.type === "text" && (
                             <input
                                 type="text"
-                                className="form-control"
+                                className="form-control filter-value-input"
                                 placeholder={`Enter ${selectedField.label}`}
                                 value={filterValue}
                                 onChange={(e) => setFilterValue(e.target.value)}
                             />
                         )}
-                </>
-            )}
 
-            {/* ➕ ADD FILTER */}
-            {selectedField && (
-                <button className="btn btn-gold" onClick={handleAddFilter}>
-                    Add Filter
-                </button>
-            )}
+                        {["number", "currency", "weight"].includes(selectedField.type) && (
+                            <input
+                                type="number"
+                                className="form-control filter-value-input"
+                                placeholder={`Enter ${selectedField.label}`}
+                                value={filterValue}
+                                onChange={(e) => setFilterValue(e.target.value)}
+                            />
+                        )}
 
-            {/* 🏷 ACTIVE FILTER TAGS */}
-            <div className="filter-tags d-flex gap-2 flex-wrap">
-                {filters.map((f, i) => (
-                    <div key={i} className="filter-tag">
-                        {f.label}: {String(f.value)}
-                        <span className="remove-tag" onClick={() => removeFilter(i)}>×</span>
+                        {selectedField.type === "checkbox" && (
+                            <select
+                                className="form-select"
+                                value={filterValue}
+                                onChange={(e) => setFilterValue(e.target.value)}
+                            >
+                                <option value="">Select</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        )}
+
+                        {(selectedField.type === "select" || selectedField.type === "mcq") && (
+                            <select
+                                className="form-control filter-value-input"
+                                value={filterValue}
+                                onChange={(e) => setFilterValue(e.target.value)}
+                            >
+                                <option value="">Select {selectedField.label}</option>
+                                {selectedField.selectOptions?.map(opt => (
+                                    <option key={opt._id} value={opt.label}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
+                        {!["text", "number", "currency", "weight", "checkbox", "select", "mcq"]
+                            .includes(selectedField.type) && (
+                                <input
+                                    type="text"
+                                    className="form-control filter-value-input"
+                                    placeholder={`Enter ${selectedField.label}`}
+                                    value={filterValue}
+                                    onChange={(e) => setFilterValue(e.target.value)}
+                                />
+                            )}
+                    </>
+                )}
+
+                {selectedField && (
+                    <button
+                        className="toolbar-btn add-filter-btn"
+                        onClick={handleAddFilter}
+                    >
+                        <span>+</span>
+                        <span>Add Filter</span>
+                    </button>
+                )}
+
+                <div className="sort-tools">
+                    <div className="sort-field-wrap">
+                        <span className="sort-field-icon">⇅</span>
+                        <select
+                            className="form-select sort-select sort-field-select"
+                            value={sortField}
+                            onChange={(e) => setSortField(e.target.value)}
+                            aria-label="Sort field"
+                            title="Sort field"
+                        >
+                            <option value="">Sort</option>
+                            {pageFields
+                                .filter(f => ["number", "currency", "weight"].includes(f.type))
+                                .map(f => (
+                                    <option key={f._id} value={f._id}>
+                                        {f.label}
+                                    </option>
+                                ))}
+                        </select>
                     </div>
-                ))}
+
+                    <button
+                        type="button"
+                        className="btn sort-order-btn"
+                        onClick={() => setSortOrder(prev => (prev === "asc" ? "desc" : "asc"))}
+                        disabled={!sortField}
+                        title="Toggle sort order"
+                        aria-label="Toggle sort order"
+                    >
+                        {sortOrder === "asc" ? "↑" : "↓"}
+                    </button>
+                </div>
+
+                {section === "sold" && (
+                    <div className="status-filter d-flex gap-2">
+                        {["pending", "partial", "paid"].map((s) => (
+                            <button
+                                key={s}
+                                className={`status-btn status-${s} ${statusFilter === s ? "active" : ""}`}
+                                onClick={() =>
+                                    setStatusFilter(prev => (prev === s ? "" : s))
+                                }
+                            >
+                                {s.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {section === "orders" && (
+                    <div className="status-filter d-flex gap-2">
+                        {["pending", "completed", "cancelled"].map((s) => (
+                            <button
+                                key={s}
+                                className={`status-btn status-${s} ${statusFilter === s ? "active" : ""}`}
+                                onClick={() =>
+                                    setStatusFilter(prev => (prev === s ? "" : s))
+                                }
+                            >
+                                {s.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <div className="top-panel-actions">
+                    <button
+                        className="btn barcode-btn"
+                        onClick={() => searchInputRef.current?.focus()}
+                    >
+                        <span className="barcode-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 6v12M7 6v12M10 8v8M13 6v12M16 8v8M19 6v12" />
+                            </svg>
+                        </span>
+
+                        <span className="barcode-label">
+                            Scan Barcode
+                        </span>
+                    </button>
+                </div>
             </div>
 
-            {/* 🔃 SORT FIELD */}
-            <select
-                className="form-select sort-select"
-                value={sortField}
-                onChange={(e) => setSortField(e.target.value)}
-            >
-                <option value="">Sort By</option>
-                {pageFields
-                    .filter(f => ["number", "currency", "weight"].includes(f.type))
-                    .map(f => (
-                        <option key={f._id} value={f._id}>
-                            {f.label}
-                        </option>
-                    ))}
-            </select>
-
-            {/* ↕ SORT ORDER */}
-            {sortField && (
-                <select
-                    className="form-select sort-select"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                >
-                    <option value="asc">Ascending ↑</option>
-                    <option value="desc">Descending ↓</option>
-                </select>
-            )}
-
-            {/* STATUS FILTER */}
-            {section === "sold" && (
-                <div className="status-filter d-flex gap-2">
-                    {["pending", "partial", "paid"].map((s) => (
-                        <button
-                            key={s}
-                            className={`status-btn status-${s} ${statusFilter === s ? "active" : ""}`}
-                            onClick={() =>
-                                setStatusFilter(prev => (prev === s ? "" : s))
-                            }
-                        >
-                            {s.toUpperCase()}
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            {section === "orders" && (
-                <div className="status-filter d-flex gap-2">
-                    {["pending", "completed", "cancelled"].map((s) => (
-                        <button
-                            key={s}
-                            className={`status-btn status-${s} ${statusFilter === s ? "active" : ""}`}
-                            onClick={() =>
-                                setStatusFilter(prev => (prev === s ? "" : s))
-                            }
-                        >
-                            {s.toUpperCase()}
-                        </button>
-                    ))}
+            {filters.length > 0 && (
+                <div className="top-panel-row top-panel-tags-row">
+                    <div className="filter-tags d-flex gap-2 flex-wrap">
+                        {filters.map((f, i) => (
+                            <div key={i} className="filter-tag">
+                                {f.label}: {String(f.value)}
+                                <span className="remove-tag" onClick={() => removeFilter(i)}>×</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

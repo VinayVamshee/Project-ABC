@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const isLocalhost = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 const api = axios.create({
-  baseURL: "https://project-abc-server.vercel.app/api",
+  baseURL:
+    process.env.REACT_APP_API_URL ||
+    (isLocalhost ? "http://localhost:3001/api" : "https://project-abc-server.vercel.app/api"),
   withCredentials: true,
 });
 

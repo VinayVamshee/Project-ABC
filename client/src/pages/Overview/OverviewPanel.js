@@ -20,7 +20,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
 
     const [selectedItem, setSelectedItem] = useState(null);
 
-    // 🧾 Payments history modal (Sold)
+    // Payments history modal (Sold)
     const [paymentsHistoryItem, setPaymentsHistoryItem] = useState(null);
 
     // Open payments history (fetch latest sold record so we have payments + populated fields)
@@ -173,7 +173,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
 
     if (!items || items.length === 0) {
         return (
-            <div className="overview-panel">
+            <div className="overview-panel overview-shell">
                 {/* <h5 className="fw-semibold text-gold text-uppercase mb-3">
                     {section} Overview
                 </h5> */}
@@ -341,7 +341,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                     href={f.value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-sm btn-outline-gold"
+                    className="btn-outline-action btn-sm"
                 >
                     View File
                 </a>
@@ -387,16 +387,16 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
     // };
 
     return (
-        <div className="overview-panel" style={{ height: '87vh', overflowX: 'scroll' }}>
+        <div className="overview-panel overview-shell">
             {/* <h5 className="fw-semibold text-gold text-uppercase mb-3">
                 {section} Overview
             </h5> */}
 
-            <div className="table-responsive overview-table-wrapper" style={{ height: '93%', overflowX: 'scroll' }}>
-                <table className="table table-hover align-middle overview-table">
+            <div className="overview-table-wrapper overview-table-shell">
+                <table className="overview-table">
 
                     {/* HEADER */}
-                    <thead className="table-light">
+                    <thead className="overview-thead">
                         <tr>
                             <th>#</th>
                             <th>Product ID</th>
@@ -408,13 +408,13 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             {section === "inventory" && (
                                 <>
                                     <th>Cost Price</th>
-                                    <th>Actions</th>
+                                    <th className="text-center">Actions</th>
                                 </>
                             )}
 
-                            {section === "orders" && <th>Status</th>}
+                            {section === "orders" && <th className="text-center">Status</th>}
 
-                            <th>Full Info</th>
+                            <th className="text-center">Full Info</th>
                         </tr>
                     </thead>
 
@@ -422,8 +422,8 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                     <tbody>
                         {paginatedItems.map((item, index) => (
                             <tr key={item._id}>
-                                <td><strong>{index + 1}</strong></td>
-                                <td className="text-nowrap">
+                                <td className="cell-index"><strong>{index + 1}</strong></td>
+                                <td className="text-nowrap cell-product">
                                     {item.productID || "-"}
                                 </td>
 
@@ -456,28 +456,28 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                 {/* INVENTORY ACTIONS */}
                                 {section === "inventory" && (
                                     <>
-                                        <td className="text-nowrap">
+                                        <td className="text-nowrap cell-cost">
                                             {formatIndianNumber(item.baseCostPrice, { isCurrency: true })}
                                         </td>
 
-                                        <td className="text-center">
-                                            <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                        <td className="text-center cell-actions">
+                                            <div className="action-group">
                                                 <button
-                                                    className="btn-sm btn-outline-gold"
+                                                    className="btn-outline-action btn-sm"
                                                     onClick={() => onEdit(item)}
                                                 >
                                                     Edit
                                                 </button>
 
                                                 <button
-                                                    className="btn-sm btn-gold"
+                                                    className="btn-primary-action btn-sm"
                                                     onClick={() => onSell(item)}
                                                 >
                                                     Sell
                                                 </button>
 
                                                 <button
-                                                    className="btn-sm btn-outline-danger"
+                                                    className="btn-danger-action btn-sm"
                                                     onClick={() => handleRemove(item._id)}
                                                 >
                                                     Remove
@@ -490,10 +490,10 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
 
                                 {/* ORDER STATUS + ACTIONS */}
                                 {section === "orders" && (
-                                    <td>
-                                        <div className="d-flex align-items-center gap-2">
+                                    <td className="cell-status">
+                                        <div className="status-action-group">
                                             <select
-                                                className={`status-select status-${item.status}`}
+                                                className={`status-select status-pill status-${item.status}`}
                                                 value={item.status}
                                                 onChange={(e) => handleStatusChange(item._id, e.target.value)}
                                             >
@@ -503,7 +503,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                             </select>
 
                                             <button
-                                                className="btn btn-sm btn-gold"
+                                                className="btn-primary-action btn-sm"
                                                 onClick={() => onSell(item)}
                                                 disabled={item.status !== "completed"}
                                             >
@@ -514,26 +514,26 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                 )}
 
                                 {/* SOLD ACTIONS */}
-                                <td className="text-center">
+                                <td className="text-center cell-info-action">
                                     {section === "sold" ? (
-                                        <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                        <div className="action-group">
 
                                             <button
-                                                className="btn-sm btn-gold"
+                                                className="btn-primary-action btn-sm"
                                                 onClick={() => openPaymentModal(item)}
                                             >
                                                 Add Payment
                                             </button>
 
                                             <button
-                                                className="btn-sm btn-outline-gold"
+                                                className="btn-outline-action btn-sm"
                                                 onClick={() => openPaymentsHistoryModal(item)}
                                             >
                                                 Payments
                                             </button>
 
                                             <button
-                                                className="btn-sm btn-outline-gold"
+                                                className="btn-outline-action btn-sm"
                                                 onClick={() => handleViewDetails(item)}
                                             >
                                                 View
@@ -542,7 +542,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                         </div>
                                     ) : (
                                         <button
-                                            className="btn-sm btn-outline-gold"
+                                            className="btn-outline-action btn-sm"
                                             onClick={() => handleViewDetails(item)}
                                         >
                                             View
@@ -553,78 +553,78 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                         ))}
                     </tbody>
 
-                   <tfoot>
-  <tr className="total-row">
+                    <tfoot>
+                        <tr className="total-row">
 
-    {/* # column */}
-    <td className="text-gold fw-bold">Total</td>
+                            {/* # column */}
+                            <td className="summary-cell summary-label">Total</td>
 
-    {/* Product ID column */}
-    <td>—</td>
+                            {/* Product ID column */}
+                            <td>—</td>
 
-    {/* Dynamic overview fields */}
-    {overviewFields.map((field) => {
-      const type = field.type;
-      const subType = field.numberSubType;
+                            {/* Dynamic overview fields */}
+                            {overviewFields.map((field) => {
+                                const type = field.type;
+                                const subType = field.numberSubType;
 
-      const isBackendCurrency =
-        ["sellingPrice", "discount", "finalPrice", "inventoryPrice", "profit", "totalPaid"]
-          .includes(field._id);
+                                const isBackendCurrency =
+                                    ["sellingPrice", "discount", "finalPrice", "inventoryPrice", "profit", "totalPaid"]
+                                        .includes(field._id);
 
-      const isCurrency =
-        type === "currency" || subType === "currency" || isBackendCurrency;
+                                const isCurrency =
+                                    type === "currency" || subType === "currency" || isBackendCurrency;
 
-      const isWeight = type === "weight" || subType === "weight";
-      const isQuantity = subType === "quantity";
+                                const isWeight = type === "weight" || subType === "weight";
+                                const isQuantity = subType === "quantity";
 
-      const shouldSum = isCurrency || isWeight || isQuantity || isBackendCurrency;
+                                const shouldSum = isCurrency || isWeight || isQuantity || isBackendCurrency;
 
-      if (!shouldSum) {
-        return <td key={field._id}>—</td>;
-      }
+                                if (!shouldSum) {
+                                    return <td key={field._id}>—</td>;
+                                }
 
-      const sum = paginatedItems.reduce((acc, item) => {
-        const raw = getFieldValue(item, field._id);
-        const n = Number(raw);
-        return !isNaN(n) ? acc + n : acc;
-      }, 0);
+                                const sum = paginatedItems.reduce((acc, item) => {
+                                    const raw = getFieldValue(item, field._id);
+                                    const n = Number(raw);
+                                    return !isNaN(n) ? acc + n : acc;
+                                }, 0);
 
-      return (
-        <td key={field._id} className="fw-bold text-gold">
-          {formatIndianNumber(sum, { isCurrency })}
-        </td>
-      );
-    })}
+                                return (
+                                    <td key={field._id} className="summary-cell">
+                                        {formatIndianNumber(sum, { isCurrency })}
+                                    </td>
+                                );
+                            })}
 
-    {/* Inventory Cost Price */}
-    {section === "inventory" && (
-      <td className="fw-bold text-gold">
-        {formatIndianNumber(
-          paginatedItems.reduce(
-            (sum, item) => sum + Number(item.baseCostPrice || 0),
-            0
-          ),
-          { isCurrency: true }
-        )}
-      </td>
-    )}
+                            {/* Inventory Cost Price */}
+                            {section === "inventory" && (
+                                <td className="summary-cell">
+                                    {formatIndianNumber(
+                                        paginatedItems.reduce(
+                                            (sum, item) => sum + Number(item.baseCostPrice || 0),
+                                            0
+                                        ),
+                                        { isCurrency: true }
+                                    )}
+                                </td>
+                            )}
 
-    {/* Orders Status column */}
-    {section === "orders" && <td>—</td>}
+                            {/* Orders Status column */}
+                            {section === "orders" && <td>—</td>}
 
-    {/* Full Info column */}
-    <td>—</td>
-  </tr>
-</tfoot>
+                            {/* Full Info column */}
+                            <td>—</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
             {/* PAGINATION CONTROLS */}
-            <div className="pagination-bar mt-3 d-flex justify-content-between align-items-center flex-wrap">
+            <div className="pagination-bar">
 
                 {/* Items per page */}
-                <div className="d-flex align-items-center gap-2">
-                    <span className="text-gold fw-semibold">Rows per page:</span>
+                <div className="pagination-controls">
+                    <span className="pagination-label">Rows per page</span>
 
                     <select
                         className="pagination-select"
@@ -642,7 +642,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                 </div>
 
                 {/* Page numbers */}
-                <div className="d-flex align-items-center gap-2">
+                <div className="pagination-nav">
 
                     <button
                         className="page-btn"
@@ -674,239 +674,240 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                 aria-labelledby="fullInfoModalLabel"
                 aria-hidden="true"
             >
-                <div className="modal-dialog modal-xl">
+                <div className="modal-dialog modal-xl overview-modal-dialog">
                     <div className="modal-content custom-modal">
                         <div className="modal-header">
-                            <h5 className="modal-title">Full Information</h5>
+                            <div>
+                                <h5 className="modal-title">Full Information</h5>
+                                <div className="modal-subtitle">Detailed product, order, and customer information</div>
+                            </div>
                             <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div className="modal-body">
                             {selectedItem ? (
-                                <div className="container-fluid">
-                                    <div className="row g-4">
+                                <div className="overview-modal-grid">
 
-                                        {/* ================= LEFT SIDE — DETAILS ================= */}
-                                        <div className="col-lg-8">
+                                    {/* ================= LEFT SIDE — DETAILS ================= */}
+                                    <div className="overview-modal-main">
 
-                                            {/* 🟦 INVENTORY DETAILS */}
-                                            {section === "inventory" &&
-                                                selectedItem.fields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
-                                                    <div className="info-section mb-4 p-2">
-                                                        <h5 className="section-title">🟦 Product Details</h5>
+                                        {/* Inventory details */}
+                                        {section === "inventory" &&
+                                            selectedItem.fields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">Product Details</h5>
 
-                                                        <div className="row g-3">
-                                                            {selectedItem.fields
-                                                                .filter(f => f.fieldRef?.type !== "file")
-                                                                .map((f, i) => (
-                                                                    <div key={i} className="col-md-6">
-                                                                        <div className="info-box">
-                                                                            <div className="info-label">{f.fieldRef?.label}</div>
-                                                                            <div className="info-value">{renderField(f)}</div>
-                                                                        </div>
+                                                    <div className="row g-3">
+                                                        {selectedItem.fields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
                                                                     </div>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                            {/* 🧾 ORDER DETAILS */}
-                                            {section === "orders" &&
-                                                selectedItem.orderFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
-                                                    <div className="info-section mb-4 p-2">
-                                                        <h5 className="section-title">🧾 Order Details</h5>
-
-                                                        <div className="row g-3">
-                                                            {selectedItem.orderFields
-                                                                .filter(f => f.fieldRef?.type !== "file")
-                                                                .map((f, i) => (
-                                                                    <div key={i} className="col-md-6">
-                                                                        <div className="info-box">
-                                                                            <div className="info-label">{f.fieldRef?.label}</div>
-                                                                            <div className="info-value">{renderField(f)}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                            {/* 🟦 PRODUCT DETAILS (Sold) */}
-                                            {section === "sold" &&
-                                                selectedItem.productFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
-                                                    <div className="info-section mb-4 p-2">
-                                                        <h5 className="section-title">🟦 Product Details</h5>
-
-                                                        <div className="row g-3">
-                                                            {selectedItem.productFields
-                                                                .filter(f => f.fieldRef?.type !== "file")
-                                                                .map((f, i) => (
-                                                                    <div key={i} className="col-md-6">
-                                                                        <div className="info-box">
-                                                                            <div className="info-label">{f.fieldRef?.label}</div>
-                                                                            <div className="info-value">{renderField(f)}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                            {/* 🧾 ORDER DETAILS (Sold-from-order) */}
-                                            {section === "sold" &&
-                                                selectedItem.orderId?.orderFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
-                                                    <div className="info-section mb-4 p-2">
-                                                        <h5 className="section-title">🧾 Order Details</h5>
-
-                                                        <div className="row g-3">
-                                                            {selectedItem.orderId.orderFields
-                                                                .filter(f => f.fieldRef?.type !== "file")
-                                                                .map((f, i) => (
-                                                                    <div key={i} className="col-md-6">
-                                                                        <div className="info-box">
-                                                                            <div className="info-label">{f.fieldRef?.label}</div>
-                                                                            <div className="info-value">{renderField(f)}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                            {/* 🟩 CUSTOMER DETAILS */}
-                                            {section === "sold" &&
-                                                selectedItem.soldFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
-                                                    <div className="info-section mb-4 p-2">
-                                                        <h5 className="section-title">🟩 Customer Details</h5>
-
-                                                        <div className="row g-3">
-                                                            {selectedItem.soldFields
-                                                                .filter(f => f.fieldRef?.type !== "file")
-                                                                .map((f, i) => (
-                                                                    <div key={i} className="col-md-6">
-                                                                        <div className="info-box">
-                                                                            <div className="info-label">{f.fieldRef?.label}</div>
-                                                                            <div className="info-value">{renderField(f)}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                        </div>
-
-                                        {/* ================= RIGHT SIDE — IMAGES ================= */}
-
-                                        <div className="col-lg-4">
-                                            <div className="image-panel sticky-top">
-                                                <h6 className="image-panel-title">🖼 Images</h6>
-
-                                                {(() => {
-                                                    let productImages = [];
-                                                    let orderImages = [];
-                                                    let customerImages = [];
-
-                                                    // 🔵 INVENTORY
-                                                    if (section === "inventory") {
-                                                        productImages = (selectedItem.fields || []).filter(
-                                                            f => f.fieldRef?.type === "file" && f.value
-                                                        );
-                                                    }
-
-                                                    // 🧾 ORDERS
-                                                    if (section === "orders") {
-                                                        orderImages = (selectedItem.orderFields || []).filter(
-                                                            f => f.fieldRef?.type === "file" && f.value
-                                                        );
-                                                    }
-
-                                                    // 🟩 SOLD
-                                                    if (section === "sold") {
-                                                        productImages = (selectedItem.productFields || []).filter(
-                                                            f => f.fieldRef?.type === "file" && f.value
-                                                        );
-
-                                                        orderImages = (selectedItem.orderId?.orderFields || []).filter(
-                                                            f => f.fieldRef?.type === "file" && f.value
-                                                        );
-
-                                                        customerImages = (selectedItem.soldFields || []).filter(
-                                                            f => f.fieldRef?.type === "file" && f.value
-                                                        );
-                                                    }
-
-                                                    if (
-                                                        productImages.length === 0 &&
-                                                        orderImages.length === 0 &&
-                                                        customerImages.length === 0
-                                                    ) {
-                                                        return (
-                                                            <div className="text-muted small text-center mt-3">
-                                                                No images available
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    const renderGroup = (title, images) =>
-                                                        images.length > 0 && (
-                                                            <div className="mb-3">
-                                                                <div className="fw-semibold small text-muted mb-2">
-                                                                    {title}
                                                                 </div>
-
-                                                                {images.map((f, i) => (
-                                                                    <a
-                                                                        key={i}
-                                                                        href={f.value}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="image-card"
-                                                                    >
-                                                                        <img src={f.value} alt={f.fieldRef?.label} />
-                                                                        <div className="image-label">
-                                                                            {f.fieldRef?.label}
-                                                                        </div>
-                                                                    </a>
-                                                                ))}
-                                                            </div>
-                                                        );
-
-                                                    return (
-                                                        <>
-                                                            {renderGroup("🟦 Product Images", productImages)}
-                                                            {renderGroup("🧾 Order Images", orderImages)}
-                                                            {renderGroup("🟩 Customer Images", customerImages)}
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                            {/* ================= BARCODE SECTION ================= */}
-                                            {section === "inventory" && selectedItem?.productID && (
-                                                <div className="mt-4 p-2 border-top">
-                                                    <div className="fw-semibold small text-muted mb-2">
-                                                        🏷 Barcode
-                                                    </div>
-
-                                                    <div className="d-flex flex-column align-items-center gap-2">
-                                                        <Barcode value={selectedItem.productID} />
-
-                                                        <div className="small text-muted">
-                                                            {selectedItem.productID}
-                                                        </div>
-
-                                                        <button
-                                                            className="btn btn-sm btn-outline-secondary"
-                                                            onClick={() => printBarcode(selectedItem.productID)}
-                                                        >
-                                                            🖨 Print Barcode
-                                                        </button>
+                                                            ))}
                                                     </div>
                                                 </div>
                                             )}
-                                        </div>
+
+                                        {/* Order details */}
+                                        {section === "orders" &&
+                                            selectedItem.orderFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">Order Details</h5>
+
+                                                    <div className="row g-3">
+                                                        {selectedItem.orderFields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* Sold product details */}
+                                        {section === "sold" &&
+                                            selectedItem.productFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">Product Details</h5>
+
+                                                    <div className="row g-3">
+                                                        {selectedItem.productFields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* Sold order details */}
+                                        {section === "sold" &&
+                                            selectedItem.orderId?.orderFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">Order Details</h5>
+
+                                                    <div className="row g-3">
+                                                        {selectedItem.orderId.orderFields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* Customer details */}
+                                        {section === "sold" &&
+                                            selectedItem.soldFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">Customer Details</h5>
+
+                                                    <div className="row g-3">
+                                                        {selectedItem.soldFields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                     </div>
+
+                                    {/* ================= RIGHT SIDE — IMAGES ================= */}
+
+                                    <div className="overview-modal-side">
+                                        <div className="image-panel">
+                                            <h6 className="image-panel-title">Images</h6>
+
+                                            {(() => {
+                                                let productImages = [];
+                                                let orderImages = [];
+                                                let customerImages = [];
+
+                                                // Inventory images
+                                                if (section === "inventory") {
+                                                    productImages = (selectedItem.fields || []).filter(
+                                                        f => f.fieldRef?.type === "file" && f.value
+                                                    );
+                                                }
+
+                                                // Order images
+                                                if (section === "orders") {
+                                                    orderImages = (selectedItem.orderFields || []).filter(
+                                                        f => f.fieldRef?.type === "file" && f.value
+                                                    );
+                                                }
+
+                                                // Sold images
+                                                if (section === "sold") {
+                                                    productImages = (selectedItem.productFields || []).filter(
+                                                        f => f.fieldRef?.type === "file" && f.value
+                                                    );
+
+                                                    orderImages = (selectedItem.orderId?.orderFields || []).filter(
+                                                        f => f.fieldRef?.type === "file" && f.value
+                                                    );
+
+                                                    customerImages = (selectedItem.soldFields || []).filter(
+                                                        f => f.fieldRef?.type === "file" && f.value
+                                                    );
+                                                }
+
+                                                if (
+                                                    productImages.length === 0 &&
+                                                    orderImages.length === 0 &&
+                                                    customerImages.length === 0
+                                                ) {
+                                                    return (
+                                                        <div className="text-muted small text-center mt-3">
+                                                            No images available
+                                                        </div>
+                                                    );
+                                                }
+
+                                                const renderGroup = (title, images) =>
+                                                    images.length > 0 && (
+                                                        <div className="image-group">
+                                                            <div className="fw-semibold small text-muted mb-2">
+                                                                {title}
+                                                            </div>
+
+                                                            {images.map((f, i) => (
+                                                                <a
+                                                                    key={i}
+                                                                    href={f.value}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="image-card"
+                                                                >
+                                                                    <img src={f.value} alt={f.fieldRef?.label} />
+                                                                    <div className="image-label">
+                                                                        {f.fieldRef?.label}
+                                                                    </div>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    );
+
+                                                return (
+                                                    <>
+                                                        {renderGroup("Product Images", productImages)}
+                                                        {renderGroup("Order Images", orderImages)}
+                                                        {renderGroup("Customer Images", customerImages)}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                        {/* ================= BARCODE SECTION ================= */}
+                                        {section === "inventory" && selectedItem?.productID && (
+                                            <div className="barcode-section">
+                                                <div className="fw-semibold small text-muted mb-2">
+                                                    Barcode
+                                                </div>
+
+                                                <div className="d-flex flex-column align-items-center gap-2">
+                                                    <Barcode value={selectedItem.productID} />
+
+                                                    <div className="small text-muted">
+                                                        {selectedItem.productID}
+                                                    </div>
+
+                                                    <button
+                                                        className="btn-outline-action btn-sm"
+                                                        onClick={() => printBarcode(selectedItem.productID)}
+                                                    >
+                                                        Print Barcode
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
                             ) : (
                                 <p className="text-muted text-center">No data available.</p>
@@ -914,8 +915,8 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                         </div>
 
 
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" data-bs-dismiss="modal">
+                        <div className="modal-footer modal-footer-actions">
+                            <button className="btn-secondary-action" data-bs-dismiss="modal">
                                 Close
                             </button>
                         </div>
@@ -931,7 +932,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                 aria-labelledby="addPaymentModalLabel"
                 aria-hidden="true"
             >
-                <div className="modal-dialog">
+                <div className="modal-dialog overview-modal-dialog">
                     <div className="modal-content custom-modal">
                         <div className="modal-header">
                             <h5 className="modal-title" id="addPaymentModalLabel">
@@ -944,21 +945,21 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             {paymentModalItem ? (
                                 <>
                                     {/* Summary */}
-                                    <div className="mb-3">
+                                    <div className="summary-card">
                                         <div className="small text-muted">Billing ID</div>
                                         <div className="fw-semibold">
                                             {paymentModalItem.billingID || "-"}
                                         </div>
                                     </div>
 
-                                    <div className="row g-2 mb-3">
-                                        <div className="col-6">
+                                    <div className="payment-summary-grid">
+                                        <div className="summary-card">
                                             <div className="small text-muted">Final Price</div>
                                             <div className="fw-semibold">
                                                 {formatIndianNumber(paymentModalItem.finalPrice, { isCurrency: true })}
                                             </div>
                                         </div>
-                                        <div className="col-6">
+                                        <div className="summary-card">
                                             <div className="small text-muted">Already Paid</div>
                                             <div className="fw-semibold">
                                                 {formatIndianNumber(
@@ -973,7 +974,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                     </div>
 
                                     {/* Form */}
-                                    <div className="mb-3">
+                                    <div className="form-block">
                                         <label className="form-label fw-semibold">Amount</label>
                                         <input
                                             type="number"
@@ -983,7 +984,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                         />
                                     </div>
 
-                                    <div className="mb-3">
+                                    <div className="form-block">
                                         <label className="form-label fw-semibold">Date</label>
                                         <input
                                             type="date"
@@ -993,7 +994,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                         />
                                     </div>
 
-                                    <div className="mb-3">
+                                    <div className="form-block">
                                         <label className="form-label fw-semibold">Mode</label>
                                         <select
                                             className="form-select"
@@ -1010,7 +1011,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                         </select>
                                     </div>
 
-                                    <div className="mb-3">
+                                    <div className="form-block">
                                         <label className="form-label fw-semibold">
                                             Reference (UPI name / Txn ID / Cheque no / Gold grams)
                                         </label>
@@ -1027,11 +1028,11 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             )}
                         </div>
 
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" data-bs-dismiss="modal">
+                        <div className="modal-footer modal-footer-actions">
+                            <button className="btn-secondary-action" data-bs-dismiss="modal">
                                 Cancel
                             </button>
-                            <button className="btn btn-primary" onClick={handleAddPaymentConfirm}>
+                            <button className="btn-primary-action" onClick={handleAddPaymentConfirm}>
                                 Save Payment
                             </button>
                         </div>
@@ -1047,7 +1048,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                 aria-labelledby="paymentsHistoryModalLabel"
                 aria-hidden="true"
             >
-                <div className="modal-dialog modal-lg">
+                <div className="modal-dialog modal-lg overview-modal-dialog">
                     <div className="modal-content custom-modal">
                         <div className="modal-header">
                             <h5 className="modal-title" id="paymentsHistoryModalLabel">
@@ -1060,15 +1061,15 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             {paymentsHistoryItem ? (
                                 <>
                                     {/* Summary */}
-                                    <div className="mb-3">
+                                    <div className="summary-card">
                                         <div className="small text-muted">Billing ID</div>
                                         <div className="fw-semibold">
                                             {paymentsHistoryItem.billingID || "-"}
                                         </div>
                                     </div>
 
-                                    <div className="row g-2 mb-3">
-                                        <div className="col-md-4">
+                                    <div className="payment-summary-grid">
+                                        <div className="summary-card">
                                             <div className="small text-muted">Final Price</div>
                                             <div className="fw-semibold">
                                                 {formatIndianNumber(
@@ -1078,7 +1079,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                             </div>
                                         </div>
 
-                                        <div className="col-md-4">
+                                        <div className="summary-card">
                                             <div className="small text-muted">Total Paid</div>
                                             <div className="fw-semibold">
                                                 {formatIndianNumber(
@@ -1088,7 +1089,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                             </div>
                                         </div>
 
-                                        <div className="col-md-4">
+                                        <div className="summary-card">
                                             <div className="small text-muted">Amount Due</div>
                                             <div className="fw-semibold">
                                                 {formatIndianNumber(
@@ -1104,7 +1105,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                         <p className="text-muted mb-0">No payments recorded yet.</p>
                                     ) : (
                                         <div className="table-responsive">
-                                            <table className="table table-sm align-middle payments-table">
+                                            <table className="payments-table">
                                                 <thead>
                                                     <tr>
                                                         <th style={{ width: 40 }}>#</th>
@@ -1187,8 +1188,8 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             )}
                         </div>
 
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" data-bs-dismiss="modal">
+                        <div className="modal-footer modal-footer-actions">
+                            <button className="btn-secondary-action" data-bs-dismiss="modal">
                                 Close
                             </button>
                         </div>

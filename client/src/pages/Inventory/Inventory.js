@@ -405,7 +405,7 @@ export default function Inventory() {
     return (
         <div className="inventory-page">
             {/* Header */}
-            <div className="top-header d-flex align-items-center gap-3 mb-4">
+            <div className="top-header">
                 <h4 className="fw-bold text-gold">📦 Inventory</h4>
                 <div className="flex-grow-1">
                     <TopPanel

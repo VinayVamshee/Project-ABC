@@ -40,10 +40,10 @@ export default function Home() {
      DASHBOARD CARDS
   ======================== */
   const cards = [
-    { name: "Inventory", icon: <FaBoxes size={40} />, link: "/inventory" },
-    { name: "Orders", icon: <FaClipboardList size={40} />, link: "/orders" },
-    { name: "Sold", icon: <FaCheckCircle size={40} />, link: "/sold" },
-    { name: "Settings", icon: <FaCog size={40} />, link: "/settings" },
+    { name: "Inventory", description: "Track stock and product details", icon: <FaBoxes size={24} />, link: "/inventory" },
+    { name: "Orders", description: "Manage pending and completed orders", icon: <FaClipboardList size={24} />, link: "/orders" },
+    { name: "Sold", description: "Review sales and payment status", icon: <FaCheckCircle size={24} />, link: "/sold" },
+    { name: "Settings", description: "Customize fields and workflow", icon: <FaCog size={24} />, link: "/settings" },
   ];
 
   /* =======================
@@ -82,10 +82,12 @@ export default function Home() {
 
       setLoading(false);
 
-      // Close modal
+      // Close modal safely
       const modal = document.getElementById("loginModal");
-      const modalInstance = window.bootstrap.Modal.getInstance(modal);
-      modalInstance.hide();
+      if (modal && window.bootstrap?.Modal) {
+        const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modal);
+        modalInstance.hide();
+      }
 
       setEmail("");
       setPassword("");
@@ -107,51 +109,58 @@ export default function Home() {
   };
 
   return (
-    <div className="home-container text-center">
-
-      {/* Header */}
-      <div className="home-marquee">
-        <div className="marquee-text">
-          ABC - Aneesh Business Console
-        </div>
-      </div>
-
-      {/* Cards */}
-      <div className="card-container mt-5">
-        {cards.map((card, i) => (
-          <Link key={i} to={card.link} className="text-decoration-none">
-            <div className="home-card">
-              <div className="home-icon">{card.icon}</div>
-              <h5>{card.name}</h5>
+    <div className="home-container">
+      <div className="home-shell">
+        <header className="home-header">
+          <div className="home-brand">
+            <div className="brand-mark">ABC</div>
+            <div>
+              <h1>Aneesh Business Console</h1>
+              <p>Gold shop inventory, orders, and sales in one refined workspace.</p>
             </div>
-          </Link>
-        ))}
+          </div>
 
-        {/* LOGIN / LOGOUT CARD */}
-        <div className="home-card">
           {!isAuth ? (
             <button
               type="button"
-              className="home-icon btn d-flex gap-2"
+              className="home-login-btn"
               data-bs-toggle="modal"
               data-bs-target="#loginModal"
-              style={{ padding: "0px" }}
             >
-              <FaSignInAlt size={40} />
-              <h5>Login</h5>
+              <FaSignInAlt size={15} />
+              <span>Login</span>
             </button>
           ) : (
             <button
               type="button"
-              className="home-icon btn d-flex gap-2 text-danger"
+              className="home-login-btn home-logout-btn"
               onClick={handleLogout}
-              style={{ padding: "0px" }}
             >
-              <FaSignOutAlt size={40} />
-              <h5>Logout</h5>
+              <FaSignOutAlt size={15} />
+              <span>Logout</span>
             </button>
           )}
-        </div>
+        </header>
+
+        <section className="home-hero">
+          <div className="hero-copy">
+            <span className="eyebrow">Premium operations hub</span>
+            <h2>Designed for elegant inventory control and trusted business flow.</h2>
+            <p>Move from stock to sales with clarity, minimal effort, and a polished experience.</p>
+          </div>
+        </section>
+
+        <section className="card-container">
+          {cards.map((card, i) => (
+            <Link key={i} to={card.link} className="home-card text-decoration-none">
+              <div className="home-card-icon">{card.icon}</div>
+              <div className="home-card-content">
+                <h5>{card.name}</h5>
+                <p>{card.description}</p>
+              </div>
+            </Link>
+          ))}
+        </section>
 
         {/* =======================
             LOGIN MODAL

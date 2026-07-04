@@ -1,116 +1,378 @@
-/* ============================================================
-   THEME VARIABLES (Default: LIGHT GOLD THEME)
-   ============================================================ */
-
 :root {
-  /* Backgrounds */
-  --bg-page-1: #fff9e1;
-  --bg-page-2: #fff1c4;
-
-  /* Title Text */
-  --text-primary: #b4880b;
-
-  /* Buttons */
-  --btn-main-1: #d4af37;
-  --btn-main-2: #f7d97a;
-  --btn-text: #ffffff;
-
-  /* Borders */
-  --border-strong: rgba(212, 175, 55, 0.45);
-
-  /* Input fields */
-  --input-bg: #fffbf0;
-  --input-border: rgba(212, 175, 55, 0.3);
-
-  /* Cards / Headers */
-  --header-bg-1: rgba(255, 247, 215, 0.75);
-  --header-bg-2: rgba(255, 250, 232, 0.95);
-
-  /* Shadow */
-  --shadow-main: rgba(212, 175, 55, 0.25);
-
-  /* Table */
-  --table-text: #444;
-  --table-bg: #ffffff;
+  --app-bg: #f5f3ed;
+  --app-bg-soft: #f8f6f0;
+  --app-surface: #fbfaf7;
+  --app-surface-strong: #ffffff;
+  --app-surface-muted: #f1eee8;
+  --app-text: #1c1c1c;
+  --app-text-muted: #6f6a60;
+  --app-border: #e7e1d4;
+  --app-border-strong: #d8cfae;
+  --app-accent: #b88f2d;
+  --app-accent-strong: #9b7420;
+  --app-accent-soft: rgba(184, 143, 46, 0.12);
+  --app-danger: #b94a48;
+  --app-success: #2f7d53;
+  --app-radius-sm: 10px;
+  --app-radius-md: 14px;
+  --app-radius-lg: 20px;
+  --app-shadow: 0 10px 24px rgba(15, 15, 15, 0.05);
 }
-
-/* ============================================================
-   DARK SILVER THEME
-   ============================================================ */
 
 body.theme-dark {
-  --bg-page-1: #1b1b1b;
-  --bg-page-2: #2d2d2d;
-
-  --text-primary: #e5e5e5;
-
-  --btn-main-1: #9e9e9e;
-  --btn-main-2: #d6d6d6;
-  --btn-text: #000000;
-
-  --border-strong: rgba(255, 255, 255, 0.35);
-
-  --input-bg: #2b2b2b;
-  --input-border: rgba(200, 200, 200, 0.3);
-
-  --header-bg-1: rgba(255, 255, 255, 0.08);
-  --header-bg-2: rgba(255, 255, 255, 0.03);
-
-  --shadow-main: rgba(0, 0, 0, 0.6);
-
-  --table-text: #f0f0f0;
-  --table-bg: #202020;
+  --app-bg: #121212;
+  --app-bg-soft: #171717;
+  --app-surface: #1d1d1d;
+  --app-surface-strong: #242424;
+  --app-surface-muted: #2b2b2b;
+  --app-text: #f2f2f2;
+  --app-text-muted: #b6bcc6;
+  --app-border: rgba(255, 255, 255, 0.09);
+  --app-border-strong: rgba(255, 255, 255, 0.16);
+  --app-accent: #d7dadd;
+  --app-accent-strong: #f1f3f6;
+  --app-accent-soft: rgba(215, 218, 221, 0.12);
+  --app-danger: #e17373;
+  --app-success: #66bb6a;
+  --app-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
 
-/* ============================================================
-   FLOATING THEME SWITCHER — GOLD / SILVER
-   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, var(--app-bg), var(--app-bg-soft));
+  color: var(--app-text);
+  overflow: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
+}
+
+.App {
+  min-height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+.btn {
+  cursor: pointer;
+}
+
+input,
+select,
+textarea,
+.btn {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+.page-shell {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.page-card,
+.surface-card {
+  background: var(--app-surface-strong);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  border-radius: var(--app-radius-lg);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  background: var(--app-surface-strong);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.page-subtitle {
+  margin: 3px 0 0;
+  font-size: 0.95rem;
+  color: var(--app-text-muted);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0.6rem 1rem;
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-strong);
+  color: var(--app-text);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  transform: translateY(-1px);
+}
+
+.btn-primary,
+.btn-gold {
+  background: linear-gradient(135deg, var(--app-accent), #d2b15f 50%, var(--app-accent));
+  border-color: var(--app-border-strong);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(184, 143, 46, 0.14);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-gold:hover,
+.btn-gold:focus-visible {
+  background: linear-gradient(135deg, #a67c21, #c99e3a);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(184, 143, 46, 0.18);
+}
+
+.btn-secondary,
+.btn-outline-secondary {
+  background: var(--app-surface-strong);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.btn-outline-gold {
+  background: var(--app-surface);
+  color: var(--app-accent-strong);
+  border-color: var(--app-border-strong);
+}
+
+.btn-outline-danger {
+  background: var(--app-surface);
+  color: var(--app-danger);
+  border-color: rgba(185, 74, 72, 0.22);
+}
+
+.btn-danger {
+  background: var(--app-danger);
+  color: #fff;
+  border-color: var(--app-danger);
+}
+
+.btn-sm {
+  min-height: 34px;
+  padding: 0.45rem 0.8rem;
+}
+
+.btn-lg {
+  min-height: 46px;
+  padding: 0.72rem 1.2rem;
+}
+
+.form-control,
+.form-select,
+textarea.form-control {
+  height: 40px;
+  padding: 0.58rem 0.8rem;
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  box-shadow: none;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea.form-control:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 3px var(--app-accent-soft);
+}
+
+.custom-modal {
+  border-radius: var(--app-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-strong);
+  box-shadow: var(--app-shadow);
+}
+
+.custom-modal .modal-header,
+.custom-modal .modal-footer {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.custom-modal .modal-title,
+.text-gold {
+  color: var(--app-accent-strong) !important;
+}
+
+.table-shell {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  overflow: hidden;
+  background: var(--app-surface-strong);
+}
+
+.table {
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+  font-weight: 700;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--app-border);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-surface-strong);
+  color: var(--app-text);
+}
+
+.table tbody tr:hover td {
+  background: var(--app-surface-muted);
+}
+
+.table .table-total td {
+  background: var(--app-surface-muted);
+  font-weight: 700;
+}
+
+.info-section,
+.image-panel,
+.overview-panel {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  border-radius: var(--app-radius-lg);
+}
+
+.info-box,
+.image-upload-box {
+  background: var(--app-surface-strong);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+}
+
+.preview-image,
+.preview-image-lg,
+.img-thumbnail {
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-border-strong);
+  background: var(--app-surface);
+}
 
 .floating-theme-toggle {
   position: fixed;
   bottom: 24px;
   right: 24px;
-
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-
+  border-radius: 999px;
+  border: 1px solid var(--app-border-strong);
   display: flex;
-  justify-content: center;
   align-items: center;
-
-  font-size: 24px;
-  cursor: pointer;
-
-  background: linear-gradient(135deg, #d4af37, #f7d97a);
-  border: 2px solid #b88f16;
-  color: white;
-
-  box-shadow: 0 4px 14px rgba(0,0,0,0.2),
-              0 0 12px rgba(212,175,55,0.4);
-
-  transition: all 0.3s ease;
+  justify-content: center;
+  background: linear-gradient(135deg, #efe2bf, #d4b76a);
+  color: #5f4512;
+  box-shadow: var(--app-shadow);
   z-index: 9999;
 }
 
-/* Hover effect */
 .floating-theme-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25),
-              0 0 16px rgba(212,175,55,0.6);
+  transform: scale(1.05);
 }
 
-/* When DARK (Silver theme) */
+body.theme-dark .page-card,
+body.theme-dark .surface-card,
+body.theme-dark .page-header,
+body.theme-dark .custom-modal,
+body.theme-dark .info-section,
+body.theme-dark .image-panel,
+body.theme-dark .overview-panel {
+  background: var(--app-surface-strong);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+body.theme-dark .table thead th {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--app-text);
+}
+
+body.theme-dark .table tbody td {
+  background: var(--app-surface-strong);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+body.theme-dark .table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 body.theme-dark .floating-theme-toggle {
-  background: linear-gradient(135deg, #555, #777);
-  border: 2px solid #aaa;
-  color: #eee;
-  box-shadow: 0 4px 14px rgba(255,255,255,0.2),
-              0 0 12px rgba(180,180,180,0.4);
-}
-
-body.theme-dark .floating-theme-toggle:hover {
-  box-shadow: 0 6px 18px rgba(255,255,255,0.25),
-              0 0 18px rgba(200,200,200,0.6);
-  transform: scale(1.1);
+  background: linear-gradient(135deg, #5a5f67, #8f96a2);
+  color: #f4f6f8;
 }
