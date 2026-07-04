@@ -6,6 +6,7 @@ import Inventory from "./pages/Inventory/Inventory";
 import OverviewPanel from "./pages/Overview/OverviewPanel";
 import Order from "./pages/Orders/Order";
 import Sold from "./pages/Sold/Sold";
+import Dashboard from "./pages/Dashboard/Dashboard";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -84,6 +85,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Sold />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />

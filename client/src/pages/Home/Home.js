@@ -6,6 +6,7 @@ import {
   FaClipboardList,
   FaCheckCircle,
   FaCog,
+  FaChartLine,
   FaSignInAlt,
   FaEye,
   FaEyeSlash,
@@ -40,6 +41,12 @@ export default function Home() {
      DASHBOARD CARDS
   ======================== */
   const cards = [
+    {
+      name: "Dashboard",
+      description: "Business insights, sales, profit and analytics",
+      icon: <FaChartLine size={24} />,
+      link: "/dashboard",
+    },
     { name: "Inventory", description: "Track stock and product details", icon: <FaBoxes size={24} />, link: "/inventory" },
     { name: "Orders", description: "Manage pending and completed orders", icon: <FaClipboardList size={24} />, link: "/orders" },
     { name: "Sold", description: "Review sales and payment status", icon: <FaCheckCircle size={24} />, link: "/sold" },

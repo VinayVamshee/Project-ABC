@@ -406,7 +406,7 @@ export default function Inventory() {
         <div className="inventory-page">
             {/* Header */}
             <div className="top-header">
-                <h4 className="fw-bold text-gold">📦 Inventory</h4>
+                <h4 className="fw-bold">📦 Inventory</h4>
                 <div className="flex-grow-1">
                     <TopPanel
                         section="inventory"

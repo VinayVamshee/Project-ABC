@@ -133,9 +133,9 @@ export default function Sold() {
     // ---------------- RENDER ----------------
     return (
         <div className="sold-page">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h4 className="fw-bold text-gold">🧾 Sold Items</h4>
-                <div className="flex-grow-1 ms-4">
+            <div className="top-header">
+                <h4 className="fw-bold">🧾 Sold Items</h4>
+                <div className="flex-grow-1">
                     <TopPanel
                         section="sold"
                         fields={allFields}
@@ -143,8 +143,6 @@ export default function Sold() {
                         onFiltersChange={handleFiltersChange}
                     /></div>
             </div>
-
-
 
             <OverviewPanel
                 section="sold"

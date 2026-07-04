@@ -250,10 +250,27 @@
   box-shadow: none;
 }
 
-.status-filter {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.status-filter{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+}
+
+.status-btn{
+    height:40px;
+    min-width:90px;
+    padding:0 16px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:10px;
+
+    white-space:nowrap;
+    font-size:.82rem;
+    font-weight:600;
 }
 
 .status-btn {
