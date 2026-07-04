@@ -13,6 +13,8 @@ export default function Settings() {
         sold: false,
     });
 
+    const [expandedField, setExpandedField] = useState(null);
+
     const [overview, setOverview] = useState({
         inventory: false,
         orders: false,
@@ -205,15 +207,27 @@ export default function Settings() {
     return (
         <div className="settings-page">
             {/* Add Field Button */}
-            <div className="d-flex justify-content-end mb-3">
+            <div className="settings-header">
+
+                <div>
+
+                    <h2>Dynamic Input Fields</h2>
+
+                    <p>
+                        Configure fields available throughout the application.
+                    </p>
+
+                </div>
+
                 <button
-                    type="button"
-                    className="btn btn-gold"
+                    className="btn-new-field"
                     data-bs-toggle="modal"
                     data-bs-target="#addFieldModal"
                 >
-                    + Add New Input Field
+                    <i className="bi bi-plus-lg"></i>
+                    New Field
                 </button>
+
             </div>
 
             {/* Modal */}
@@ -227,214 +241,579 @@ export default function Settings() {
                 <div className="modal-dialog modal-lg">
                     <div className="modal-content custom-modal">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="addFieldModalLabel">
-                                {editFieldId
-                                    ? `Editing: ${label || "Selected Field"}`
-                                    : "Add New Input Field"}
-                            </h5>
+
+                            <div>
+
+                                <h4 className="modal-title">
+
+                                    {editFieldId
+                                        ? "Edit Dynamic Field"
+                                        : "Create Dynamic Field"}
+
+                                </h4>
+
+                                <p className="modal-subtitle">
+
+                                    Configure reusable fields used throughout the system.
+
+                                </p>
+
+                            </div>
 
                             <button
-                                type="button"
                                 className="btn-close"
                                 data-bs-dismiss="modal"
-                                aria-label="Close"
-                            ></button>
+                            />
+
                         </div>
 
-                        <div className="modal-body text-start">
-                            {/* Label */}
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold">Field Label</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Enter field label"
-                                    value={label}
-                                    onChange={(e) => setLabel(e.target.value)}
-                                />
-                            </div>
+                        <div className="modal-body">
 
-                            {/* Field Type */}
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold">Field Type</label>
-                                <select
-                                    className="form-select"
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value)}
-                                >
-                                    <option value="text">Text (default)</option>
-                                    <option value="number">Number</option>
-                                    <option value="checkbox">Checkbox</option>
-                                    <option value="file">File</option>
-                                    <option value="select">Select / Options</option>
-                                </select>
-                            </div>
+                            {/* =======================================================
+        GENERAL INFORMATION
+    ======================================================= */}
 
-                            {/* Number Type */}
-                            {type === "number" && (
-                                <div className="mb-3 ms-3">
-                                    <label className="form-label">Number Type</label>
-                                    <select
-                                        className="form-select"
-                                        value={numberSubType}
-                                        onChange={(e) => setNumberSubType(e.target.value)}
-                                    >
-                                        <option value="">Select Sub-Type</option>
-                                        <option value="currency">Currency (₹)</option>
-                                        <option value="weight">Weight (grams)</option>
-                                        <option value="phone">Phone Number</option>
-                                        <option value="plain">Plain Number</option>
-                                    </select>
+                            <div className="modal-card">
+
+                                <div className="modal-card-header">
+
+                                    <div>
+
+                                        <h5>General Information</h5>
+
+                                        <p>
+                                            Basic information about this dynamic field.
+                                        </p>
+
+                                    </div>
+
                                 </div>
-                            )}
 
-                            {/* File Type */}
-                            {type === "file" && (
-                                <div className="mb-3 ms-3">
-                                    <label className="form-label">File Type</label>
-                                    <select
-                                        className="form-select"
-                                        value={fileType}
-                                        onChange={(e) => setFileType(e.target.value)}
-                                    >
-                                        <option value="">Select File Type</option>
-                                        <option value="image">Image</option>
-                                        <option value="pdf" disabled>PDF</option>
-                                    </select>
-                                </div>
-                            )}
+                                <div className="modal-grid">
 
-                            {/* Select Options */}
-                            {type === "select" && (
-                                <div className="mb-3 ms-3">
-                                    <label className="form-label fw-semibold text-gold">
-                                        Select Options
-                                    </label>
+                                    <div className="form-group">
 
-                                    {selectOptions.map((opt, idx) => (
-                                        <div
-                                            key={opt.id}
-                                            className="d-flex align-items-center mb-2 option-input-row"
+                                        <label className="form-label">
+                                            Field Label
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Example : Gross Weight"
+                                            value={label}
+                                            onChange={(e) =>
+                                                setLabel(e.target.value)
+                                            }
+                                        />
+
+                                    </div>
+
+                                    <div className="form-group">
+
+                                        <label className="form-label">
+                                            Field Type
+                                        </label>
+
+                                        <select
+                                            className="form-select"
+                                            value={type}
+                                            onChange={(e) =>
+                                                setType(e.target.value)
+                                            }
                                         >
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm me-2"
-                                                placeholder={`Option ${idx + 1}`}
-                                                value={opt.value}
-                                                onChange={(e) => updateOptionValue(opt.id, e.target.value)}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-outline-danger"
-                                                onClick={() => removeOption(opt.id)}
-                                                disabled={selectOptions.length === 1}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
 
-                                    <button
-                                        type="button"
-                                        className="btn btn-sm btn-gold mt-2"
-                                        onClick={addOption}
-                                    >
-                                        + Add Option
-                                    </button>
+                                            <option value="text">
+                                                Text
+                                            </option>
+
+                                            <option value="number">
+                                                Number
+                                            </option>
+
+                                            <option value="checkbox">
+                                                Checkbox
+                                            </option>
+
+                                            <option value="file">
+                                                File
+                                            </option>
+
+                                            <option value="select">
+                                                Dropdown / Select
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
                                 </div>
-                            )}
 
-                            {/* Show Sections */}
-                            <div className="show-section mt-4">
-                                <h6 className="section-title">Show this field in:</h6>
-                                <hr className="gold-divider" />
+                            </div>
 
-                                <div className="d-flex justify-content-around flex-wrap gap-3">
-                                    {["inventory", "orders", "sold"].map((section) => (
-                                        <div key={section} className="show-box">
-                                            <div className="form-check d-flex justify-content-center align-items-center mb-2">
-                                                <input
-                                                    className="form-check-input me-2"
-                                                    type="checkbox"
-                                                    id={`show-${section}`}
-                                                    checked={showIn[section]}
-                                                    onChange={() => handleShowInChange(section)}
-                                                />
-                                                <label
-                                                    className="form-check-label fw-semibold text-capitalize"
-                                                    htmlFor={`show-${section}`}
+
+                            {/* =======================================================
+        NUMBER CONFIG
+    ======================================================= */}
+
+                            {
+
+                                type === "number" &&
+
+                                <div className="modal-card">
+
+                                    <div className="modal-card-header">
+
+                                        <div>
+
+                                            <h5>Number Configuration</h5>
+
+                                            <p>
+                                                Select how this number should behave.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="modal-grid">
+
+                                        <div className="form-group">
+
+                                            <label className="form-label">
+                                                Number Type
+                                            </label>
+
+                                            <select
+                                                className="form-select"
+                                                value={numberSubType}
+                                                onChange={(e) =>
+                                                    setNumberSubType(e.target.value)
+                                                }
+                                            >
+
+                                                <option value="">
+                                                    Select...
+                                                </option>
+
+                                                <option value="currency">
+                                                    Currency ₹
+                                                </option>
+
+                                                <option value="weight">
+                                                    Weight
+                                                </option>
+
+                                                <option value="phone">
+                                                    Phone
+                                                </option>
+
+                                                <option value="plain">
+                                                    Plain Number
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            }
+
+
+                            {/* =======================================================
+        FILE CONFIG
+    ======================================================= */}
+
+                            {
+
+                                type === "file" &&
+
+                                <div className="modal-card">
+
+                                    <div className="modal-card-header">
+
+                                        <div>
+
+                                            <h5>File Configuration</h5>
+
+                                            <p>
+                                                Allowed upload type.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="modal-grid">
+
+                                        <div className="form-group">
+
+                                            <label className="form-label">
+                                                File Type
+                                            </label>
+
+                                            <select
+                                                className="form-select"
+                                                value={fileType}
+                                                onChange={(e) =>
+                                                    setFileType(e.target.value)
+                                                }
+                                            >
+
+                                                <option value="">
+                                                    Select...
+                                                </option>
+
+                                                <option value="image">
+                                                    Image
+                                                </option>
+
+                                                <option
+                                                    value="pdf"
+                                                    disabled
                                                 >
-                                                    {section}
-                                                </label>
+                                                    PDF
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            }
+                            {/* =======================================================
+    SELECT OPTIONS
+======================================================= */}
+
+                            {
+
+                                type === "select" &&
+
+                                <div className="modal-card">
+
+                                    <div className="modal-card-header">
+
+                                        <div>
+
+                                            <h5>Dropdown Options</h5>
+
+                                            <p>
+                                                Configure values available in the dropdown.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="option-editor">
+
+                                        {
+
+                                            selectOptions.map((opt, index) => (
+
+                                                <div
+                                                    key={opt.id}
+                                                    className="option-input-row"
+                                                >
+
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        placeholder={`Option ${index + 1}`}
+                                                        value={opt.value}
+                                                        onChange={(e) =>
+                                                            updateOptionValue(
+                                                                opt.id,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                    />
+
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-outline-danger"
+                                                        onClick={() =>
+                                                            removeOption(opt.id)
+                                                        }
+                                                        disabled={
+                                                            selectOptions.length === 1
+                                                        }
+                                                    >
+                                                        Remove
+                                                    </button>
+
+                                                </div>
+
+                                            ))
+
+                                        }
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary option-add-btn"
+                                            onClick={addOption}
+                                        >
+                                            + Add Option
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            }
+
+
+
+                            {/* =======================================================
+    VISIBILITY
+======================================================= */}
+
+                            <div className="modal-card">
+
+                                <div className="modal-card-header">
+
+                                    <div>
+
+                                        <h5>Visibility</h5>
+
+                                        <p>
+                                            Choose where this field should appear.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="visibility-grid">
+
+                                    {
+
+                                        ["inventory", "orders", "sold"].map(section => (
+
+                                            <div
+                                                key={section}
+                                                className={`visibility-card ${showIn[section]
+                                                        ? "active"
+                                                        : ""
+                                                    }`}
+                                            >
+
+                                                <div className="visibility-header">
+
+                                                    <div className="visibility-title">
+
+                                                        <input
+
+                                                            type="checkbox"
+
+                                                            checked={
+                                                                showIn[section]
+                                                            }
+
+                                                            onChange={() =>
+                                                                handleShowInChange(section)
+                                                            }
+
+                                                        />
+
+                                                        <span>
+
+                                                            {
+
+                                                                section.charAt(0)
+                                                                    .toUpperCase()
+
+                                                                +
+
+                                                                section.slice(1)
+
+                                                            }
+
+                                                        </span>
+
+                                                    </div>
+
+                                                    {
+
+                                                        showIn[section]
+
+                                                        &&
+
+                                                        <span className="visibility-badge">
+
+                                                            Enabled
+
+                                                        </span>
+
+                                                    }
+
+                                                </div>
+
+                                                {
+
+                                                    showIn[section]
+
+                                                    &&
+
+                                                    <div className="visibility-body">
+
+                                                        <div className="form-group">
+
+                                                            <label>
+
+                                                                Display Order
+
+                                                            </label>
+
+                                                            <input
+
+                                                                type="number"
+
+                                                                className="form-control"
+
+                                                                placeholder="Serial"
+
+                                                                value={
+                                                                    serialNumbers[
+                                                                    section
+                                                                    ]
+                                                                }
+
+                                                                onChange={(e) =>
+
+                                                                    setSerialNumbers(
+
+                                                                        prev => ({
+
+                                                                            ...prev,
+
+                                                                            [section]:
+                                                                                e.target.value
+
+                                                                        })
+
+                                                                    )
+
+                                                                }
+
+                                                            />
+
+                                                        </div>
+
+                                                        <div className="overview-box">
+
+                                                            <label className="overview-check">
+
+                                                                <input
+
+                                                                    type="checkbox"
+
+                                                                    checked={
+                                                                        overview[
+                                                                        section
+                                                                        ]
+                                                                    }
+
+                                                                    onChange={() =>
+
+                                                                        handleOverviewChange(
+                                                                            section
+                                                                        )
+
+                                                                    }
+
+                                                                />
+
+                                                                Show in Overview
+
+                                                            </label>
+
+                                                            {
+
+                                                                overview[
+                                                                section
+                                                                ]
+
+                                                                &&
+
+                                                                <input
+
+                                                                    type="number"
+
+                                                                    className="form-control mt-2"
+
+                                                                    placeholder="Overview Order"
+
+                                                                    value={
+
+                                                                        overviewSerialNumbers[
+                                                                        section
+                                                                        ]
+
+                                                                    }
+
+                                                                    onChange={(e) =>
+
+                                                                        setOverviewSerialNumbers(
+
+                                                                            prev => ({
+
+                                                                                ...prev,
+
+                                                                                [section]:
+                                                                                    e.target.value
+
+                                                                            })
+
+                                                                        )
+
+                                                                    }
+
+                                                                />
+
+                                                            }
+
+                                                        </div>
+
+                                                    </div>
+
+                                                }
+
                                             </div>
 
-                                            {showIn[section] && (
-                                                <>
-                                                    <hr className="mini-divider" />
-                                                    <div className="mt-2">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Serial No."
-                                                            className="form-control form-control-sm mb-2 mx-auto"
-                                                            value={serialNumbers[section] || ""}
-                                                            onChange={(e) =>
-                                                                setSerialNumbers((prev) => ({ ...prev, [section]: e.target.value }))
-                                                            }
-                                                        />
-                                                        <div className="form-check">
-                                                            <input
-                                                                className="form-check-input"
-                                                                type="checkbox"
-                                                                id={`overview-${section}`}
-                                                                checked={overview[section]}
-                                                                onChange={() => handleOverviewChange(section)}
-                                                            />
-                                                            <label
-                                                                className="form-check-label"
-                                                                htmlFor={`overview-${section}`}
-                                                            >
-                                                                Show in Overview
-                                                            </label>
-                                                        </div>
-                                                        {overview[section] && (
-                                                            <input
-                                                                type="number"
-                                                                placeholder="Overview Serial No."
-                                                                className="form-control form-control-sm mt-2 mx-auto"
-                                                                value={overviewSerialNumbers[section] || ""}
-                                                                onChange={(e) =>
-                                                                    setOverviewSerialNumbers((prev) => ({
-                                                                        ...prev,
-                                                                        [section]: e.target.value,
-                                                                    }))
-                                                                }
-                                                            />
-                                                        )}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    ))}
+                                        ))
+
+                                    }
+
                                 </div>
+
                             </div>
                         </div>
-
-                        {/* Footer */}
                         <div className="modal-footer">
+
                             <button
                                 type="button"
-                                id="closeModalBtn"
-                                className="btn btn-secondary"
+                                className="btn btn-light modal-btn-cancel"
                                 data-bs-dismiss="modal"
+                                id="closeModalBtn"
                             >
                                 Cancel
                             </button>
+
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className="btn modal-btn-save"
                                 onClick={handleSaveField}
                             >
-                                {editFieldId ? "Update Field" : "Save Field"}
+                                {editFieldId
+                                    ? "Update Field"
+                                    : "Create Field"}
                             </button>
 
                         </div>
@@ -445,12 +824,21 @@ export default function Settings() {
             {/* ----------------------------------------------------
                 Existing Input Fields — Grouped by Category
                ---------------------------------------------------- */}
-            <div className="existing-fields mt-5">
-                <h4 className="fw-bold text-center mb-4 text-gold">📋 Existing Input Fields</h4>
+            <div className="existing-fields">
+
+                <div className="settings-toolbar">
+                    <div>
+                        <h4 className="settings-title">Existing Input Fields</h4>
+                        <p className="settings-subtitle">
+                            Manage all dynamic fields used across Inventory, Orders and Sold.
+                        </p>
+                    </div>
+                </div>
 
                 {["inventory", "orders", "sold"].map((section) => {
+
                     const filtered = fields
-                        .filter((f) => f.showIn[section]?.show)
+                        .filter(f => f.showIn[section]?.show)
                         .sort(
                             (a, b) =>
                                 (a.showIn[section].serialNo || 0) -
@@ -458,100 +846,253 @@ export default function Settings() {
                         );
 
                     return (
-                        <div key={section} className="mb-5">
-                            <div className="d-flex align-items-center mb-3">
-                                <h5 className="fw-semibold text-uppercase mb-0 me-3 text-gold">
+
+                        <div key={section} className="settings-section">
+
+                            <div className="settings-section-header">
+
+                                <h5 className="settings-section-title">
                                     {section}
+                                    <span className="section-count">
+                                        {filtered.length}
+                                    </span>
                                 </h5>
-                                <div className="flex-grow-1 border-top border-gold opacity-50"></div>
+
+                                <div className="settings-divider"></div>
+
                             </div>
 
-                            {filtered.length === 0 ? (
-                                <p className="text-muted fst-italic ms-2">
-                                    No fields added to {section}.
-                                </p>
-                            ) : (
-                                <div className="row g-3">
-                                    {filtered.map((field) => (
-                                        <div key={field._id} className="col-6 col-md-4 col-lg-2">
-                                            <div className="field-card h-100 d-flex flex-column justify-content-between">
+                            {
 
-                                                {/* Header */}
-                                                <div className="field-card-header d-flex align-items-center justify-content-between">
-                                                    <div className="serial-and-label d-flex align-items-center gap-2">
-                                                        <span className="serial-display">#{field.showIn[section]?.serialNo || "-"}</span>
-                                                        <h6 className="field-label mb-0 text-truncate">{field.label}</h6>
-                                                    </div>
-                                                </div>
-                                                <hr className="field-divider" />
+                                filtered.length === 0 ?
 
-                                                {/* Body */}
-                                                <div className="field-card-body flex-grow-1">
-                                                    <p className="field-info">
-                                                        <span>Type:</span> {field.type}
-                                                    </p>
-                                                    {field.numberSubType && (
-                                                        <p className="field-info">
-                                                            <span>Sub:</span> {field.numberSubType}
-                                                        </p>
-                                                    )}
-                                                    {field.fileType && (
-                                                        <p className="field-info">
-                                                            <span>File:</span> {field.fileType}
-                                                        </p>
-                                                    )}
-                                                    {field.showIn[section]?.overview?.show && (
-                                                        <p className="field-info">
-                                                            <span>Overview #:</span>{" "}
-                                                            {field.showIn[section].overview.serialNo || "-"}
-                                                        </p>
-                                                    )}
+                                    <div className="empty-section">
+                                        No fields added.
+                                    </div>
 
-                                                    {/* ✅ Select Options (if any) */}
-                                                    {field.type === "select" && field.selectOptions?.length > 0 && (
-                                                        <div className="mt-3">
-                                                            <p className="field-info mb-1">
-                                                                <span>Options:</span>
-                                                            </p>
-                                                            <div className="option-list">
-                                                                {field.selectOptions.map((opt) => (
-                                                                    <div key={opt._id} className="option-item">
-                                                                        • {opt.label}
-                                                                    </div>
-                                                                ))}
+                                    :
+
+                                    <div className="settings-list">
+
+                                        {
+
+                                            filtered.map(field => {
+
+                                                const expanded =
+                                                    expandedField === field._id;
+
+                                                return (
+
+                                                    <div
+                                                        key={field._id}
+                                                        className={`settings-item ${expanded ? "expanded" : ""}`}
+                                                    >
+
+                                                        {/* SUMMARY */}
+
+                                                        <div
+                                                            className="settings-summary"
+                                                            onClick={() =>
+                                                                setExpandedField(
+                                                                    expanded
+                                                                        ? null
+                                                                        : field._id
+                                                                )
+                                                            }
+                                                        >
+
+                                                            <div className="summary-left">
+
+                                                                <span className="expand-icon">
+                                                                    {expanded ? "▼" : "▶"}
+                                                                </span>
+
+                                                                <span className="serial-badge">
+                                                                    #
+                                                                    {field.showIn[section]?.serialNo}
+                                                                </span>
+
+                                                                <span className="field-name">
+                                                                    {field.label}
+                                                                </span>
+
                                                             </div>
+
+                                                            <div className="summary-right">
+
+                                                                <span className="badge badge-type">
+                                                                    {field.type}
+                                                                </span>
+
+                                                                {
+
+                                                                    field.numberSubType &&
+
+                                                                    <span className="badge">
+                                                                        {field.numberSubType}
+                                                                    </span>
+
+                                                                }
+
+                                                                {
+
+                                                                    field.fileType &&
+
+                                                                    <span className="badge">
+                                                                        {field.fileType}
+                                                                    </span>
+
+                                                                }
+
+                                                            </div>
+
                                                         </div>
-                                                    )}
-                                                </div>
 
-                                                {/* Footer */}
-                                                <div className="field-card-footer d-flex justify-content-end align-items-center mt-auto pt-2">
-                                                    <hr className="field-divider-footer" />
-                                                    <div className="d-flex gap-2 mt-2">
-                                                        <button
-                                                            className="btn-gold-outline-sm"
-                                                            onClick={() => handleEditField(field)}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className="btn-danger-outline-sm"
-                                                            onClick={() => handleDeleteField(field._id)}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        {/* DETAILS */}
+
+                                                        {
+
+                                                            expanded &&
+
+                                                            <div className="settings-details">
+
+                                                                <div className="details-grid">
+
+                                                                    <div>
+
+                                                                        <h6>Visibility</h6>
+
+                                                                        <div className="badge-group">
+
+                                                                            {
+
+                                                                                ["inventory", "orders", "sold"]
+                                                                                    .filter(
+                                                                                        x =>
+                                                                                            field.showIn[x]?.show
+                                                                                    )
+                                                                                    .map(x => (
+
+                                                                                        <span
+                                                                                            key={x}
+                                                                                            className="badge"
+                                                                                        >
+                                                                                            {x}
+                                                                                        </span>
+
+                                                                                    ))
+
+                                                                            }
+
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    {
+
+                                                                        field.type === "select"
+                                                                        &&
+                                                                        field.selectOptions?.length > 0 &&
+
+                                                                        <div>
+
+                                                                            <h6>Options</h6>
+
+                                                                            <div className="badge-group">
+
+                                                                                {
+
+                                                                                    field.selectOptions.map(opt => (
+
+                                                                                        <span
+                                                                                            key={opt._id}
+                                                                                            className="badge"
+                                                                                        >
+                                                                                            {opt.label}
+                                                                                        </span>
+
+                                                                                    ))
+
+                                                                                }
+
+                                                                            </div>
+
+                                                                        </div>
+
+                                                                    }
+
+                                                                    {
+
+                                                                        field.showIn[section]?.overview?.show &&
+
+                                                                        <div>
+
+                                                                            <h6>Overview Position</h6>
+
+                                                                            <span className="badge">
+
+                                                                                #
+
+                                                                                {
+
+                                                                                    field.showIn[section]
+                                                                                        .overview
+                                                                                        .serialNo
+
+                                                                                }
+
+                                                                            </span>
+
+                                                                        </div>
+
+                                                                    }
+
+                                                                </div>
+
+                                                                <div className="details-actions">
+
+                                                                    <button
+                                                                        className="btn-gold-outline-sm btn"
+                                                                        onClick={() =>
+                                                                            handleEditField(field)
+                                                                        }
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+
+                                                                    <button
+                                                                        className="btn-danger-outline-sm btn"
+                                                                        onClick={() =>
+                                                                            handleDeleteField(field._id)
+                                                                        }
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                        }
+
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
 
+                                                );
 
-                                    ))}
-                                </div>
-                            )}
+                                            })
+
+                                        }
+
+                                    </div>
+
+                            }
+
                         </div>
+
                     );
+
                 })}
+
             </div>
 
 
