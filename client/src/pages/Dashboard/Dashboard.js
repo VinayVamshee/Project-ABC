@@ -344,12 +344,12 @@ function Dashboard() {
     const inRangeSold = useMemo(() => soldItems.filter((item) => isInRange(item.soldAt || item.createdAt, timeRange)), [soldItems, timeRange, isInRange]);
 
     const previousRangeSold = useMemo(() => {
-    const { start, end } = getPreviousRangeBounds(timeRange);
-    return soldItems.filter((item) => {
-        const date = new Date(item.soldAt || item.createdAt);
-        return date >= start && date <= end;
-    });
-}, [soldItems, timeRange, getPreviousRangeBounds]);
+        const { start, end } = getPreviousRangeBounds(timeRange);
+        return soldItems.filter((item) => {
+            const date = new Date(item.soldAt || item.createdAt);
+            return date >= start && date <= end;
+        });
+    }, [soldItems, timeRange, getPreviousRangeBounds]);
 
     const inventoryInStock = inventoryItems.filter((item) => item.inStock !== false);
     const inventorySoldOut = inventoryItems.filter((item) => item.inStock === false);
@@ -415,9 +415,11 @@ function Dashboard() {
 
         return buckets;
     };
-
-    const timelineData = useMemo(buildTimeline, [inRangeSold, timeRange]);
-
+    const timelineData = useMemo(buildTimeline, [
+        inRangeSold,
+        timeRange,
+        getRangeBounds,
+    ]);
     const paymentStatusData = [
         { name: "Paid", value: paidBills, color: palette.green },
         { name: "Partial", value: partialBills, color: palette.orange },
