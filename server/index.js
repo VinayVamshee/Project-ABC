@@ -20,7 +20,6 @@ app.use(cookieParser());
 const allowedOrigins = [
     "https://abc-aneesh-buisness-console.vercel.app",
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
 ].filter(Boolean);
 
 app.use(
@@ -56,5 +55,5 @@ mongoose
     .catch((err) => console.error("❌ MongoDB connection failed:", err.message));
 
 // ✅ Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
