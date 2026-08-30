@@ -26,18 +26,26 @@ app.use(cookieParser());
 const allowedOrigins = [
     "https://abc-aneesh-buisness-console.vercel.app",
     "http://localhost:3000",
+    "http://localhost:3001",
 ].filter(Boolean);
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
+            if (
+                !origin ||
+                allowedOrigins.includes(origin) ||
+                origin.endsWith(".vercel.app") ||
+                origin.includes("localhost") ||
+                origin.includes("127.0.0.1")
+            ) {
                 callback(null, true);
             } else {
                 callback(null, false);
             }
         },
-        methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+        methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
         credentials: true,
     })
 );

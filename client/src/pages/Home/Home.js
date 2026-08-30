@@ -3,10 +3,18 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import {
   FaCrown,
-  FaSignInAlt,
-  FaEye,
-  FaEyeSlash
 } from "react-icons/fa";
+import {
+  FiUser,
+  FiLock,
+  FiEye,
+  FiEyeOff,
+  FiArrowRight,
+  FiSun,
+  FiMoon,
+  FiShield,
+  FiCheckCircle,
+} from "react-icons/fi";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Home.css";
 
@@ -18,6 +26,9 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem("theme-dark-enabled") === "true";
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,6 +37,20 @@ export default function Home() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.add("theme-dark");
+      localStorage.setItem("theme-dark-enabled", "true");
+    } else {
+      document.body.classList.remove("theme-dark");
+      localStorage.setItem("theme-dark-enabled", "false");
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    setIsDark((prev) => !prev);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -33,90 +58,175 @@ export default function Home() {
 
     try {
       const res = await api.post("/auth/login", { email, password });
-      
+
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user_role", res.data.role || "admin");
+      localStorage.setItem("user_name", res.data.user?.username || "Aneesh");
       api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
-      
+
       setLoading(false);
       navigate("/dashboard");
-
     } catch (err) {
       setLoading(false);
       setError(
-        err.response?.data?.message || "Invalid username or password"
+        err.response?.data?.message || "Invalid username or password. Please try again."
       );
     }
   };
 
+  const handleQuickFill = () => {
+    setEmail("SVLJ1983");
+    setPassword("ANee12345");
+    setError("");
+  };
+
   return (
-    <div className="home-container" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-      <div className="login-card" style={{ maxWidth: "450px", width: "100%", background: "#fff", padding: "2rem", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}>
-        
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div style={{ background: "var(--accent-gold)", width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem auto" }}>
-            <FaCrown size={30} color="#fff" />
+    <div className="login-portal-wrapper">
+      {/* Background Ambient Glow Circles */}
+      <div className="login-ambient-glow login-ambient-glow--1"></div>
+      <div className="login-ambient-glow login-ambient-glow--2"></div>
+
+      {/* Top Header Navigation */}
+      <header className="login-top-nav">
+        <div className="login-brand-pill">
+          <div className="login-brand-icon">
+            <FaCrown size={16} />
           </div>
-          <h2 style={{ fontWeight: "700", margin: "0" }}>Aneesh Console</h2>
-          <p style={{ color: "#666" }}>Login to your workspace</p>
+          <span className="login-brand-text">Aneesh Console</span>
+          <span className="login-version-badge">PRO</span>
         </div>
 
-        {error && (
-          <div className="alert alert-danger" role="alert">
-            {error}
-          </div>
-        )}
+        <button
+          type="button"
+          className="login-theme-toggle"
+          onClick={toggleTheme}
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDark ? <FiSun size={17} /> : <FiMoon size={17} />}
+          <span className="d-none d-sm-inline">{isDark ? "Light" : "Dark"}</span>
+        </button>
+      </header>
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-3">
-            <label className="form-label" style={{ fontWeight: "600" }}>Username / Email</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="admin"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ padding: "0.8rem" }}
-            />
+      {/* Main Centered Login Section */}
+      <main className="login-main-container">
+        <div className="login-glass-card">
+          {/* Card Header */}
+          <div className="login-card-header">
+            <div className="login-emblem-ring">
+              <FaCrown size={28} color="#C8A14B" />
+            </div>
+            <h1 className="login-title">Welcome Back</h1>
+            <p className="login-subtitle">
+              Sign in to manage your jewellery inventory, live market rates, and business ledger.
+            </p>
           </div>
 
-          <div className="mb-4 position-relative">
-            <label className="form-label" style={{ fontWeight: "600" }}>Password</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              className="form-control"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ padding: "0.8rem", paddingRight: "40px" }}
-            />
+          {/* Error Alert */}
+          {error && (
+            <div className="login-error-banner" role="alert">
+              <span className="login-error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form className="login-form" onSubmit={handleLogin}>
+            {/* Username / ID Field */}
+            <div className="login-input-group">
+              <label htmlFor="username-input" className="login-input-label">
+                Username / Admin ID
+              </label>
+              <div className="login-input-wrapper">
+                <span className="login-input-icon">
+                  <FiUser size={18} />
+                </span>
+                <input
+                  id="username-input"
+                  type="text"
+                  className="login-text-input"
+                  placeholder="e.g. SVLJ1983"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="login-input-group">
+              <label htmlFor="password-input" className="login-input-label">
+                Password
+              </label>
+              <div className="login-input-wrapper">
+                <span className="login-input-icon">
+                  <FiLock size={18} />
+                </span>
+                <input
+                  id="password-input"
+                  type={showPassword ? "text" : "password"}
+                  className="login-text-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Demo Credentials Chip */}
+            <div className="login-demo-helper" onClick={handleQuickFill}>
+              <span className="login-demo-badge">
+                <FiCheckCircle size={13} /> Quick Fill
+              </span>
+              <span className="login-demo-text">
+                Demo Account: <strong>SVLJ1983</strong> / <strong>ANee12345</strong>
+              </span>
+            </div>
+
+            {/* Submit CTA Button */}
             <button
-              type="button"
-              className="btn btn-link position-absolute end-0 top-50 translate-middle-y mt-2"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{ color: "#999", textDecoration: "none" }}
+              type="submit"
+              className={`login-submit-btn ${loading ? "login-submit-btn--loading" : ""}`}
+              disabled={loading}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  <span>Sign In to Console</span>
+                  <FiArrowRight size={18} className="login-btn-arrow" />
+                </>
+              )}
             </button>
+          </form>
+
+          {/* Footer Security Badge */}
+          <div className="login-card-footer">
+            <div className="login-security-tag">
+              <FiShield size={14} />
+              <span>256-Bit SSL Encrypted Enterprise Workspace</span>
+            </div>
           </div>
+        </div>
+      </main>
 
-          <button
-            type="submit"
-            className="btn w-100"
-            disabled={loading}
-            style={{ background: "var(--accent-gold)", color: "#fff", padding: "0.8rem", fontWeight: "600", fontSize: "1.1rem" }}
-          >
-            {loading ? "Authenticating..." : (
-              <>
-                <FaSignInAlt className="me-2" /> Sign In
-              </>
-            )}
-          </button>
-        </form>
-
-      </div>
+      {/* Portal Bottom Footer */}
+      <footer className="login-bottom-footer">
+        <p>© 2026 Aneesh Jewellery Business Console • All Rights Reserved</p>
+      </footer>
     </div>
   );
 }
