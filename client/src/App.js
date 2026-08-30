@@ -3,15 +3,27 @@ import "./App.css";
 import Home from "./pages/Home/Home";
 import Settings from "./pages/Settings/Settings";
 import Inventory from "./pages/Inventory/Inventory";
+import AddInventoryItem from "./pages/Inventory/AddInventoryItem";
 import OverviewPanel from "./pages/Overview/OverviewPanel";
 import Order from "./pages/Orders/Order";
 import Sold from "./pages/Sold/Sold";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import People from "./pages/People/People";
+
+import LedgerDashboard from "./pages/Ledger/LedgerDashboard";
+import LedgerContacts from "./pages/Ledger/LedgerContacts";
+import LedgerContactView from "./pages/Ledger/LedgerContactView";
+import LedgerTransactions from "./pages/Ledger/LedgerTransactions";
+import LedgerGroupCreate from "./pages/Ledger/LedgerGroupCreate";
+
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // 🔔 Toast Provider
 import ToastProvider from "./components/Toast/ToastProvider";
+
+import BarcodeScanner from "./components/BarcodeScanner/BarcodeScanner";
+import Layout from "./components/Layout/Layout";
 
 function App() {
 
@@ -21,95 +33,154 @@ function App() {
     if (saved) document.body.classList.add("theme-dark");
   }, []);
 
-  const toggleTheme = () => {
-    document.body.classList.toggle("theme-dark");
-
-    localStorage.setItem(
-      "theme-dark-enabled",
-      document.body.classList.contains("theme-dark")
-    );
-  };
-
-  const isDark = document.body.classList.contains("theme-dark");
-
   return (
     <ToastProvider>
       <div className="App">
 
         {/* ROUTES */}
         <BrowserRouter>
+          <BarcodeScanner />
           <Routes>
 
             {/* ✅ PUBLIC */}
             <Route path="/" element={<Home />} />
 
-            {/* 🔐 PROTECTED */}
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/inventory"
-              element={
-                <ProtectedRoute>
-                  <Inventory />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/overview"
-              element={
-                <ProtectedRoute>
-                  <OverviewPanel />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <Order />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/sold"
-              element={
-                <ProtectedRoute>
-                  <Sold />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* 🔐 PROTECTED with Sidebar Layout */}
+            <Route element={<Layout />}>
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inventory"
+                element={
+                  <ProtectedRoute>
+                    <Inventory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inventory/add"
+                element={
+                  <ProtectedRoute>
+                    <AddInventoryItem />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inventory/edit/:id"
+                element={
+                  <ProtectedRoute>
+                    <AddInventoryItem />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/overview"
+                element={
+                  <ProtectedRoute>
+                    <OverviewPanel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute>
+                    <Order />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sold"
+                element={
+                  <ProtectedRoute>
+                    <Sold />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/people"
+                element={
+                  <ProtectedRoute>
+                    <People />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* LEDGER ROUTES */}
+              <Route
+                path="/ledger"
+                element={
+                  <ProtectedRoute>
+                    <LedgerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/contacts"
+                element={
+                  <ProtectedRoute>
+                    <LedgerContacts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/contacts/:id"
+                element={
+                  <ProtectedRoute>
+                    <LedgerContactView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/contact/:contactId"
+                element={
+                  <ProtectedRoute>
+                    <LedgerContactView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/transactions"
+                element={
+                  <ProtectedRoute>
+                    <LedgerTransactions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/group/new"
+                element={
+                  <ProtectedRoute>
+                    <LedgerGroupCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ledger/obligations"
+                element={
+                  <ProtectedRoute>
+                    <LedgerTransactions />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
 
           </Routes>
         </BrowserRouter>
-
-        {/* 🌗 Floating Theme Toggle Button */}
-        <button
-          className="floating-theme-toggle"
-          onClick={toggleTheme}
-          title="Toggle Theme"
-        >
-          {isDark ? "🌕" : "🌑"}
-        </button>
-
       </div>
     </ToastProvider>
   );

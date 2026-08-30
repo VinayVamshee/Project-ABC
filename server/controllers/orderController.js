@@ -4,12 +4,6 @@ import Inventory from "../models/Inventory.js";
 
 /**
  * Create an order from inventory
- * Body expects:
- * {
- *   inventoryId: "<inventoryObjectId>",
- *   productFields: [{ fieldRef, value }, ...], // editable product values
- *   orderFields: [{ fieldRef, value }, ...] // order/customer fields
- * }
  */
 export const createOrder = async (req, res) => {
     const session = await mongoose.startSession();
@@ -18,110 +12,124 @@ export const createOrder = async (req, res) => {
     try {
         const {
             inventoryId,
-            productFields = [],
-            orderFields = [],
-            buyingCostPrice = 0,   // ✅ READ IT
+            customerId,
+            orderFor,
+            orderedTo,
+            orderedAddress,
+            homeDelivery,
+            modelImage,
+            workerId,
+            goldGivenToWorker,
+            goldPurity,
+            buyingCostPrice
         } = req.body;
 
         const newOrder = new Order({
-            productFields,
-            orderFields,
-            buyingCostPrice: Number(buyingCostPrice || 0), // ✅ SAVE IT
+            customerId,
+            orderFor,
+            orderedTo,
+            orderedAddress,
+            homeDelivery,
+            modelImage,
+            workerId,
+            goldGivenToWorker: Number(goldGivenToWorker || 0),
+            goldPurity: Number(goldPurity || 0),
+            buyingCostPrice: Number(buyingCostPrice || 0),
+            sourceInventoryId: inventoryId || null
         });
 
-        await newOrder.save({ session }); // IMPORTANT
+        await newOrder.save({ session });
 
-        // Delete inventory item if coming from inventory
+        // Soft-delete inventory item if coming from inventory
         if (inventoryId) {
-            await Inventory.findByIdAndDelete(inventoryId, { session });
+            await Inventory.findByIdAndUpdate(inventoryId, { inStock: false }, { session });
         }
 
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(201).json({ success: true, data: newOrder });
+        res.status(201).json({
+            success: true,
+            message: "Order created successfully",
+            data: newOrder
+        });
+
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
         console.error("Error creating order:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Server error while creating order",
-        });
+        res.status(500).json({ success: false, message: "Server error", error: error.message });
     }
 };
 
 export const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find()
-            .populate("productFields.fieldRef")
-            .populate("orderFields.fieldRef")
+        const { status, search } = req.query;
+        let filter = {};
+        if (status && status !== 'all') {
+            filter.status = status;
+        }
+        
+        if (search) {
+            filter.$or = [
+                { orderID: { $regex: search, $options: "i" } },
+                { orderFor: { $regex: search, $options: "i" } },
+                { orderedTo: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        const orders = await Order.find(filter)
+            .populate("customerId")
+            .populate("workerId")
+            .populate("sourceInventoryId")
             .sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, data: orders });
+
+        res.status(200).json({ success: true, data: orders });
     } catch (error) {
         console.error("Error fetching orders:", error);
-        return res.status(500).json({ success: false, message: "Server error while fetching orders" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 export const getOrderById = async (req, res) => {
     try {
-        const id = req.params.id;
-        const order = await Order.findById(id)
-            .populate("productFields.fieldRef")
-            .populate("orderFields.fieldRef");
+        const order = await Order.findById(req.params.id)
+            .populate("customerId")
+            .populate("workerId")
+            .populate("sourceInventoryId");
+
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-        return res.status(200).json({ success: true, data: order });
+        res.status(200).json({ success: true, data: order });
     } catch (error) {
-        console.error("Error fetching order:", error);
-        return res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 export const updateOrder = async (req, res) => {
     try {
-        const id = req.params.id;
-        const updated = await Order.findByIdAndUpdate(id, req.body, { new: true })
-            .populate("productFields.fieldRef")
-            .populate("orderFields.fieldRef");
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const updated = await Order.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        ).populate("customerId").populate("workerId");
+
         if (!updated) return res.status(404).json({ success: false, message: "Order not found" });
-        return res.status(200).json({ success: true, data: updated });
+
+        res.status(200).json({ success: true, message: "Order status updated", data: updated });
     } catch (error) {
-        console.error("Error updating order:", error);
-        return res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 export const deleteOrder = async (req, res) => {
     try {
-        const id = req.params.id;
-        await Order.findByIdAndDelete(id);
-        return res.status(200).json({ success: true, message: "Order deleted" });
+        const deleted = await Order.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ success: false, message: "Order not found" });
+        res.status(200).json({ success: true, message: "Order deleted" });
     } catch (error) {
-        console.error("Error deleting order:", error);
-        return res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
-
-// export const sellOrder = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { sellingPrice, discount = 0, payments = [] } = req.body;
-
-//     const order = await Order.findById(id);
-//     if (!order) {
-//       return res.status(404).json({ success: false, message: "Order not found" });
-//     }
-
-//     order.status = "sold";
-//     order.sellingPrice = Number(sellingPrice);
-//     order.discount = Number(discount);
-//     order.payments = payments;
-
-//     await order.save();
-
-//     res.json({ success: true, order });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };

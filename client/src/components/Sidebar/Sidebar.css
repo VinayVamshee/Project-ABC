@@ -1,0 +1,490 @@
+/* ============================================================
+   💎 LUXURY MINIMAL AESTHETIC COLLAPSIBLE SIDEBAR
+   ============================================================ */
+
+:root {
+  --sb-width: 260px;
+  --sb-width-collapsed: 76px;
+  --sb-bg: #FFFFFF;
+  --sb-border: rgba(200, 161, 75, 0.15);
+  --sb-border-soft: rgba(0, 0, 0, 0.05);
+  --sb-text: #1C1917;
+  --sb-text-muted: #78716C;
+  --sb-gold: #C8A14B;
+  --sb-gold-dark: #9A7B38;
+  --sb-gold-soft: rgba(200, 161, 75, 0.12);
+  --sb-hover: rgba(0, 0, 0, 0.035);
+  --sb-radius: 12px;
+  --sb-shadow: 4px 0 24px rgba(0, 0, 0, 0.025);
+  --sb-transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+body.theme-dark {
+  --sb-bg: #1A1A1A;
+  --sb-border: rgba(255, 255, 255, 0.08);
+  --sb-border-soft: rgba(255, 255, 255, 0.04);
+  --sb-text: #F3F4F6;
+  --sb-text-muted: #9CA3AF;
+  --sb-hover: rgba(255, 255, 255, 0.05);
+  --sb-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.luxury-sidebar {
+  width: var(--sb-width);
+  height: 100vh;
+  background-color: var(--sb-bg);
+  border-right: 1px solid var(--sb-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  box-shadow: var(--sb-shadow);
+  transition: width var(--sb-transition), transform var(--sb-transition);
+  user-select: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.luxury-sidebar.collapsed {
+  width: var(--sb-width-collapsed);
+}
+
+/* ============================================================
+   1. BRAND HEADER
+   ============================================================ */
+
+.luxury-sidebar .sidebar-header {
+  height: 78px;
+  padding: 0 16px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--sb-border-soft);
+  background: var(--sb-bg);
+  color: var(--sb-text);
+  flex-shrink: 0;
+  transition: background var(--sb-transition), border-color var(--sb-transition);
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity var(--sb-transition);
+}
+
+.brand-icon-box {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #C8A14B 0%, #9A7B38 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(200, 161, 75, 0.3);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.brand-icon-box:hover {
+  transform: scale(1.04);
+}
+
+.brand-crown-icon {
+  font-size: 1.15rem;
+}
+
+.brand-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  white-space: nowrap;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.luxury-sidebar.collapsed .brand-meta {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  width: 0;
+}
+
+.brand-title {
+  color: var(--sb-text);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.brand-tag {
+  color: #A8A29E;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}
+
+.sidebar-toggle-btn {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sb-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--sb-gold-soft);
+  color: var(--sb-gold-dark);
+  border-color: var(--sb-border);
+}
+
+.luxury-sidebar.collapsed .sidebar-header {
+  padding: 0 10px;
+  justify-content: center;
+}
+
+.luxury-sidebar.collapsed .brand-wrapper {
+  display: none;
+}
+
+.luxury-sidebar.collapsed .sidebar-toggle-btn {
+  margin: 0 auto;
+}
+
+/* ============================================================
+   2. NAVIGATION ITEMS
+   ============================================================ */
+
+.sidebar-nav-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 12px;
+}
+
+.sidebar-nav-container::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar-nav-container::-webkit-scrollbar-thumb {
+  background: rgba(200, 161, 75, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-nav-item {
+  width: 100%;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  color: var(--sb-text-muted);
+  text-decoration: none;
+  border-radius: var(--sb-radius);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+  white-space: nowrap;
+}
+
+.sidebar-nav-link:hover {
+  background-color: var(--sb-hover);
+  color: var(--sb-text);
+  transform: translateX(2px);
+}
+
+.sidebar-nav-icon {
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sb-text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.sidebar-nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.active-pill-indicator {
+  position: absolute;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sb-gold);
+  box-shadow: 0 0 8px rgba(200, 161, 75, 0.6);
+}
+
+/* ACTIVE STATE */
+.sidebar-nav-link.active {
+  background: var(--sb-gold-soft);
+  color: var(--sb-gold-dark);
+  font-weight: 700;
+}
+
+body.theme-dark .sidebar-nav-link.active {
+  color: var(--sb-gold);
+}
+
+.sidebar-nav-link.active .sidebar-nav-icon {
+  color: var(--sb-gold);
+  transform: scale(1.08);
+}
+
+/* ============================================================
+   3. COLLAPSED STATE ADJUSTMENTS
+   ============================================================ */
+
+.luxury-sidebar.collapsed .sidebar-nav-container {
+  padding: 16px 8px;
+}
+
+.luxury-sidebar.collapsed .sidebar-nav-link {
+  justify-content: center;
+  padding: 12px 0;
+  gap: 0;
+}
+
+.luxury-sidebar.collapsed .sidebar-nav-label {
+  display: none;
+}
+
+.luxury-sidebar.collapsed .active-pill-indicator {
+  right: 6px;
+  top: 8px;
+}
+
+.luxury-sidebar.collapsed .sidebar-nav-icon {
+  font-size: 1.25rem;
+}
+
+.luxury-sidebar.collapsed .sidebar-nav-link:hover {
+  transform: scale(1.06);
+}
+
+/* ============================================================
+   4. FOOTER: THEME TOGGLE & LOGOUT BUTTON
+   ============================================================ */
+
+.sidebar-footer-container {
+  padding: 12px 14px 16px 14px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Theme Toggle Segmented Control (Expanded Mode) */
+.sidebar-theme-wrapper {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.theme-toggle-segmented {
+  position: relative;
+  width: 100%;
+  height: 38px;
+  background: #F4F1EA;
+  border: 1px solid var(--sb-border);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.25s ease;
+}
+
+body.theme-dark .theme-toggle-segmented {
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sb-text-muted);
+  z-index: 2;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.theme-icon {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-slider-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  background: #FFFFFF;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.25s ease;
+  z-index: 1;
+}
+
+body.theme-dark .theme-slider-thumb {
+  background: #282828;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Light Active State */
+.theme-toggle-segmented.light-active .theme-toggle-pill:first-child {
+  color: var(--sb-gold-dark);
+  font-weight: 700;
+}
+
+.theme-toggle-segmented.light-active .theme-toggle-pill:first-child .theme-icon {
+  color: #F59E0B;
+  transform: scale(1.15) rotate(15deg);
+}
+
+/* Dark Active State (Slid Right) */
+.theme-toggle-segmented.dark-active .theme-slider-thumb {
+  transform: translateX(100%);
+}
+
+.theme-toggle-segmented.dark-active .theme-toggle-pill:last-child {
+  color: #C8A14B;
+  font-weight: 700;
+}
+
+.theme-toggle-segmented.dark-active .theme-toggle-pill:last-child .theme-icon {
+  color: #C8A14B;
+  transform: scale(1.15) rotate(-15deg);
+}
+
+/* Collapsed Mode Circular Button */
+.theme-toggle-collapsed-btn {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #F4F1EA;
+  border: 1px solid var(--sb-border);
+  color: var(--sb-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+body.theme-dark .theme-toggle-collapsed-btn {
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--sb-gold);
+}
+
+.theme-toggle-collapsed-btn:hover {
+  background: var(--sb-gold-soft);
+  color: var(--sb-gold);
+  border-color: var(--sb-gold);
+  transform: rotate(45deg);
+}
+
+.sidebar-footer-divider {
+  height: 1px;
+  background: var(--sb-border-soft);
+  margin: 4px 0 6px 0;
+}
+
+.sidebar-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--sb-radius);
+  color: #EF4444;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.sidebar-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #DC2626;
+  transform: translateX(2px);
+}
+
+.logout-icon {
+  color: #EF4444;
+  font-size: 1.1rem;
+}
+
+.luxury-sidebar.collapsed .sidebar-footer-container {
+  padding: 10px 8px 14px 8px;
+}
+
+.luxury-sidebar.collapsed .sidebar-logout-btn {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.luxury-sidebar.collapsed .sidebar-logout-btn .sidebar-nav-label {
+  display: none;
+}
+
+/* ============================================================
+   5. RESPONSIVE BREAKPOINTS
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .luxury-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .luxury-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}

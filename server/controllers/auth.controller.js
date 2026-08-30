@@ -48,5 +48,18 @@ export const login = async (req, res) => {
   return res.status(200).json({
     message: "Login successful",
     token,
+    role: staticUser.role
+  });
+};
+
+export const logout = async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+  });
+
+  return res.status(200).json({
+    message: "Logged out successfully",
   });
 };

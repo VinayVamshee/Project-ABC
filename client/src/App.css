@@ -41,29 +41,31 @@ body.theme-dark {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
+  padding: 0;
   min-height: 100vh;
   font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: linear-gradient(135deg, var(--app-bg), var(--app-bg-soft));
   color: var(--app-text);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
   min-height: 100vh;
-  height: 100%;
-  overflow: hidden;
+  width: 100%;
 }
 
 .App {
   min-height: 100vh;
-  height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  width: 100%;
 }
 
 button,
@@ -92,9 +94,14 @@ textarea:focus {
 }
 
 .page-shell {
-  max-width: 1320px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 24px 20px 40px;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .page-card,
@@ -324,55 +331,6 @@ textarea.form-control:focus {
   background: var(--app-surface);
 }
 
-.floating-theme-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  border: 1px solid var(--app-border-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #efe2bf, #d4b76a);
-  color: #5f4512;
-  box-shadow: var(--app-shadow);
-  z-index: 9999;
-}
-
-.floating-theme-toggle:hover {
-  transform: scale(1.05);
-}
-
-body.theme-dark .page-card,
-body.theme-dark .surface-card,
-body.theme-dark .page-header,
-body.theme-dark .custom-modal,
-body.theme-dark .info-section,
-body.theme-dark .image-panel,
-body.theme-dark .overview-panel {
-  background: var(--app-surface-strong);
-  border-color: var(--app-border);
-  box-shadow: var(--app-shadow);
-}
-
-body.theme-dark .table thead th {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--app-text);
-}
-
-body.theme-dark .table tbody td {
-  background: var(--app-surface-strong);
-  color: var(--app-text);
-  border-color: var(--app-border);
-}
-
 body.theme-dark .table tbody tr:hover td {
   background: rgba(255, 255, 255, 0.06);
-}
-
-body.theme-dark .floating-theme-toggle {
-  background: linear-gradient(135deg, #5a5f67, #8f96a2);
-  color: #f4f6f8;
 }

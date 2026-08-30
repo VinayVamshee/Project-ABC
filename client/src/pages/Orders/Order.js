@@ -115,22 +115,7 @@ export default function Order() {
     });
 
   const fetchSoldFields = async () => {
-    try {
-      const res = await api.get("/fields");
-      if (res.data.success) {
-        const soldFields = res.data.fields
-          .filter(f => f.showIn?.sold?.show)
-          .sort(
-            (a, b) =>
-              (a.showIn.sold.serialNo || 0) -
-              (b.showIn.sold.serialNo || 0)
-          );
-
-        setSoldFieldsDefs(soldFields);
-      }
-    } catch (err) {
-      console.error("Failed to fetch sold fields", err);
-    }
+    setSoldFieldsDefs([]);
   };
 
   const getPaymentDetailLabel = (mode) => {
@@ -183,22 +168,7 @@ export default function Order() {
      FETCH ORDER FIELDS
   ======================= */
   const fetchFields = async () => {
-    try {
-      const res = await api.get("/fields");
-      if (res.data.success) {
-        const filtered = res.data.fields
-          .filter(f => f.showIn?.orders?.show)
-          .sort(
-            (a, b) =>
-              (a.showIn.orders.serialNo || 0) -
-              (b.showIn.orders.serialNo || 0)
-          );
-
-        setOrderFields(filtered);
-      }
-    } catch (err) {
-      console.error("Failed to fetch order fields", err);
-    }
+    setOrderFields([]);
   };
 
   /* =======================

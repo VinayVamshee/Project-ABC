@@ -144,8 +144,9 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
     };
 
     // Pagination
-    const [itemsPerPage, setItemsPerPage] = useState(100); // default 100
+    const [itemsPerPage, setItemsPerPage] = useState(10); // default 10
     const [currentPage, setCurrentPage] = useState(1);
+
 
     // Total pages
     const totalPages = itemsPerPage === "all"
@@ -539,6 +540,13 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                                 View
                                             </button>
 
+                                            <button
+                                                className="btn-outline-action btn-sm fw-bold text-gold"
+                                                onClick={() => import('../../utils/pdfGenerator').then(m => m.generateInvoice(item))}
+                                            >
+                                                Invoice
+                                            </button>
+
                                         </div>
                                     ) : (
                                         <button
@@ -634,11 +642,13 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                             setCurrentPage(1);
                         }}
                     >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
                         <option value={50}>50</option>
                         <option value={100}>100</option>
-                        <option value={200}>200</option>
                         <option value="all">All</option>
                     </select>
+
                 </div>
 
                 {/* Page numbers */}
@@ -775,14 +785,40 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                                 </div>
                                             )}
 
-                                        {/* Customer details */}
+                                        {/* Sold / Invoice Details */}
                                         {section === "sold" &&
                                             selectedItem.soldFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
                                                 <div className="info-section">
-                                                    <h5 className="section-title">Customer Details</h5>
+                                                    <h5 className="section-title">Invoice Details</h5>
 
                                                     <div className="row g-3">
                                                         {selectedItem.soldFields
+                                                            .filter(f => f.fieldRef?.type !== "file")
+                                                            .map((f, i) => (
+                                                                <div key={i} className="col-md-6">
+                                                                    <div className="info-box">
+                                                                        <div className="info-label">{f.fieldRef?.label}</div>
+                                                                        <div className="info-value">{renderField(f)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* CRM Customer details */}
+                                        {section === "sold" &&
+                                            selectedItem.customerId?.customerFields?.filter(f => f.fieldRef?.type !== "file").length > 0 && (
+                                                <div className="info-section">
+                                                    <h5 className="section-title">CRM Customer Profile</h5>
+                                                    <div className="mb-2">
+                                                        <strong>Name: </strong> {selectedItem.customerId.name || "N/A"} <br/>
+                                                        <strong>Phone: </strong> {selectedItem.customerId.phone || "N/A"} <br/>
+                                                        <strong>Loyalty Points: </strong> {selectedItem.customerId.loyaltyPoints || 0}
+                                                    </div>
+
+                                                    <div className="row g-3 mt-2">
+                                                        {selectedItem.customerId.customerFields
                                                             .filter(f => f.fieldRef?.type !== "file")
                                                             .map((f, i) => (
                                                                 <div key={i} className="col-md-6">

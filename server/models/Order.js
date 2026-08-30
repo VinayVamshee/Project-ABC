@@ -1,28 +1,27 @@
 import mongoose from "mongoose";
 import Counter from "./counterModel.js";
+import "./BusinessContact.js";
+import "./BusinessContact.js";
 
-const fieldValueSchema = new mongoose.Schema(
-  {
-    fieldRef: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "InputField",
-      required: true,
-    },
-    value: { type: mongoose.Schema.Types.Mixed, default: null },
-  },
-  { _id: false }
-);
 
 const orderSchema = new mongoose.Schema({
   orderID: { type: String, unique: true, required: true },
 
-  buyingCostPrice: {
-    type: Number,
-    default: 0,
-  },
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: "BusinessContact", default: null },
+  
+  orderFor: { type: String, trim: true },
+  orderedTo: { type: String, trim: true },
+  orderedAddress: { type: String, trim: true },
+  homeDelivery: { type: Boolean, default: false },
+  modelImage: { type: String, trim: true },
+  
+  workerId: { type: mongoose.Schema.Types.ObjectId, ref: "BusinessContact", default: null },
+  goldGivenToWorker: { type: Number, default: 0 },
+  goldPurity: { type: Number, default: 0 },
 
-  productFields: { type: [fieldValueSchema], default: [] },
-  orderFields: { type: [fieldValueSchema], default: [] },
+  buyingCostPrice: { type: Number, default: 0 },
+
+  // Legacy arrays for migration
 
   status: {
     type: String,
@@ -37,13 +36,15 @@ const orderSchema = new mongoose.Schema({
   },
 }, { timestamps: true, versionKey: false });
 
+orderSchema.index({ status: 1, createdAt: -1 });
+
 // Auto-increment orderID like ORD_ID_0000001
 orderSchema.pre("validate", async function (next) {
   if (this.isNew && !this.orderID) {
     try {
       const counter = await Counter.findOneAndUpdate(
         { name: "orders" },
-        { $inc: { seq: 1 } },       // ← use seq, not value
+        { $inc: { seq: 1 } },
         { new: true, upsert: true }
       );
 

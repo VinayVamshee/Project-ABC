@@ -1,60 +1,123 @@
 import Sold from "../models/Sold.js";
 import Inventory from "../models/Inventory.js";
 import Order from "../models/Order.js";
+import BusinessContact from "../models/BusinessContact.js";
+import mongoose from "mongoose";
+
 // -----------------------------------------
 // CREATE SOLD (Sell an item)
 // -----------------------------------------
 export const createSold = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const {
       inventoryId,
-      productFields = [],
-      soldFields = [],
+      orderId,
+      customerId,
+      customerName,
+      customerPhone,
       sellingPrice = 0,
       discount = 0,
       payments = [],
     } = req.body;
 
-    const invItem = await Inventory.findById(inventoryId);
-    if (!invItem) {
-      return res.status(404).json({
-        success: false,
-        message: "Inventory item not found",
-      });
+    let finalCustomerId = customerId;
+    let basePrice = 0;
+
+    // Validate Source
+    if (inventoryId) {
+      const invItem = await Inventory.findById(inventoryId).session(session);
+      if (!invItem) {
+        throw new Error("Inventory item not found");
+      }
+      basePrice = invItem.baseCostPrice || 0;
+      invItem.inStock = false;
+      await invItem.save({ session });
+    } else if (orderId) {
+      const order = await Order.findById(orderId).session(session);
+      if (!order) {
+        throw new Error("Order not found");
+      }
+      basePrice = order.buyingCostPrice || 0;
+      order.status = "completed";
+      await order.save({ session });
+    } else {
+      throw new Error("Sale must be linked to either Inventory or Order");
     }
 
-    // ✅ cost = baseCostPrice from Inventory
-    const inventoryPrice = Number(invItem.baseCostPrice || 0);
+    const finalPriceCalc = Math.max(Number(sellingPrice) - Number(discount), 0);
+    const pointsEarned = Math.floor(finalPriceCalc * 0.001);
 
-    const sold = new Sold({
-      inventoryId,                // 🔗 connect
-      productID: invItem.productID, // optional but useful
-      productFields,
-      soldFields,
-      sellingPrice: Number(sellingPrice || 0),
-      discount: Number(discount || 0),
-      inventoryPrice,
-      payments,
-      // finalPrice, profit, paymentStatus → pre-save hook
+    // Handle Customer
+    if (!finalCustomerId && (customerName || customerPhone)) {
+      let customer = null;
+      if (customerPhone) {
+        customer = await BusinessContact.findOne({ phone: customerPhone }).session(session);
+      }
+      if (!customer && customerName) {
+        customer = await BusinessContact.findOne({ name: customerName }).session(session);
+      }
+      if (customer) {
+        finalCustomerId = customer._id;
+        if (!customer.customerDetails) customer.customerDetails = {};
+        if (!customer.categories.includes("Customer")) customer.categories.push("Customer");
+
+        customer.customerDetails.loyaltyPoints = (customer.customerDetails.loyaltyPoints || 0) + pointsEarned;
+        await customer.save({ session });
+      } else {
+        const newCustomer = new BusinessContact({
+          name: customerName || "Unknown",
+          phone: customerPhone || `UNKNOWN_${Date.now()}`,
+          categories: ["Customer"],
+          customerDetails: { loyaltyPoints: pointsEarned },
+        });
+        await newCustomer.save({ session });
+        finalCustomerId = newCustomer._id;
+      }
+    } else if (finalCustomerId) {
+       const customer = await BusinessContact.findById(finalCustomerId).session(session);
+       if (customer) {
+        if (!customer.customerDetails) customer.customerDetails = {};
+        if (!customer.categories.includes("Customer")) customer.categories.push("Customer");
+
+          customer.customerDetails.loyaltyPoints = (customer.customerDetails.loyaltyPoints || 0) + pointsEarned;
+          await customer.save({ session });
+       }
+    }
+
+    if (!finalCustomerId) {
+      throw new Error("Customer information or ID is required");
+    }
+
+    const soldRecord = new Sold({
+      inventoryId: inventoryId || null,
+      orderId: orderId || null,
+      customerId: finalCustomerId,
+      inventoryPrice: basePrice,
+      sellingPrice: Number(sellingPrice),
+      discount: Number(discount),
+      finalPrice: finalPriceCalc,
+      payments: payments,
     });
 
-    await sold.save();
+    await soldRecord.save({ session });
 
-    // OPTIONAL: mark inventory item out of stock
-    invItem.inStock = false;
-    await invItem.save();
+    await session.commitTransaction();
+    session.endSession();
 
-    return res.json({
+    res.status(201).json({
       success: true,
       message: "Item sold successfully",
-      sold,
+      data: soldRecord,
     });
   } catch (error) {
-    console.error("CREATE SOLD ERROR:", error);
-    return res.status(500).json({
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error selling item:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to create sold item",
-      error: error.message,
+      message: error.message || "Server error while selling item",
     });
   }
 };
@@ -62,144 +125,99 @@ export const createSold = async (req, res) => {
 // -----------------------------------------
 // GET ALL SOLD ITEMS
 // -----------------------------------------
-export const getAllSold = async (req, res) => {
+export const getAllSoldItems = async (req, res) => {
   try {
-    const soldItems = await Sold.find()
-      // 🔥 inventory product fields
-      .populate("productFields.fieldRef")
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 1000;
+    const skip = (page - 1) * limit;
 
-      // 🔥 customer / sold fields
-      .populate("soldFields.fieldRef")
+    const { search, paymentStatus } = req.query;
+    let filter = {};
 
-      // 🔥 ORDER → bring orderFields also
-      .populate({
-        path: "orderId",
-        populate: {
-          path: "orderFields.fieldRef",
-          model: "InputField",
-        },
-      })
-
-      .sort({ createdAt: -1 });
-
-    return res.json({
-      success: true,
-      items: soldItems,
-    });
-
-  } catch (error) {
-    console.error("GET ALL SOLD ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch sold items",
-      error: error.message,
-    });
-  }
-};
-
-// -----------------------------------------
-// GET SINGLE SOLD ITEM
-// -----------------------------------------
-export const getSoldById = async (req, res) => {
-  try {
-    const item = await Sold.findById(req.params.id)
-      .populate("productFields.fieldRef")
-      .populate("soldFields.fieldRef")
-      .populate({
-        path: "orderId",
-        populate: {
-          path: "orderFields.fieldRef",
-          model: "InputField",
-        },
-      });
-
-    if (!item) {
-      return res.status(404).json({ success: false, message: "Sold not found" });
+    if (paymentStatus && paymentStatus !== "all") {
+      filter.paymentStatus = paymentStatus;
+    }
+    if (search) {
+      filter.billingID = { $regex: search, $options: "i" };
     }
 
-    res.json({ success: true, item });
+    const items = await Sold.find(filter)
+      .populate("inventoryId")
+      .populate("orderId")
+      .populate("customerId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-  } catch (error) {
-    console.error("GET SOLD BY ID ERROR:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch sold item",
-    });
-  }
-};
-
-export const addPaymentToSold = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { amount, date, mode, reference, paidBy } = req.body;
-
-    if (!amount || isNaN(amount)) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid amount is required",
-      });
-    }
-
-    const soldItem = await Sold.findById(id);
-    if (!soldItem) {
-      return res.status(404).json({
-        success: false,
-        message: "Sold item not found",
-      });
-    }
-
-    soldItem.payments.push({
-      amount: Number(amount),
-      date: date ? new Date(date) : new Date(),
-      mode: mode || "cash",
-      reference: reference || "",
-      paidBy: paidBy || "customer",
-    });
-
-    await soldItem.save(); // 🔥 recalculates paymentStatus + profit in pre('save')
+    const total = await Sold.countDocuments(filter);
 
     res.status(200).json({
       success: true,
-      message: "Payment added successfully",
-      item: soldItem,
+      data: items,
+      pagination: { total, page, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    console.error("Error adding payment to sold item:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while adding payment",
-    });
+    console.error("Error fetching sold items:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-export const createSoldFromOrder = async (req, res) => {
+// -----------------------------------------
+// GET SOLD ITEM BY ID
+// -----------------------------------------
+export const getSoldItemById = async (req, res) => {
+  try {
+    const item = await Sold.findById(req.params.id)
+      .populate("inventoryId")
+      .populate("orderId")
+      .populate("customerId");
+
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Sold record not found" });
+    }
+    res.status(200).json({ success: true, data: item });
+  } catch (error) {
+    console.error("Error fetching sold record:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// -----------------------------------------
+// ADD / UPDATE PAYMENT FOR SOLD ITEM
+// -----------------------------------------
+export const addPaymentToSold = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sellingPrice, discount = 0, payments = [], soldFields = [] } = req.body;
+    const { amount, mode, notes, reference, paidBy, recordedBy } = req.body;
 
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+    if (!amount || isNaN(amount)) {
+      return res.status(400).json({ success: false, message: "Valid payment amount is required" });
     }
 
-    const sold = new Sold({
-      orderId: order._id,                 // ✅ LINK ORDER
-      inventoryId: null,
+    const soldRecord = await Sold.findById(id);
+    if (!soldRecord) {
+      return res.status(404).json({ success: false, message: "Sold record not found" });
+    }
 
-      productFields: [],                  // orders have no productFields
-      soldFields,                         // ✅ REAL SOLD INPUTS
-
-      sellingPrice: Number(sellingPrice || 0),
-      discount: Number(discount || 0),
-      inventoryPrice: Number(order.buyingCostPrice || 0),
-      payments,
+    soldRecord.payments.push({
+      amount: Number(amount),
+      mode,
+      notes,
+      reference,
+      paidBy,
+      recordedBy,
+      date: new Date(),
     });
 
-    await sold.save();
+    await soldRecord.save();
 
-    res.json({ success: true, sold });
-  } catch (err) {
-    console.error("SELL ORDER ERROR:", err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(200).json({
+      success: true,
+      message: "Payment recorded successfully",
+      data: soldRecord,
+    });
+  } catch (error) {
+    console.error("Error updating payment:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

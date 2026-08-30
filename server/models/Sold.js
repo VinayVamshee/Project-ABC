@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Counter from "./counterModel.js";
+import "./Inventory.js";
+import "./BusinessContact.js";
 
 /* ---------------- PAYMENT ---------------- */
 const paymentSchema = new mongoose.Schema(
@@ -17,17 +19,6 @@ const paymentSchema = new mongoose.Schema(
 );
 
 /* ---------------- FIELD VALUE ---------------- */
-const fieldValueSchema = new mongoose.Schema(
-  {
-    fieldRef: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "InputField",
-      required: true,
-    },
-    value: { type: mongoose.Schema.Types.Mixed, default: null },
-  },
-  { _id: false }
-);
 
 /* ---------------- SOLD ---------------- */
 const soldSchema = new mongoose.Schema(
@@ -39,6 +30,11 @@ const soldSchema = new mongoose.Schema(
       ref: "Inventory",
       default: null,
     },
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessContact",
+      default: null,
+    },
 
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,8 +44,6 @@ const soldSchema = new mongoose.Schema(
 
     productID: { type: String },
 
-    productFields: { type: [fieldValueSchema], default: [] },
-    soldFields: { type: [fieldValueSchema], default: [] },
 
     inventoryPrice: { type: Number, default: 0 },
     sellingPrice: { type: Number, default: 0 },
@@ -69,6 +63,8 @@ const soldSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 );
+
+soldSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 /* 🔒 HARD RULE: INVENTORY OR ORDER (ONLY ONE) */
 soldSchema.pre("validate", function (next) {

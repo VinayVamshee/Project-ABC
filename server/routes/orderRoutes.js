@@ -1,4 +1,6 @@
 import express from "express";
+import { validateRequest } from "../middleware/validate.middleware.js";
+import { createOrderSchema, updateOrderSchema } from "../validations/order.validation.js";
 import {
   createOrder,
   getAllOrders,
@@ -10,10 +12,10 @@ import {
 
 const router = express.Router();
 
-router.post("/", createOrder);
+router.post("/", validateRequest(createOrderSchema), createOrder);
 router.get("/", getAllOrders);
 router.get("/:id", getOrderById);
-router.put("/:id", updateOrder);
+router.put("/:id", validateRequest(updateOrderSchema), updateOrder);
 router.delete("/:id", deleteOrder);
 // router.post("/:id/sell", sellOrder);
 export default router;

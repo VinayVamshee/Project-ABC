@@ -29,14 +29,7 @@ export default function Sold() {
 
     // ---------------- FETCH FIELDS ----------------
     const fetchFields = async () => {
-        try {
-            const res = await api.get("/fields");
-            if (res.data?.success) {
-                setAllFields(res.data.fields || []);
-            }
-        } catch (err) {
-            console.error("Failed to load fields", err);
-        }
+        setAllFields([]);
     };
 
     useEffect(() => {
