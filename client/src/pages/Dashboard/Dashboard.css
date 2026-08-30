@@ -1060,39 +1060,309 @@ body.theme-dark .dash-sold-item-thumb {
 
 @media (max-width: 768px) {
   .modern-dashboard {
-    padding: 14px 12px 80px;
+    padding: 12px 12px 85px;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .dash-kpi-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .dash-rates-pills-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dash-ledger-four-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .dash-inv-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dash-inv-status-bars {
-    grid-template-columns: 1fr;
-  }
-
+  /* Header adjustments */
   .dash-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .dash-greeting {
+    font-size: 1.25rem;
+  }
+
+  .dash-greeting-sub {
+    font-size: 0.78rem;
   }
 
   .dash-header__right {
     width: 100%;
+    display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dash-pill {
+    padding: 5px 12px;
+    font-size: 0.76rem;
+  }
+
+  .dash-profile-chip {
+    padding: 3px 10px 3px 4px;
+  }
+
+  .dash-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .dash-profile-name {
+    font-size: 0.76rem;
+  }
+
+  .dash-profile-role {
+    font-size: 0.62rem;
+  }
+
+  /* 2x2 Clean KPI Grid on Mobile */
+  .dash-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .dash-kpi-card {
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+
+  .dash-kpi-card__icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+
+  .dash-kpi-card__left {
+    gap: 8px;
+  }
+
+  .dash-kpi-card__label {
+    font-size: 0.7rem;
+  }
+
+  .dash-kpi-card__value {
+    font-size: 1.02rem;
+  }
+
+  .dash-kpi-card__trend {
+    font-size: 0.66rem;
+  }
+
+  .dash-kpi-card__spark {
+    display: none;
+  }
+
+  /* Cards styling */
+  .dash-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .dash-card__header {
+    margin-bottom: 10px;
+  }
+
+  .dash-card__title {
+    font-size: 0.88rem;
+  }
+
+  /* Rates 2x2 Grid */
+  .dash-rates-ledger-grid {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .dash-rates-pills-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .dash-rate-pill {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .dash-rate-name {
+    font-size: 0.68rem;
+  }
+
+  .dash-rate-price {
+    font-size: 0.86rem;
+  }
+
+  .dash-rate-change {
+    font-size: 0.66rem;
+  }
+
+  /* Ledger Summary 2x2 Grid */
+  .dash-ledger-four-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .dash-ledger-sub {
+    font-size: 0.68rem;
+  }
+
+  .dash-ledger-val {
+    font-size: 0.88rem;
+  }
+
+  /* Middle 4 Sections */
+  .dash-middle-four-grid {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .dash-time-tabs {
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 3px;
+    gap: 2px;
+  }
+
+  .dash-time-tab {
+    padding: 2px 7px;
+    font-size: 0.66rem;
+    flex-shrink: 0;
+  }
+
+  .dash-chart-legend {
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .dash-legend-item {
+    font-size: 0.68rem;
+  }
+
+  .dash-chart-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding-top: 8px;
+    margin-top: 6px;
+  }
+
+  .dash-donut-legend-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+
+  .dash-donut-sub {
+    font-size: 0.64rem;
+  }
+
+  .dash-donut-val {
+    font-size: 0.72rem;
+  }
+
+  .dash-donut-amt {
+    font-size: 0.62rem;
+  }
+
+  /* Bottom 3 Panels */
+  .dash-bottom-three-grid {
+    gap: 12px;
+  }
+
+  .dash-inv-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .dash-inv-stat-box {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .dash-inv-stat-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .dash-inv-stat-sub {
+    font-size: 0.64rem;
+  }
+
+  .dash-inv-stat-val {
+    font-size: 0.82rem;
+  }
+
+  .dash-inv-status-bars {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dash-inv-status-bar {
+    padding: 6px 10px;
+  }
+
+  .dash-sold-items-list {
+    gap: 8px;
+  }
+
+  .dash-sold-item-row {
+    padding: 4px 0;
+    gap: 8px;
+  }
+
+  .dash-sold-item-thumb {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .dash-sold-item-name {
+    font-size: 0.74rem;
+  }
+
+  .dash-sold-item-price {
+    font-size: 0.78rem;
+  }
+
+  .dash-activity-timeline {
+    gap: 8px;
+  }
+
+  .dash-activity-timeline-row {
+    padding: 2px 0;
+    gap: 8px;
+  }
+
+  .dash-activity-icon-box {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .dash-activity-title {
+    font-size: 0.72rem;
+  }
+
+  .dash-activity-subtitle {
+    font-size: 0.64rem;
+  }
+
+  .dash-activity-amount {
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-rates-pills-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dash-ledger-four-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
