@@ -106,9 +106,9 @@ export default function AddInventoryItem() {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const res = await api.get("/ledger/contacts");
+        const res = await api.get("/contacts");
         if (res.data.success) {
-          setWholesalers(res.data.data || []);
+          setWholesalers(res.data.contacts || []);
         }
       } catch (err) {
         console.error("Error fetching wholesalers:", err);

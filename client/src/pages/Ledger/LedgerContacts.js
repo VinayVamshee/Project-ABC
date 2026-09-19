@@ -15,7 +15,7 @@ export default function LedgerContacts() {
 
   const fetchContacts = async () => {
     try {
-      const res = await api.get("/ledger/contacts");
+      const res = await api.get("/ledger/balances");
       if (res.data.success) {
         setContacts(res.data.contacts);
       }
@@ -35,7 +35,7 @@ export default function LedgerContacts() {
     setIsAdding(true);
     try {
       const catArray = categories.split(",").map(c => c.trim()).filter(c => c);
-      const res = await api.post("/ledger/contacts", { name, phone, categories: catArray });
+      const res = await api.post("/contacts", { name, phone, categories: catArray });
       if (res.data.success) {
         notify.success("Contact added");
         setName("");

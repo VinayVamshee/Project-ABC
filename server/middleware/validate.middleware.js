@@ -15,10 +15,11 @@ export const validateRequest = (schema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        const errorList = error.errors || error.issues || [];
         return res.status(400).json({
           success: false,
           message: "Input Validation Failed",
-          errors: error.errors.map(err => ({ field: err.path.join('.'), message: err.message })),
+          errors: errorList.map(err => ({ field: err.path?.join('.') || 'unknown', message: err.message })),
         });
       }
       next(error);

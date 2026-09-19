@@ -10,7 +10,7 @@ export const createInventoryItemSchema = {
     baseCostPrice: z.number({ required_error: "baseCostPrice is required" }).min(0, "Price must be positive"),
     productName: z.string().optional(),
     category: z.string().optional(),
-    wholeSellerId: objectId.optional(),
+    wholeSellerId: objectId.optional().nullable(),
     quality: z.string().optional(),
     grossWeight: z.number().min(0).optional(),
     netWeight: z.number().min(0).optional(),
@@ -20,7 +20,7 @@ export const createInventoryItemSchema = {
     productImage: z.string().optional(),
     modelImage: z.string().optional(),
     fields: z.any().optional(), // allow legacy fields payload during transition
-  }),
+  }).passthrough(),
 };
 
 export const createBulkInventoryItemsSchema = {
