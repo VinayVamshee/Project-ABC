@@ -57,6 +57,7 @@ export default function AddInventoryItem() {
   const isEditMode = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [wholesalers, setWholesalers] = useState([]);
 
   // Form State (Cleaned of all removed fields)
@@ -247,30 +248,63 @@ export default function AddInventoryItem() {
     }));
   };
 
-  // Image Upload handler (Base64 file preview)
-  const handleImageFile = (e, fieldName) => {
+  const uploadToImgBB = async (file) => {
+    const formData = new FormData();
+    formData.append("key", "8451f34223c6e62555eec9187d855f8f");
+    formData.append("image", file);
+    setUploading(true);
+    try {
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && (data.data?.display_url || data.data?.url)) {
+        return data.data.display_url || data.data.url;
+      } else {
+        throw new Error(data.error?.message || "Upload failed");
+      }
+    } catch (err) {
+      console.error("Image upload failed", err);
+      notify.error("Image upload failed: " + err.message);
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Image Upload handler (Uploads to ImgBB)
+  const handleImageFile = async (e, fieldName) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({ ...prev, [fieldName]: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const uploadedUrl = await uploadToImgBB(file);
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, [fieldName]: uploadedUrl }));
+      }
+    } catch (err) {
+      console.error("Primary image upload error", err);
+    }
   };
 
-  const handleMultipleImages = (e) => {
+  const handleMultipleImages = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          productImages: [...prev.productImages, reader.result],
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+    if (!files.length) return;
+
+    for (const file of files) {
+      try {
+        const uploadedUrl = await uploadToImgBB(file);
+        if (uploadedUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            productImages: [...prev.productImages, uploadedUrl],
+          }));
+        }
+      } catch (err) {
+        console.error("Multiple image upload error", err);
+      }
+    }
   };
 
   const handleRemoveProductImage = (indexToRemove) => {
@@ -357,9 +391,9 @@ export default function AddInventoryItem() {
             type="button"
             className="btn btn-gold-solid rounded-pill px-4 shadow-sm"
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || uploading}
           >
-            <FiSave className="me-2" /> {loading ? "Saving..." : "Save Item"}
+            <FiSave className="me-2" /> {loading ? "Saving..." : uploading ? "Uploading Image..." : "Save Item"}
           </button>
         </div>
       </header>
