@@ -16,7 +16,28 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, ".env") });
 dotenv.config();
 
+
 const app = express();
+
+// ✅ MongoDB connection (Serverless Optimized)
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        const db = await mongoose.connect(process.env.MONGO_URI);
+        isConnected = db.connections[0].readyState === 1;
+        console.log("✅ MongoDB connected (Serverless mode)");
+    } catch (err) {
+        console.error("❌ MongoDB connection failed:", err.message);
+    }
+};
+
+// Middleware to ensure DB connection on every request
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
+
 
 // ✅ Middleware
 app.use(express.json({ limit: "50mb" }));
@@ -73,24 +94,7 @@ app.get("/", (req, res) => {
     res.send("ABC Server is running successfully 🚀");
 });
 
-// ✅ MongoDB connection (Serverless Optimized)
-let isConnected = false;
-const connectDB = async () => {
-    if (isConnected) return;
-    try {
-        const db = await mongoose.connect(process.env.MONGO_URI);
-        isConnected = db.connections[0].readyState === 1;
-        console.log("✅ MongoDB connected (Serverless mode)");
-    } catch (err) {
-        console.error("❌ MongoDB connection failed:", err.message);
-    }
-};
 
-// Middleware to ensure DB connection on every request for Vercel
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
-});
 
 // ✅ Global Error Handler
 app.use(errorHandler);
