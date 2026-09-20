@@ -26,8 +26,7 @@ app.use(cookieParser());
 // ✅ CORS FIX — allow frontend (React) to talk to backend
 const allowedOrigins = [
     "https://abc-aneesh-buisness-console.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3001",
+    "http://localhost:3000"
 ].filter(Boolean);
 
 app.use(
@@ -74,15 +73,32 @@ app.get("/", (req, res) => {
     res.send("ABC Server is running successfully 🚀");
 });
 
-// ✅ MongoDB connection
-mongoose
-    .connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch((err) => console.error("❌ MongoDB connection failed:", err.message));
+// ✅ MongoDB connection (Serverless Optimized)
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        const db = await mongoose.connect(process.env.MONGO_URI);
+        isConnected = db.connections[0].readyState === 1;
+        console.log("✅ MongoDB connected (Serverless mode)");
+    } catch (err) {
+        console.error("❌ MongoDB connection failed:", err.message);
+    }
+};
+
+// Middleware to ensure DB connection on every request for Vercel
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
 // ✅ Global Error Handler
 app.use(errorHandler);
 
-// ✅ Start server
-const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ✅ Start server (Only if not running on Vercel)
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+    const PORT = process.env.PORT;
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
+
+export default app;
