@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { notify } from "../../components/Toast/toast";
 import "./AddInventoryItem.css";
@@ -13,6 +14,7 @@ import {
   FiLayers,
 } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa";
+import LogoLoader from "../../components/Loader/LogoLoader";
 
 const CATEGORIES = [
   "Necklace / హారం (Haram)",
@@ -55,10 +57,11 @@ export default function AddInventoryItem() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [wholesalers, setWholesalers] = useState([]);
+
 
   // Form State (Cleaned of all removed fields)
   const [formData, setFormData] = useState({
@@ -104,48 +107,40 @@ export default function AddInventoryItem() {
   const [tagInput, setTagInput] = useState("");
 
   // Fetch Wholesalers for purchase section
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const res = await api.get("/contacts");
-        if (res.data.success) {
-          setWholesalers(res.data.contacts || []);
-        }
-      } catch (err) {
-        console.error("Error fetching wholesalers:", err);
-      }
-    };
-    fetchContacts();
-  }, []);
+  const { data: wholesalers = [] } = useQuery({
+    queryKey: ['contacts'],
+    queryFn: async () => {
+      const res = await api.get("/contacts");
+      return res.data.contacts || [];
+    }
+  });
 
   // Fetch item data if in edit mode
+  const { data: itemData, error: itemError } = useQuery({
+    queryKey: ['inventory', id],
+    queryFn: async () => {
+      const res = await api.get(`/inventory/${id}`);
+      return res.data.data;
+    },
+    enabled: isEditMode,
+  });
+
   useEffect(() => {
-    if (isEditMode) {
-      const fetchItem = async () => {
-        try {
-          setLoading(true);
-          const res = await api.get(`/inventory/${id}`);
-          if (res.data.success && res.data.data) {
-            const item = res.data.data;
-            setFormData({
-              ...item,
-              wholeSellerId: item.wholeSellerId?._id || item.wholeSellerId || "",
-              purchaseDate: item.purchaseDate ? new Date(item.purchaseDate).toISOString().slice(0, 10) : "",
-              stones: item.stones || [],
-              tags: item.tags || [],
-              productImages: item.productImages || [],
-            });
-          }
-        } catch (err) {
-          console.error("Error loading item:", err);
-          notify.error("Failed to load inventory item");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchItem();
+    if (itemData) {
+      setFormData({
+        ...itemData,
+        wholeSellerId: itemData.wholeSellerId?._id || itemData.wholeSellerId || "",
+        purchaseDate: itemData.purchaseDate ? new Date(itemData.purchaseDate).toISOString().slice(0, 10) : "",
+        stones: itemData.stones || [],
+        tags: itemData.tags || [],
+        productImages: itemData.productImages || [],
+      });
     }
-  }, [id, isEditMode]);
+    if (itemError) {
+      console.error("Error loading item:", itemError);
+      notify.error("Failed to load inventory item");
+    }
+  }, [itemData, itemError]);
 
   // Recalculate Net Weight automatically
   const handleWeightChange = (field, val) => {
@@ -352,6 +347,7 @@ export default function AddInventoryItem() {
 
       if (res.data.success) {
         notify.success(isEditMode ? "Inventory item updated successfully!" : "Inventory item added successfully!");
+        queryClient.invalidateQueries({ queryKey: ["inventory"] });
         navigate("/inventory");
       }
     } catch (err) {
@@ -364,6 +360,12 @@ export default function AddInventoryItem() {
 
   return (
     <div className="add-inventory-page">
+      {(loading || uploading) && (
+        <LogoLoader 
+          fullScreen={true} 
+          text={uploading ? "Uploading Image..." : "Saving Item..."} 
+        />
+      )}
       {/* HEADER & ACTION BUTTONS */}
       <header className="add-inv-header">
         <div className="add-inv-header__left">

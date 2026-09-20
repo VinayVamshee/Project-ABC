@@ -1,0 +1,136 @@
+.bulk-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; transition: all 0.3s ease;
+}
+
+.bulk-modal-content {
+  background: white;
+  width: 90%;
+  max-width: 800px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.theme-dark .bulk-modal-content {
+  background: #1E293B;
+  color: #F8FAFC;
+}
+
+.bulk-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.theme-dark .bulk-modal-header { border-bottom-color: #334155; }
+
+.bulk-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.bulk-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.bulk-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.theme-dark .bulk-modal-footer { border-top-color: #334155; }
+
+.upload-zone {
+  border: 2px dashed #CBD5E1;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  background: #F8FAFC;
+}
+.theme-dark .upload-zone {
+  border-color: #475569;
+  background: #0F172A;
+}
+.upload-zone:hover {
+  border-color: #C8A14B;
+}
+
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+.theme-dark .progress-container { background: #334155; }
+
+.progress-bar-fill {
+  height: 100%;
+  background: #C8A14B;
+  transition: width 0.3s ease;
+}
+
+.summary-card {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: #F1F5F9;
+}
+.theme-dark .summary-card { background: #0F172A; }
+
+.error-list {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  margin-top: 10px;
+}
+
+.error-item {
+  color: #DC2626;
+  background: #FEF2F2;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.theme-dark .error-item {
+  background: rgba(220, 38, 38, 0.1);
+  color: #F87171;
+}
+
+.success-item {
+  color: #16A34A;
+  font-size: 0.9rem;
+}
+
+
+.bulk-modal-overlay.importing-locked {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  cursor: wait;
+}
+
+.bulk-modal-overlay.importing-locked .bulk-modal-content {
+  pointer-events: none; /* Prevent any accidental clicks inside the modal while importing */
+}

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import { notify } from "../../components/Toast/toast";
 import "./Ledger.css";
 
 export default function LedgerContacts() {
-  const [contacts, setContacts] = useState([]);
+  const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
   
   // Form state
@@ -13,21 +14,16 @@ export default function LedgerContacts() {
   const [phone, setPhone] = useState("");
   const [categories, setCategories] = useState("");
 
-  const fetchContacts = async () => {
-    try {
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['ledgerBalances'],
+    queryFn: async () => {
       const res = await api.get("/ledger/balances");
       if (res.data.success) {
-        setContacts(res.data.contacts);
+        return res.data.contacts || [];
       }
-    } catch (err) {
-      console.error(err);
-      notify.error("Failed to load ledger contacts");
+      return [];
     }
-  };
-
-  useEffect(() => {
-    fetchContacts();
-  }, []);
+  });
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -42,7 +38,7 @@ export default function LedgerContacts() {
         setPhone("");
         setCategories("");
         document.getElementById("closeAddContactBtn")?.click();
-        fetchContacts();
+        queryClient.invalidateQueries({ queryKey: ["ledgerBalances"] });
       }
     } catch (err) {
       console.error(err);

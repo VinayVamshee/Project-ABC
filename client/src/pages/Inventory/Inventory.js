@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as XLSX from "xlsx";
 import JsBarcode from "jsbarcode";
 import api from "../../api/axios";
@@ -33,6 +34,8 @@ import {
   FaFolder,
   FaGem,
 } from "react-icons/fa";
+import LogoLoader from "../../components/Loader/LogoLoader";
+import BulkImportModal from "../../components/BulkImport/BulkImportModal";
 
 // Visual Barcode SVG Component
 const BarcodeSvg = ({ value }) => {
@@ -62,7 +65,8 @@ const BarcodeSvg = ({ value }) => {
 
 export default function Inventory() {
   const navigate = useNavigate();
-  const [items, setItems] = useState([]);
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [isExpandedView, setIsExpandedView] = useState(false);
@@ -85,30 +89,30 @@ export default function Inventory() {
   const [mobileMaxPrice, setMobileMaxPrice] = useState("");
   const [mobileSortBy, setMobileSortBy] = useState("recent");
   const [mobileSortOrder, setMobileSortOrder] = useState("desc");
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
-  // Bulk Upload State
-  const [bulkPreviewItems, setBulkPreviewItems] = useState([]);
-  const [isImporting, setIsImporting] = useState(false);
 
-  const fetchInventory = useCallback(async () => {
-    try {
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ['inventory'],
+    queryFn: async () => {
       const res = await api.get("/inventory");
       if (res.data.success) {
-        setItems(res.data.items || []);
-        const inStockItems = (res.data.items || []).filter((i) => i.inStock);
-        if (inStockItems.length > 0 && !selectedItem) {
-          setSelectedItem(inStockItems[0]);
-          setActiveImageIndex(0);
-        }
+        return res.data.items || [];
       }
-    } catch (err) {
-      notify.error("Failed to load inventory");
-    }
-  }, [selectedItem]);
+      throw new Error("Failed to load inventory");
+    },
+  });
 
   useEffect(() => {
-    fetchInventory();
-  }, [fetchInventory]);
+    if (items.length > 0 && !selectedItem) {
+      const inStockItems = items.filter((i) => i.inStock);
+      if (inStockItems.length > 0) {
+        setSelectedItem(inStockItems[0]);
+        setActiveImageIndex(0);
+      }
+    }
+  }, [items, selectedItem]);
 
   // Distinct categories
   const categoriesList = Array.from(
@@ -252,159 +256,9 @@ export default function Inventory() {
     notify.success("Exported inventory to Excel successfully!");
   };
 
-  // DOWNLOAD TEMPLATE
-  const handleDownloadTemplate = async () => {
-    try {
-      notify.info("Generating Excel template with live wholesalers & categories...");
-      const response = await api.get("/inventory/template", {
-        responseType: "blob",
-      });
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "ABC_Inventory_Bulk_Import_Template.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      notify.success("Downloaded Excel template with dynamic dropdowns!");
-    } catch (err) {
-      console.error("Error downloading template from server:", err);
-      notify.error("Failed to download template from server.");
-    }
-  };
-
-  // PARSE BULK UPLOAD FILE
-  const handleBulkFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-        if (jsonRows.length === 0) {
-          notify.error("The uploaded spreadsheet has no data rows.");
-          return;
-        }
-
-        const normalizedItems = jsonRows.map((row) => {
-          let productName = "";
-          let category = "Other Jewellery / ఇతర ఆభరణాలు";
-          let metalType = "Gold";
-          let purity = 91.6;
-          let grossWeight = 0;
-          let stoneWeight = 0;
-          let otherWeight = 0;
-          let netWeight = 0;
-          let baseCostPrice = 0;
-          let totalCostPrice = 0;
-          let gender = "Unisex";
-          let occasion = "Daily & Traditional";
-          let stoneComposition = "";
-          let productImage = "";
-          let notes = "";
-
-          Object.entries(row).forEach(([col, val]) => {
-            const c = col.trim().toLowerCase();
-            if (c.includes("product name") || c.includes("name") || c.includes("item")) {
-              productName = String(val).trim();
-            } else if (c.includes("category")) {
-              category = String(val).trim();
-            } else if (c.includes("metal")) {
-              metalType = String(val).trim() || "Gold";
-            } else if (c.includes("purity")) {
-              purity = parseFloat(val) || 91.6;
-            } else if (c.includes("gross")) {
-              grossWeight = parseFloat(val) || 0;
-            } else if (c.includes("stone weight")) {
-              stoneWeight = parseFloat(val) || 0;
-            } else if (c.includes("other weight")) {
-              otherWeight = parseFloat(val) || 0;
-            } else if (c.includes("net weight") || c.includes("net wt")) {
-              netWeight = parseFloat(val) || 0;
-            } else if (c.includes("cost") || c.includes("buying") || c.includes("price")) {
-              if (c.includes("total")) {
-                totalCostPrice = parseFloat(val) || 0;
-              } else {
-                baseCostPrice = parseFloat(val) || 0;
-              }
-            } else if (c.includes("gender")) {
-              gender = String(val).trim() || "Unisex";
-            } else if (c.includes("occasion")) {
-              occasion = String(val).trim();
-            } else if (c.includes("stone composition") || c.includes("stone comp")) {
-              stoneComposition = String(val).trim();
-            } else if (c.includes("image") || c.includes("photo") || c.includes("url")) {
-              productImage = String(val).trim();
-            } else if (c.includes("note") || c.includes("desc")) {
-              notes = String(val).trim();
-            }
-          });
-
-          if (!netWeight && grossWeight > 0) {
-            netWeight = Math.max(0, grossWeight - stoneWeight - otherWeight);
-          }
-
-          return {
-            productName: productName || "Jewellery Item",
-            category: category || "Other Jewellery / ఇతర ఆభరణాలు",
-            metalType,
-            purity,
-            grossWeight: Number(grossWeight.toFixed(3)),
-            stoneWeight: Number(stoneWeight.toFixed(3)),
-            otherWeight: Number(otherWeight.toFixed(3)),
-            netWeight: Number(netWeight.toFixed(3)),
-            baseCostPrice: baseCostPrice || 0,
-            totalCostPrice: totalCostPrice || baseCostPrice || 0,
-            gender,
-            occasion,
-            stoneComposition,
-            productImage,
-            notes,
-            inStock: true,
-          };
-        });
-
-        setBulkPreviewItems(normalizedItems);
-        notify.success(`Parsed ${normalizedItems.length} items from ${file.name}`);
-      } catch (err) {
-        console.error("Bulk file parse error:", err);
-        notify.error("Failed to parse spreadsheet file.");
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  // CONFIRM AND BULK INSERT
-  const handleConfirmBulkImport = async () => {
-    if (bulkPreviewItems.length === 0 || isImporting) return;
-    setIsImporting(true);
-
-    try {
-      const res = await api.post("/inventory/bulk", { items: bulkPreviewItems });
-      if (res.data.success) {
-        notify.success(`Successfully imported ${res.data.count} inventory items into stock!`);
-        setBulkPreviewItems([]);
-        document.getElementById("closeBulkModalBtn")?.click();
-        fetchInventory();
-      }
-    } catch (err) {
-      console.error("Bulk import failed:", err);
-      notify.error(err.response?.data?.message || "Failed to import items.");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
+  
+  
+  
   // Extract all available images for selected product
   const getProductImageGallery = (item) => {
     if (!item) return [];
@@ -479,6 +333,7 @@ export default function Inventory() {
 
   return (
     <div className="inventory-workspace">
+      {isLoading && <LogoLoader fullScreen={true} text="Loading Inventory..." />}
       {/* ============================================================
          DESKTOP SECTION (>= 768px)
          ============================================================ */}
@@ -496,8 +351,7 @@ export default function Inventory() {
           </button>
           <button
             className="btn-outline"
-            data-bs-toggle="modal"
-            data-bs-target="#bulkImportModal"
+            onClick={() => setIsBulkModalOpen(true)}
             title="Bulk Excel Import"
           >
             <FaCloudUploadAlt /> Bulk Upload
@@ -1787,15 +1641,7 @@ export default function Inventory() {
               >
                 <FaCloudUploadAlt className="text-success" /> Bulk Upload (Excel)
               </button>
-              <button
-                className="mobile-sheet-menu-item"
-                onClick={() => {
-                  setMobileQuickMenuOpen(false);
-                  handleDownloadTemplate();
-                }}
-              >
-                <FaFileExport className="text-info" /> Download Import Template
-              </button>
+
               <button
                 className="mobile-sheet-menu-item danger mt-2"
                 onClick={() => setMobileQuickMenuOpen(false)}
@@ -1868,7 +1714,7 @@ export default function Inventory() {
                       notify.success("Item deleted successfully!");
                       setMobileItemActionsOpen(false);
                       setMobileDetailOpen(false);
-                      fetchInventory();
+                      queryClient.invalidateQueries({ queryKey: ["inventory"] });
                     } catch (err) {
                       notify.error("Failed to delete item.");
                     }
@@ -1884,109 +1730,7 @@ export default function Inventory() {
 
 
 
-      {/* ============================================================
-         BULK IMPORT MODAL (DESKTOP & MOBILE)
-         ============================================================ */}
-      <div
-        className="modal fade"
-        id="bulkImportModal"
-        tabIndex="-1"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-lg modal-dialog-centered">
-          <div className="modal-content custom-modal">
-            <div className="modal-header border-0 pb-0">
-              <h5 className="modal-title fw-bold">Bulk Upload Inventory</h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                id="closeBulkModalBtn"
-              />
-            </div>
-            <div className="modal-body">
-              <div className="p-3 bg-light rounded-3 mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                  <span className="fw-bold d-block">Download Excel Template</span>
-                  <span className="very-small text-muted">
-                    Pre-populated with your registered wholesalers and categories.
-                  </span>
-                </div>
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={handleDownloadTemplate}
-                >
-                  <FaFileExport /> Download Template
-                </button>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label fw-semibold small">
-                  Upload Completed Excel Sheet (.xlsx)
-                </label>
-                <input
-                  type="file"
-                  className="form-control form-control-sm"
-                  accept=".xlsx, .xls, .csv"
-                  onChange={handleBulkFileSelect}
-                />
-              </div>
-
-              {bulkPreviewItems.length > 0 && (
-                <div>
-                  <span className="fw-bold small d-block mb-2">
-                    Preview Items to Import ({bulkPreviewItems.length})
-                  </span>
-                  <div
-                    className="table-responsive border rounded-3"
-                    style={{ maxHeight: 200 }}
-                  >
-                    <table className="table table-sm mb-0 very-small">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Name</th>
-                          <th>Category</th>
-                          <th>Net Wt</th>
-                          <th>Gross Wt</th>
-                          <th>Cost Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bulkPreviewItems.slice(0, 10).map((p, i) => (
-                          <tr key={i}>
-                            <td>{p.productName}</td>
-                            <td>{p.category}</td>
-                            <td>{p.netWeight}g</td>
-                            <td>{p.grossWeight}g</td>
-                            <td>₹{p.baseCostPrice}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer border-0">
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-gold btn-sm"
-                disabled={bulkPreviewItems.length === 0 || isImporting}
-                onClick={handleConfirmBulkImport}
-              >
-                {isImporting ? "Importing..." : "Confirm & Import Stock"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            <BulkImportModal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} />
     </div>
   );
 }

@@ -246,9 +246,7 @@ export const downloadBulkImportTemplate = async (req, res) => {
   try {
     const contacts = await BusinessContact.find({ categories: "Wholeseller" }).sort({ name: 1 });
     const wholesalerNames = contacts.map((c) => c.name).filter(Boolean);
-    if (wholesalerNames.length === 0) {
-      wholesalerNames.push("Default Supplier", "Balaji Gold Bullion", "Sri Lakshmi Refineries");
-    }
+
 
     const categories = [
       "Necklace / హారం (Haram)",
@@ -374,110 +372,9 @@ export const downloadBulkImportTemplate = async (req, res) => {
       };
     });
 
-    // Sample data rows
-    const sampleRows = [
-      {
-        productName: "22K Gold Kasulaperu Necklace (Lakshmi Coins)",
-        category: "Kasulaperu / కాసుల పేరు",
-        wholesaler: wholesalerNames[0] || "",
-        metalType: "Gold",
-        purity: "91.6 (22K)",
-        grossWeight: 45.5,
-        stoneWeight: 1.5,
-        otherWeight: 0.0,
-        netWeight: { formula: "F2-G2-H2", result: 44.0 },
-        baseCostPrice: 195000,
-        totalCostPrice: 195000,
-        purchaseType: "Cash",
-        gender: "Women",
-        occasion: "Bridal / Wedding",
-        stoneComposition: "Burmese Rubies & Uncut Polki",
-        productImage: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=500",
-        notes: "Antique finish hallmarked 916 with Lakshmi embossing",
-      },
-      {
-        productName: "22K Designer Gold Vaddanam (Peacock Waist Belt)",
-        category: "Waist Belt / వడ్డాణం (Vaddanam)",
-        wholesaler: wholesalerNames[0] || "",
-        metalType: "Gold",
-        purity: "91.6 (22K)",
-        grossWeight: 105.0,
-        stoneWeight: 2.5,
-        otherWeight: 0.0,
-        netWeight: { formula: "F3-G3-H3", result: 102.5 },
-        baseCostPrice: 450000,
-        totalCostPrice: 450000,
-        purchaseType: "Cash",
-        gender: "Women",
-        occasion: "Bridal / Wedding",
-        stoneComposition: "Natural Rubies & Emerald drops",
-        productImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500",
-        notes: "Royal temple nakshi bridal kamarbandh",
-      },
-      {
-        productName: "Silver Fancy Bridal Pattilu (Gajjelu)",
-        category: "Pattilu / పట్టీలు (Anklets / Payal)",
-        wholesaler: wholesalerNames[0] || "",
-        metalType: "Silver",
-        purity: "92.5 (Silver)",
-        grossWeight: 120.0,
-        stoneWeight: 0.0,
-        otherWeight: 0.0,
-        netWeight: { formula: "F4-G4-H4", result: 120.0 },
-        baseCostPrice: 11500,
-        totalCostPrice: 11500,
-        purchaseType: "Cash",
-        gender: "Women",
-        occasion: "Daily & Traditional",
-        stoneComposition: "Pure Silver with tinkling bell gajjelu",
-        productImage: "",
-        notes: "Sterling 925 silver heavy bridal payal set",
-      },
-      {
-        productName: "22K Temple Gold Buttalu (Jhumkas)",
-        category: "Earrings / బుట్టలు (Buttalu / Jhumkas)",
-        wholesaler: wholesalerNames[0] || "",
-        metalType: "Gold",
-        purity: "91.6 (22K)",
-        grossWeight: 21.4,
-        stoneWeight: 1.3,
-        otherWeight: 0.0,
-        netWeight: { formula: "F5-G5-H5", result: 20.1 },
-        baseCostPrice: 88000,
-        totalCostPrice: 88000,
-        purchaseType: "Credit",
-        gender: "Women",
-        occasion: "Festive",
-        stoneComposition: "Rubies with small pearl hangings",
-        productImage: "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=500",
-        notes: "Traditional south Indian bridal buttalu",
-      },
-      {
-        productName: "22K Men Navaratna Gold Ungaram (Ring)",
-        category: "Ring / ఉంగరం (Ungaram)",
-        wholesaler: wholesalerNames[0] || "",
-        metalType: "Gold",
-        purity: "91.6 (22K)",
-        grossWeight: 9.2,
-        stoneWeight: 1.4,
-        otherWeight: 0.0,
-        netWeight: { formula: "F6-G6-H6", result: 7.8 },
-        baseCostPrice: 42000,
-        totalCostPrice: 42000,
-        purchaseType: "Cash",
-        gender: "Men",
-        occasion: "Daily & Traditional",
-        stoneComposition: "Certified 9 Planetary Navaratna Gems",
-        productImage: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500",
-        notes: "Auspicious Navaratna ring in hallmarked gold",
-      },
-    ];
-
-    sampleRows.forEach((r) => ws.addRow(r));
-
     // Data Validation Rules for 500 rows
     const catRange = `Lists_Data!$A$2:$A$${categories.length + 1}`;
-    const wsRange = `Lists_Data!$B$2:$B$${wholesalerNames.length + 1}`;
+    const wsRange = wholesalerNames.length > 0 ? `Lists_Data!$B$2:$B$${wholesalerNames.length + 1}` : null;
     const metalRange = `Lists_Data!$C$2:$C$${metalTypes.length + 1}`;
     const purityRange = `Lists_Data!$D$2:$D$${purities.length + 1}`;
     const genderRange = `Lists_Data!$E$2:$E$${genders.length + 1}`;
@@ -499,14 +396,16 @@ export const downloadBulkImportTemplate = async (req, res) => {
       };
 
       // Wholesaler Dropdown (Column C)
-      ws.getCell(`C${r}`).dataValidation = {
-        type: "list",
-        allowBlank: true,
-        formulae: [wsRange],
-        errorStyle: "information",
-        errorTitle: "Select Wholesaler",
-        error: "Select a wholesaler from your ledger contacts.",
-      };
+      if (wsRange) {
+        ws.getCell(`C${r}`).dataValidation = {
+          type: "list",
+          allowBlank: true,
+          formulae: [wsRange],
+          errorStyle: "information",
+          errorTitle: "Select Wholesaler",
+          error: "Select a wholesaler from your ledger contacts.",
+        };
+      }
 
       // Metal Type Dropdown (Column D)
       ws.getCell(`D${r}`).dataValidation = {

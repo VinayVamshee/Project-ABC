@@ -25,6 +25,17 @@ import ToastProvider from "./components/Toast/ToastProvider";
 import BarcodeScanner from "./components/BarcodeScanner/BarcodeScanner";
 import Layout from "./components/Layout/Layout";
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes caching
+      refetchOnWindowFocus: true,
+    },
+  },
+});
+
 function App() {
 
   // Load saved theme
@@ -34,15 +45,15 @@ function App() {
   }, []);
 
   return (
-    <ToastProvider>
-      <div className="App">
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <div className="App">
+          {/* ROUTES */}
+          <BrowserRouter>
+            <BarcodeScanner />
+            <Routes>
 
-        {/* ROUTES */}
-        <BrowserRouter>
-          <BarcodeScanner />
-          <Routes>
-
-            {/* ✅ PUBLIC */}
+              {/* ✅ PUBLIC */}
             <Route path="/" element={<Home />} />
 
             {/* 🔐 PROTECTED with Sidebar Layout */}
@@ -183,6 +194,7 @@ function App() {
         </BrowserRouter>
       </div>
     </ToastProvider>
+    </QueryClientProvider>
   );
 }
 
