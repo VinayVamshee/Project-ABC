@@ -18,6 +18,20 @@ export default function LedgerContactView() {
   const [loading,      setLoading]      = useState(true);
   const [activeTab,    setActiveTab]    = useState("overview");
 
+
+  const renderGoldValue = (weightGrams, valuation) => {
+    if (!weightGrams) return "0g";
+    const str = `${weightGrams}g`;
+    if (valuation > 0) {
+      return (
+        <span>
+          {str} <span className="text-muted small fw-normal ms-1">(₹{Math.round(valuation).toLocaleString("en-IN")})</span>
+        </span>
+      );
+    }
+    return str;
+  };
+
   // Settlement modal
   const [settling,     setSettling]    = useState(null); // obligation being settled
   const [settleForm,   setSettleForm]  = useState({ settleAsset:"money", moneyAmount:"", goldWeight:"", goldValuation:"", goldRate:"", paymentMethod:"Cash", notes:"" });
@@ -115,13 +129,13 @@ export default function LedgerContactView() {
         {balances.goldOwedToOwner > 0 && (
           <div className="cb-card receivable">
             <div className="cb-label">Gold They Owe</div>
-            <div className="cb-amount green">{fmtg(balances.goldOwedToOwner)}g</div>
+            <div className="cb-amount green">{renderGoldValue(fmtg(balances.goldOwedToOwner), balances.goldOwedToOwnerValuation)}</div>
           </div>
         )}
         {balances.goldOwnerOwes > 0 && (
           <div className="cb-card payable">
             <div className="cb-label">Gold You Owe</div>
-            <div className="cb-amount amber">{fmtg(balances.goldOwnerOwes)}g</div>
+            <div className="cb-amount amber">{renderGoldValue(fmtg(balances.goldOwnerOwes), balances.goldOwnerOwesValuation)}</div>
           </div>
         )}
         {!balances.moneyOwedToOwner && !balances.moneyOwnerOwes && !balances.goldOwedToOwner && !balances.goldOwnerOwes && (

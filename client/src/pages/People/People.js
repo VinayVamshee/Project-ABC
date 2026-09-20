@@ -23,7 +23,6 @@ import {
   FaBars,
   FaArrowUp,
   FaArrowDown,
-  FaCoins,
   FaCopy,
   FaExternalLinkAlt,
 } from "react-icons/fa";
@@ -176,6 +175,20 @@ export default function People() {
     fetchCounts();
   }, [fetchCounts]);
 
+  
+  const renderGoldValue = (weightGrams, valuation) => {
+    if (!weightGrams) return "0.000g";
+    const str = `${weightGrams}g`;
+    if (valuation > 0) {
+      return (
+        <span>
+          {str} <span className="text-muted" style={{fontSize: '0.85em', fontWeight: 500}}>(₹{Math.round(valuation).toLocaleString("en-IN")})</span>
+        </span>
+      );
+    }
+    return str;
+  };
+
   // ── Fetch real ledger balances & transactions for contact ──
   const fetchContactLedgerData = useCallback(async (contactId) => {
     if (!contactId) return;
@@ -194,7 +207,7 @@ export default function People() {
 
     try {
       // 2. Fetch real transactions (up to 100)
-      const txnRes = await api.get(`/ledger/transactions?contactId=${contactId}&limit=100`);
+      const txnRes = await api.get(`/ledger/transactions?contactId=${contactId}&limit=20`);
       if (txnRes.data && txnRes.data.success) {
         setMobileTransactions(txnRes.data.transactions || []);
       } else {
@@ -222,6 +235,23 @@ export default function People() {
       }).catch(console.error);
     }
   }, [location.search, fetchContactLedgerData]);
+
+
+  const handleCloseContactView = () => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("from")) {
+      navigate(-1);
+    } else {
+      setSelected(null);
+      setMobileSelectedContact(null);
+      setMobileDetailOpen(false);
+      setIsExpanded(false);
+      // Remove query param if present
+      if (params.get("contactId") || params.get("id")) {
+        navigate("/people", { replace: true });
+      }
+    }
+  };
 
   const handleTabClick = (tab) => {
     setActiveTab(tab.value);
@@ -691,10 +721,7 @@ export default function People() {
                       </span>
                       <button
                         className="sp-close"
-                        onClick={() => {
-                          setSelected(null);
-                          setIsExpanded(false);
-                        }}
+                        onClick={handleCloseContactView}
                       >
                         <FaTimes />
                       </button>
@@ -774,25 +801,27 @@ export default function People() {
                     <div className="sp-section-title">Ledger Balance Summary</div>
                     <div className="sp-stats-grid">
                       <div className="sp-stat">
-                        <label>You will Receive</label>
+                        <label>Money Receivable</label>
                         <span className="text-success">
-                          ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString()}
+                          ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
                         </span>
                       </div>
                       <div className="sp-stat">
-                        <label>You will Pay</label>
+                        <label>Money Payable</label>
                         <span className="text-danger">
-                          ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString()}
+                          ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="sp-stat full-span">
-                        <label>Gold Balance (Owe / Receive)</label>
-                        <span className="text-gold">
-                          {mobileBalance?.goldOwnerOwes > 0
-                            ? `Owe ${mobileBalance.goldOwnerOwes.toFixed(3)}g`
-                            : mobileBalance?.goldOwedToOwner > 0
-                            ? `Receive ${mobileBalance.goldOwedToOwner.toFixed(3)}g`
-                            : "Settled (0.000g)"}
+                      <div className="sp-stat">
+                        <label>Gold Receivable</label>
+                        <span className="text-success">
+                          {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
+                        </span>
+                      </div>
+                      <div className="sp-stat">
+                        <label>Gold Payable</label>
+                        <span className="text-danger">
+                          {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
                         </span>
                       </div>
                     </div>
@@ -813,7 +842,7 @@ export default function People() {
                       <div className="py-2 text-center text-muted small">No transactions recorded yet.</div>
                     ) : (
                       <div className="d-flex flex-column gap-2">
-                        {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 10)).map((t) => {
+                        {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
                           const isIncoming =
                             t.providerId?._id === selected._id ||
                             t.providerId === selected._id;
@@ -1123,7 +1152,7 @@ export default function People() {
           <div className="mobile-detail-top-nav">
             <button
               className="mobile-detail-back-btn"
-              onClick={() => setMobileDetailOpen(false)}
+              onClick={handleCloseContactView}
             >
               <FaChevronLeft />
             </button>
@@ -1331,7 +1360,7 @@ export default function People() {
               </div>
             ) : (
               <div className="mobile-txns-list">
-                {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 10)).map((t) => {
+                {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
                   const isIncoming =
                     t.providerId?._id === mobileSelectedContact._id ||
                     t.providerId === mobileSelectedContact._id;
@@ -1385,40 +1414,40 @@ export default function People() {
               <div className="mobile-outstanding-row in">
                 <div className="d-flex align-items-center gap-2">
                   <div className="mobile-outstanding-icon in">₹</div>
-                  <span className="small fw-semibold">You will Receive</span>
+                  <span className="small fw-semibold">Money Receivable</span>
                 </div>
                 <span className="fw-bold">
-                  ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString()}
+                  ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
                 </span>
               </div>
 
               <div className="mobile-outstanding-row out">
                 <div className="d-flex align-items-center gap-2">
                   <div className="mobile-outstanding-icon out">₹</div>
-                  <span className="small fw-semibold">You will Pay</span>
+                  <span className="small fw-semibold">Money Payable</span>
                 </div>
                 <span className="fw-bold">
-                  ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString()}
+                  ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
                 </span>
               </div>
 
               <div className="mobile-outstanding-row gold">
                 <div className="d-flex align-items-center gap-2">
-                  <div className="mobile-outstanding-icon gold">
-                    <FaCoins />
-                  </div>
-                  <span className="small fw-semibold">
-                    {mobileBalance?.goldOwnerOwes > 0
-                      ? "Gold You Owe"
-                      : "Gold You will Receive"}
-                  </span>
+                  <div className="mobile-outstanding-icon in" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
+                  <span className="small fw-semibold">Gold Receivable</span>
                 </div>
-                <span className="fw-bold text-gold">
-                  {mobileBalance?.goldOwnerOwes > 0
-                    ? `${mobileBalance.goldOwnerOwes.toFixed(3)} g`
-                    : mobileBalance?.goldOwedToOwner > 0
-                    ? `${mobileBalance.goldOwedToOwner.toFixed(3)} g`
-                    : "0.000 g"}
+                <span className="fw-bold text-success">
+                  {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
+                </span>
+              </div>
+              
+              <div className="mobile-outstanding-row gold">
+                <div className="d-flex align-items-center gap-2">
+                  <div className="mobile-outstanding-icon out" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
+                  <span className="small fw-semibold">Gold Payable</span>
+                </div>
+                <span className="fw-bold text-danger">
+                  {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
                 </span>
               </div>
             </div>

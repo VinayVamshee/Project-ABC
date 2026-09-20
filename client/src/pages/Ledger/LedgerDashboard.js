@@ -151,6 +151,8 @@ export default function LedgerDashboard() {
   const [txnFilterType, setTxnFilterType] = useState("all"); // "all" | "advance" | "repayment" | "purchase" | "wage" | "settlement" | "transfer"
   const [txnFilterDirection, setTxnFilterDirection] = useState("all"); // "all" | "paid" | "received"
   const [txnFilterOpen, setTxnFilterOpen] = useState(false);
+  const [txnFilterDate, setTxnFilterDate] = useState("all");
+  const [txnSort, setTxnSort] = useState("newest");
   const [txnPage, setTxnPage] = useState(1);
   const [showAllTxns, setShowAllTxns] = useState(false);
   const txnPerPage = 20;
@@ -165,10 +167,13 @@ export default function LedgerDashboard() {
   // Load Real Data from Backend
   const loadLedgerData = useCallback(async () => {
     try {
-      const [resContacts, resBalances] = await Promise.all([
+      const [resContacts, resBalances,  ] = await Promise.all([
         api.get("/contacts?limit=500"),
         api.get("/ledger/balances"),
+        api.get("/rates").catch(() => null)
       ]);
+
+      
 
       if (resContacts.data.success) {
         const fetchedContacts = resContacts.data.contacts || [];
@@ -211,7 +216,7 @@ export default function LedgerDashboard() {
   // Load Transactions when tab changes (Last 100 entries)
   const loadTransactions = async () => {
     try {
-      const res = await api.get("/ledger/transactions?limit=100");
+      const res = await api.get("/ledger/transactions?limit=5000");
       if (res.data.success) {
         setTransactions(res.data.transactions || []);
       }
@@ -529,7 +534,38 @@ export default function LedgerDashboard() {
       if (tx.receiverId && !tx.receiverId.isOwner) return false;
     }
 
+    // 5. Date filter
+    if (txnFilterDate !== "all") {
+      const txDate = new Date(tx.transactionDate || tx.createdAt);
+      const now = new Date();
+      if (txnFilterDate === "today") {
+        if (txDate.toDateString() !== now.toDateString()) return false;
+      } else if (txnFilterDate === "week") {
+        const weekAgo = new Date(now.setDate(now.getDate() - 7));
+        if (txDate < weekAgo) return false;
+      } else if (txnFilterDate === "month") {
+        const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+        if (txDate < monthAgo) return false;
+      }
+    }
+
     return true;
+  });
+
+  // Apply Sorting
+  filteredTransactions.sort((a, b) => {
+    const dateA = new Date(a.transactionDate || a.createdAt).getTime();
+    const dateB = new Date(b.transactionDate || b.createdAt).getTime();
+    if (txnSort === "newest") return dateB - dateA;
+    if (txnSort === "oldest") return dateA - dateB;
+    
+    // Amount sorting (approximate cross-asset)
+    const valA = a.assetType === "money" ? (a.money?.amount || 0) : (a.assetType === "gold" ? (a.gold?.valuation || 0) : (a.goods?.valuation || 0));
+    const valB = b.assetType === "money" ? (b.money?.amount || 0) : (b.assetType === "gold" ? (b.gold?.valuation || 0) : (b.goods?.valuation || 0));
+    
+    if (txnSort === "amount_high") return valB - valA;
+    if (txnSort === "amount_low") return valA - valB;
+    return 0;
   });
 
   // Paginated Transactions slice
@@ -538,6 +574,21 @@ export default function LedgerDashboard() {
     ? filteredTransactions
     : filteredTransactions.slice((txnPage - 1) * txnPerPage, txnPage * txnPerPage);
 
+
+  // Helper to render Gold weight + Est Money Value
+  const renderGoldValue = (weightGrams, valuation) => {
+    if (!weightGrams) return "0g";
+    const str = `${weightGrams}g`;
+    if (valuation > 0) {
+      return (
+        <span>
+          {str} <span className="text-muted small fw-normal ms-1">(₹{Math.round(valuation).toLocaleString("en-IN")})</span>
+        </span>
+      );
+    }
+    return str;
+  };
+
   // Filter obligations with deep search + status/asset/direction filters
   const filteredObligations = obligations.filter((ob) => {
     // 1. Search Query
@@ -545,50 +596,42 @@ export default function LedgerDashboard() {
       const q = obligationSearch.toLowerCase();
       const dName = ob.debtorId?.name?.toLowerCase() || "business owner (you)";
       const cName = ob.creditorId?.name?.toLowerCase() || "business owner (you)";
-      const asset = ob.assetType?.toLowerCase() || "";
       const status = ob.status?.toLowerCase() || "";
       const id = ob.obligationId?.toLowerCase() || "";
-      const moneyOrig = ob.money?.originalAmount ? String(ob.money.originalAmount) : "";
-      const moneyOut = ob.money?.outstandingAmount ? String(ob.money.outstandingAmount) : "";
-      const goldOrig = ob.gold?.originalWeight ? String(ob.gold.originalWeight) : "";
-      const goldOut = ob.gold?.outstandingWeight ? String(ob.gold.outstandingWeight) : "";
+      const moneyBal = String(ob.moneyBalance || "");
+      const goldBal  = String(ob.goldBalance  || "");
 
       const match =
         dName.includes(q) ||
         cName.includes(q) ||
-        asset.includes(q) ||
         status.includes(q) ||
         id.includes(q) ||
-        moneyOrig.includes(q) ||
-        moneyOut.includes(q) ||
-        goldOrig.includes(q) ||
-        goldOut.includes(q);
+        moneyBal.includes(q) ||
+        goldBal.includes(q);
 
       if (!match) return false;
     }
 
-    // 2. Asset filter
-    if (obFilterAsset !== "all" && ob.assetType !== obFilterAsset) return false;
-
-    // 3. Status filter
+    // 2. Status filter
     if (obFilterStatus !== "all" && ob.status !== obFilterStatus) return false;
 
-    // 4. Direction filter
+    // 3. Direction filter
     if (obFilterDirection === "receivable") {
-      // Creditor is owner (null or isOwner)
       if (ob.creditorId && !ob.creditorId.isOwner) return false;
     } else if (obFilterDirection === "payable") {
-      // Debtor is owner (null or isOwner)
       if (ob.debtorId && !ob.debtorId.isOwner) return false;
     }
 
     return true;
   });
 
+
   const txnActiveFiltersCount =
     (txnFilterAsset !== "all" ? 1 : 0) +
     (txnFilterType !== "all" ? 1 : 0) +
-    (txnFilterDirection !== "all" ? 1 : 0);
+    (txnFilterDirection !== "all" ? 1 : 0) +
+    (txnFilterDate !== "all" ? 1 : 0) +
+    (txnSort !== "newest" ? 1 : 0);
 
   const obActiveFiltersCount =
     (obFilterStatus !== "all" ? 1 : 0) +
@@ -679,14 +722,14 @@ export default function LedgerDashboard() {
               </div>
               <div className="today-summary-item">
                 <span className="today-summary-label">Gold Receivable</span>
-                <span className="today-summary-val green">
-                  {(totals.totalGoldReceivable || 0).toFixed(3)} g
+                <span className="today-summary-val green" style={{fontSize: "1.1rem"}}>
+                  {renderGoldValue((totals.totalGoldReceivable || 0).toFixed(3), totals.totalGoldReceivableValuation || 0)}
                 </span>
               </div>
               <div className="today-summary-item">
                 <span className="today-summary-label">Gold Payable</span>
-                <span className="today-summary-val gold">
-                  {(totals.totalGoldPayable || 0).toFixed(3)} g
+                <span className="today-summary-val gold" style={{fontSize: "1.1rem"}}>
+                  {renderGoldValue((totals.totalGoldPayable || 0).toFixed(3), totals.totalGoldPayableValuation || 0)}
                 </span>
               </div>
             </div>
@@ -1181,7 +1224,7 @@ export default function LedgerDashboard() {
                 <div
                   key={c._id}
                   className="contact-balance-card"
-                  onClick={() => navigate(`/people?contactId=${c._id}`)}
+                  onClick={() => navigate(`/people?contactId=${c._id}&from=ledger`)}
                 >
                   <div className="d-flex justify-content-between align-items-start gap-2">
                     <div className="d-flex align-items-center gap-3">
@@ -1222,7 +1265,7 @@ export default function LedgerDashboard() {
 
                   <div className="border-top pt-2 mt-1">
                     <div className="d-flex justify-content-between very-small mb-1">
-                      <span className="text-muted">Money Position:</span>
+                      <span className="text-muted">Money:</span>
                       {owesUs > 0 ? (
                         <span className="text-success fw-bold">
                           They Owe: ₹{owesUs.toLocaleString("en-IN")}
@@ -1236,20 +1279,20 @@ export default function LedgerDashboard() {
                       )}
                     </div>
 
-                    {(goldOwesUs > 0 || goldWeOwe > 0) && (
-                      <div className="d-flex justify-content-between very-small">
-                        <span className="text-muted">Gold Position:</span>
-                        {goldOwesUs > 0 ? (
-                          <span className="text-success fw-bold">
-                            They Owe: {goldOwesUs.toFixed(3)}g
-                          </span>
-                        ) : (
-                          <span className="text-warning fw-bold">
-                            You Owe: {goldWeOwe.toFixed(3)}g
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <div className="d-flex justify-content-between very-small">
+                      <span className="text-muted">Gold:</span>
+                      {goldOwesUs > 0 ? (
+                        <span className="text-success fw-bold">
+                          They Owe: {renderGoldValue(goldOwesUs.toFixed(3), c.balances?.goldOwedToOwnerValuation || 0)}
+                        </span>
+                      ) : goldWeOwe > 0 ? (
+                        <span className="text-danger fw-bold">
+                          You Owe: {renderGoldValue(goldWeOwe.toFixed(3), c.balances?.goldOwnerOwesValuation || 0)}
+                        </span>
+                      ) : (
+                        <span className="text-muted">Settled ({renderGoldValue("0", 0)})</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -1421,6 +1464,8 @@ export default function LedgerDashboard() {
                         setTxnFilterAsset("all");
                         setTxnFilterType("all");
                         setTxnFilterDirection("all");
+                        setTxnFilterDate("all");
+                        setTxnSort("newest");
                         setTxnPage(1);
                       }}
                     >
@@ -1471,6 +1516,50 @@ export default function LedgerDashboard() {
                         onClick={() => { setTxnFilterType(t.id); setTxnPage(1); }}
                       >
                         {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Date Filter Group */}
+                <div>
+                  <div className="ldg-filter-group-title">Date Range</div>
+                  <div className="ldg-segmented-control">
+                    {[
+                      { id: "all", label: "All Time" },
+                      { id: "today", label: "Today" },
+                      { id: "week", label: "Past 7 Days" },
+                      { id: "month", label: "Past 30 Days" },
+                    ].map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className={`ldg-segmented-btn ${txnFilterDate === d.id ? "active" : ""}`}
+                        onClick={() => { setTxnFilterDate(d.id); setTxnPage(1); }}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Sort Group */}
+                <div>
+                  <div className="ldg-filter-group-title">Sort By</div>
+                  <div className="ldg-segmented-control" style={{ flexWrap: 'wrap' }}>
+                    {[
+                      { id: "newest", label: "Latest" },
+                      { id: "oldest", label: "Oldest" },
+                      { id: "amount_high", label: "Highest Amt" },
+                      { id: "amount_low", label: "Lowest Amt" },
+                    ].map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`ldg-segmented-btn ${txnSort === s.id ? "active" : ""}`}
+                        onClick={() => { setTxnSort(s.id); setTxnPage(1); }}
+                      >
+                        {s.label}
                       </button>
                     ))}
                   </div>
@@ -1531,7 +1620,7 @@ export default function LedgerDashboard() {
                 <div
                   key={tx._id}
                   className="mobile-txn-card"
-                  onClick={() => otherContact?._id && navigate(`/people?contactId=${otherContact._id}`)}
+                  onClick={() => otherContact?._id && navigate(`/people?contactId=${otherContact._id}&from=ledger`)}
                   style={{ cursor: "pointer" }}
                 >
                   {/* Left Date Block */}
@@ -1577,7 +1666,7 @@ export default function LedgerDashboard() {
                         ? `₹${(tx.money?.amount || 0).toLocaleString("en-IN")}`
                         : isGold
                         ? `${(tx.gold?.weight || 0).toFixed(3)} g`
-                        : `${tx.goods?.quantity || 1} ${tx.goods?.unit || "pcs"}`}
+                        : `₹${(tx.goods?.valuation || 0).toLocaleString("en-IN")} (${tx.goods?.quantity || 1} ${tx.goods?.unit || "pcs"})`}
                     </span>
                   </div>
                 </div>
@@ -1606,7 +1695,7 @@ export default function LedgerDashboard() {
                   return (
                     <tr
                       key={tx._id}
-                      onClick={() => otherContact?._id && navigate(`/people?contactId=${otherContact._id}`)}
+                      onClick={() => otherContact?._id && navigate(`/people?contactId=${otherContact._id}&from=ledger`)}
                       style={{ cursor: "pointer" }}
                     >
                       <td>{new Date(tx.transactionDate || tx.createdAt).toLocaleDateString()}</td>
@@ -1756,14 +1845,26 @@ export default function LedgerDashboard() {
               </div>
             </div>
 
-            <div className="mobile-ob-summary-card full-width">
+            <div className="mobile-ob-summary-card">
+              <div className="mobile-ob-icon-box gold">
+                <span>🪙</span>
+              </div>
+              <div className="d-flex flex-column">
+                <span className="mobile-ob-sub">Gold To Receive</span>
+                <span className="mobile-ob-val green">
+                  {renderGoldValue((totals.totalGoldReceivable || 0).toFixed(3), totals.totalGoldReceivableValuation || 0)}
+                </span>
+              </div>
+            </div>
+            
+            <div className="mobile-ob-summary-card">
               <div className="mobile-ob-icon-box gold">
                 <span>🪙</span>
               </div>
               <div className="d-flex flex-column">
                 <span className="mobile-ob-sub">Gold You Owe</span>
                 <span className="mobile-ob-val gold">
-                  {(totals.totalGoldPayable || 0).toFixed(3)} g
+                  {renderGoldValue((totals.totalGoldPayable || 0).toFixed(3), totals.totalGoldPayableValuation || 0)}
                 </span>
               </div>
             </div>
@@ -1965,39 +2066,35 @@ export default function LedgerDashboard() {
             )}
           </div>
 
-          {/* Mobile Obligation Cards (Screen 3 Reference Match) */}
+          {/* Mobile Obligation Cards */}
           <div className="d-md-none d-flex flex-column gap-3">
             {filteredObligations.map((ob) => {
               const otherParty = ob.debtorId?.isOwner ? ob.creditorId : ob.debtorId;
-              const isWeOwe = ob.debtorId?.isOwner || !ob.debtorId;
-              const isMoney = ob.assetType === "money";
-              const isGold = ob.assetType === "gold";
+              const isWeOwe   = ob.debtorId?.isOwner || !ob.debtorId;
+              const hasGold   = (ob.goldBalance || 0) > 0;
+              const hasMoney  = (ob.moneyBalance || 0) > 0;
 
-              const origStr = isMoney
-                ? `₹${(ob.money?.originalAmount || 0).toLocaleString("en-IN")}`
-                : `${(ob.gold?.originalWeight || 0).toFixed(3)} g`;
-              const settledStr = isMoney
-                ? `₹${(ob.money?.settledAmount || 0).toLocaleString("en-IN")}`
-                : `${(ob.gold?.settledWeight || 0).toFixed(3)} g`;
-              const outstandingStr = isMoney
-                ? `₹${(ob.money?.outstandingAmount || 0).toLocaleString("en-IN")}`
-                : `${(ob.gold?.outstandingWeight || 0).toFixed(3)} g`;
+              // What they owe / you owe — expressed clearly
+              const balanceLabel = hasMoney
+                ? `₹${(ob.moneyBalance || 0).toLocaleString("en-IN")}${hasGold ? ` + ${(ob.goldBalance || 0).toFixed(3)}g` : ""}`
+                : hasGold
+                ? `${(ob.goldBalance || 0).toFixed(3)}g Gold`
+                : "₹0 (Settled)";
+
+              const totalLabel = ob.totalDebtMoney > 0
+                ? `₹${(ob.totalDebtMoney || 0).toLocaleString("en-IN")} total`
+                : "";
+
+              const settledLabel = ob.totalSettledMoney > 0
+                ? `₹${(ob.totalSettledMoney || 0).toLocaleString("en-IN")} settled`
+                : "";
 
               return (
                 <div key={ob._id} className="mobile-ob-card">
-                  {/* Top Row: Avatar + Name + Subtitle + Status Pill */}
+                  {/* Header Row */}
                   <div className="d-flex justify-content-between align-items-start gap-2">
                     <div className="d-flex align-items-center gap-2">
-                      <div
-                        className="actor-avatar"
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          fontSize: "12px",
-                          backgroundColor: "#FEF3C7",
-                          color: "#B45309",
-                        }}
-                      >
+                      <div className="actor-avatar" style={{ width: "36px", height: "36px", fontSize: "12px", backgroundColor: "#FEF3C7", color: "#B45309" }}>
                         {getInitials(otherParty)}
                       </div>
                       <div className="d-flex flex-column" style={{ minWidth: 0 }}>
@@ -2009,53 +2106,61 @@ export default function LedgerDashboard() {
                         </span>
                       </div>
                     </div>
-
-                    <span
-                      className={`mobile-ob-status ${
-                        ob.status === "outstanding"
-                          ? "outstanding"
-                          : ob.status === "partially_settled"
-                          ? "partial"
-                          : "settled"
-                      }`}
-                    >
-                      {ob.status === "outstanding"
-                        ? "Outstanding"
-                        : ob.status === "partially_settled"
-                        ? "Partially Settled"
-                        : "Settled"}
+                    <span className={`mobile-ob-status ${ob.status === "outstanding" ? "outstanding" : ob.status === "partially_settled" ? "partial" : "settled"}`}>
+                      {ob.status === "outstanding" ? "Outstanding" : ob.status === "partially_settled" ? "Partial" : "Settled"}
                     </span>
                   </div>
 
-                  {/* Asset Pill */}
-                  <div className="mt-2">
-                    <span className="mobile-ob-asset-pill">
-                      {isMoney ? "Money" : isGold ? "Gold" : "Goods"}
-                    </span>
+                  {/* Balance Display */}
+                  <div className="mt-2 mb-1">
+                    <div className={`fw-bold ${hasMoney || hasGold ? "text-primary" : "text-success"}`} style={{ fontSize: "16px" }}>
+                      {balanceLabel}
+                    </div>
+                    {(totalLabel || settledLabel) && (
+                      <div className="very-small text-muted d-flex gap-2 mt-1">
+                        {totalLabel && <span>Total: {totalLabel}</span>}
+                        {settledLabel && <span>· {settledLabel}</span>}
+                      </div>
+                    )}
                   </div>
 
-                  {/* 3-Column Stats Row */}
-                  <div className="mobile-ob-stats-row">
-                    <div className="mobile-ob-stat-col">
-                      <span className="mobile-ob-stat-label">Original Amount</span>
-                      <span className="mobile-ob-stat-val">{origStr}</span>
-                    </div>
-                    <div className="mobile-ob-stat-col">
-                      <span className="mobile-ob-stat-label">Settled</span>
-                      <span className="mobile-ob-stat-val">{settledStr}</span>
-                    </div>
-                    <div className="mobile-ob-stat-col">
-                      <span className="mobile-ob-stat-label">Outstanding</span>
-                      <span className="mobile-ob-stat-val cyan">{outstandingStr}</span>
-                    </div>
-                  </div>
+                  {/* Settlement Log Timeline */}
+                  {ob.settlementLog && ob.settlementLog.length > 0 && (
+                    <div className="mt-2" style={{ borderTop: "1px solid var(--border-light)", paddingTop: "8px" }}>
+                      <div className="very-small fw-semibold text-muted mb-1">Transaction History</div>
+                      <div className="d-flex flex-column gap-1">
+                        {[...(ob.settlementLog || [])].reverse().map((entry, i) => {
+                          const isAdded    = entry.direction === "added";
+                          const entryMoney = entry.moneyApplied || 0;
+                          const entryGold  = entry.goldGrams    || 0;
+                          const dateStr    = entry.date
+                            ? new Date(entry.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })
+                            : "";
 
-                  {/* Bottom Action Link */}
-                  <div
-                    className="mobile-ob-view-link"
-                    onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}`)}
-                  >
-                    <span>View Details &amp; History</span>
+                          let amtLabel = "";
+                          if (entry.assetType === "gold" && entryGold > 0) {
+                            amtLabel = `${entryGold.toFixed(3)}g gold`;
+                            if (entryMoney > 0) amtLabel += ` (₹${entryMoney.toLocaleString("en-IN")})`;
+                          } else {
+                            amtLabel = entryMoney > 0 ? `₹${entryMoney.toLocaleString("en-IN")}` : entry.assetType;
+                          }
+
+                          return (
+                            <div key={i} className="d-flex align-items-center gap-2 very-small">
+                              <span style={{ color: isAdded ? "#EF4444" : "#22C55E", fontWeight: 700, width: "12px" }}>{isAdded ? "+" : "−"}</span>
+                              <span className="text-muted" style={{ minWidth: "60px" }}>{dateStr}</span>
+                              <span className={isAdded ? "text-danger" : "text-success"}>{amtLabel}</span>
+                              <span className="text-muted" style={{ fontSize: "10px" }}>{entry.txnId || ""}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Link */}
+                  <div className="mobile-ob-view-link mt-2" onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}&from=ledger`)}>
+                    <span>View Full Ledger</span>
                     <FaChevronRight className="very-small" />
                   </div>
                 </div>
@@ -2068,62 +2173,60 @@ export default function LedgerDashboard() {
             <table className="table ldg-theme-table align-middle mb-0 small">
               <thead>
                 <tr>
-                  <th>Debtor (Who Owes)</th>
-                  <th>Creditor (Who is Owed)</th>
-                  <th>Asset</th>
-                  <th>Original Amount</th>
+                  <th>Who Owes</th>
+                  <th>Who is Owed</th>
+                  <th>Outstanding Balance</th>
+                  <th>Total Debt</th>
                   <th>Settled</th>
-                  <th>Outstanding</th>
                   <th>Status</th>
+                  <th>Settlement Log</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredObligations.map((ob) => {
                   const otherParty = ob.debtorId?.isOwner ? ob.creditorId : ob.debtorId;
+                  const hasMoney   = (ob.moneyBalance || 0) > 0;
+                  const hasGold    = (ob.goldBalance  || 0) > 0;
+                  const balanceDisplay = hasMoney
+                    ? `₹${(ob.moneyBalance || 0).toLocaleString("en-IN")}${hasGold ? ` + ${(ob.goldBalance || 0).toFixed(3)}g` : ""}`
+                    : hasGold
+                    ? `${(ob.goldBalance || 0).toFixed(3)}g Gold`
+                    : "₹0";
                   return (
-                    <tr
-                      key={ob._id}
-                      onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}`)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td className="fw-bold text-danger">
-                        {ob.debtorId?.name || "Business Owner (You)"}
-                      </td>
-                      <td className="fw-bold text-success">
-                        {ob.creditorId?.name || "Business Owner (You)"}
-                      </td>
+                    <tr key={ob._id} onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}&from=ledger`)} style={{ cursor: "pointer" }}>
+                      <td className="fw-bold text-danger">{ob.debtorId?.name || "Business Owner (You)"}</td>
+                      <td className="fw-bold text-success">{ob.creditorId?.name || "Business Owner (You)"}</td>
+                      <td className="fw-bold text-primary">{balanceDisplay}</td>
+                      <td className="text-muted">{ob.totalDebtMoney > 0 ? `₹${(ob.totalDebtMoney || 0).toLocaleString("en-IN")}` : "—"}</td>
+                      <td className="text-muted">{ob.totalSettledMoney > 0 ? `₹${(ob.totalSettledMoney || 0).toLocaleString("en-IN")}` : "—"}</td>
                       <td>
-                        <span className="badge ldg-type-badge">
-                          {ob.assetType}
-                        </span>
-                      </td>
-                      <td>
-                        {ob.assetType === "money"
-                          ? `₹${(ob.money?.originalAmount || 0).toLocaleString("en-IN")}`
-                          : `${ob.gold?.originalWeight || 0}g`}
-                      </td>
-                      <td className="text-muted">
-                        {ob.assetType === "money"
-                          ? `₹${(ob.money?.settledAmount || 0).toLocaleString("en-IN")}`
-                          : `${ob.gold?.settledWeight || 0}g`}
-                      </td>
-                      <td className="fw-bold text-primary">
-                        {ob.assetType === "money"
-                          ? `₹${(ob.money?.outstandingAmount || 0).toLocaleString("en-IN")}`
-                          : `${ob.gold?.outstandingWeight || 0}g`}
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            ob.status === "outstanding"
-                              ? "bg-warning text-dark"
-                              : ob.status === "settled"
-                              ? "bg-success"
-                              : "bg-info"
-                          }`}
-                        >
+                        <span className={`badge ${ob.status === "outstanding" ? "bg-warning text-dark" : ob.status === "settled" ? "bg-success" : "bg-info"}`}>
                           {ob.status}
                         </span>
+                      </td>
+                      <td style={{ maxWidth: "260px" }}>
+                        <div className="d-flex flex-column gap-1 very-small">
+                          {[...(ob.settlementLog || [])].reverse().slice(0, 4).map((entry, i) => {
+                            const isAdded  = entry.direction === "added";
+                            const entryMoney = entry.moneyApplied || 0;
+                            const entryGold  = entry.goldGrams    || 0;
+                            const dateStr    = entry.date
+                              ? new Date(entry.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+                              : "";
+                            let amtLabel = "";
+                            if (entry.assetType === "gold" && entryGold > 0) {
+                              amtLabel = `${entryGold.toFixed(3)}g`;
+                              if (entryMoney > 0) amtLabel += ` (₹${entryMoney.toLocaleString("en-IN")})`;
+                            } else {
+                              amtLabel = entryMoney > 0 ? `₹${entryMoney.toLocaleString("en-IN")}` : entry.assetType;
+                            }
+                            return (
+                              <span key={i} className={isAdded ? "text-danger" : "text-success"}>
+                                {isAdded ? "+" : "−"} {amtLabel} <span className="text-muted">({dateStr} · {entry.txnId})</span>
+                              </span>
+                            );
+                          })}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -2151,8 +2254,10 @@ export default function LedgerDashboard() {
               </div>
             </div>
           )}
+
         </div>
       )}
+
 
       {/* ============================================================
          CONTACT PICKER MODAL (FOR PROVIDER / RECEIVER / ON BEHALF OF)

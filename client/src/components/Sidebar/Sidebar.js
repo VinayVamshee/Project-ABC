@@ -32,7 +32,8 @@ export default function Sidebar({
     { name: "Dashboard", path: "/dashboard", icon: <FiGrid /> },
     { name: "Inventory", path: "/inventory", icon: <FiBox /> },
     { name: "Orders", path: "/orders", icon: <FiFileText /> },
-    { name: "Sold", path: "/sold", icon: <FiCheckCircle /> },
+    { name: "Sales", path: "/sales", icon: <FiCheckCircle /> },
+
     { name: "People", path: "/people", icon: <FiUsers /> },
     {
       name: "Personal Ledger",

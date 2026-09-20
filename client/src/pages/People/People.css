@@ -1121,6 +1121,14 @@ body.theme-dark .mobile-card-status.active { color: #34D399; }
 /* ============================================================
    5. 📱 MOBILE DETAIL SLIDE-IN (SCREEN 2 MATCH)
    ============================================================ */
+
+/* Hide mobile detail overlay completely on desktop so side-panel handles it */
+@media (min-width: 768px) {
+  .mobile-ppl-detail-overlay {
+    display: none !important;
+  }
+}
+
 .mobile-ppl-detail-overlay {
   position: fixed;
   inset: 0;

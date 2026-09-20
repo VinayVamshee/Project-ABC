@@ -7,7 +7,7 @@ const objectId = z.string().refine((val) => mongoose.Types.ObjectId.isValid(val)
 
 const paymentSchema = z.object({
   amount: z.number().min(0),
-  date: z.string().datetime().optional(),
+  date: z.union([z.string(), z.date()]).optional(),
   mode: z.string().optional(),
   paidBy: z.string().optional(),
   reference: z.string().optional(),
@@ -25,6 +25,7 @@ export const createSoldSchema = {
     sellingPrice: z.number().min(0).optional(),
     discount: z.number().min(0).optional(),
     payments: z.array(paymentSchema).optional(),
+    soldAt: z.union([z.string(), z.date()]).optional(),
     
     // Legacy arrays for transition
     productFields: z.any().optional(),

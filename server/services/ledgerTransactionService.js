@@ -141,7 +141,7 @@ export async function getTransactions({ contactId, groupId, assetType, status, l
     .populate("receiverId",   "name categories")
     .populate("onBehalfOfId", "name categories")
     .populate("groupId",      "title groupId")
-    .sort({ transactionDate: -1 })
+    .sort({ transactionDate: -1, createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();

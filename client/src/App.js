@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import Home from "./pages/Home/Home";
 import Settings from "./pages/Settings/Settings";
@@ -6,9 +6,10 @@ import Inventory from "./pages/Inventory/Inventory";
 import AddInventoryItem from "./pages/Inventory/AddInventoryItem";
 import OverviewPanel from "./pages/Overview/OverviewPanel";
 import Order from "./pages/Orders/Order";
-import Sold from "./pages/Sold/Sold";
+import Sales from "./pages/Sold/Sales";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import People from "./pages/People/People";
+
 
 import LedgerDashboard from "./pages/Ledger/LedgerDashboard";
 import LedgerContacts from "./pages/Ledger/LedgerContacts";
@@ -107,13 +108,15 @@ function App() {
                 }
               />
               <Route
-                path="/sold"
+                path="/sales"
                 element={
                   <ProtectedRoute>
-                    <Sold />
+                    <Sales />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/sold" element={<Navigate to="/sales" replace />} />
+
               <Route
                 path="/dashboard"
                 element={

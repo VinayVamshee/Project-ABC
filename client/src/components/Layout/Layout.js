@@ -230,15 +230,16 @@ export default function Layout() {
                 </div>
               </Link>
 
-              <Link to="/sold" className="ios-sheet-link-item">
+              <Link to="/sales" className="ios-sheet-link-item">
                 <div className="ios-link-icon-box">
                   <FiCheckCircle />
                 </div>
                 <div className="d-flex flex-column flex-fill">
-                  <span className="fw-bold">Sold &amp; Sales Ledger</span>
-                  <span className="very-small text-muted">Archived and completed sales</span>
+                  <span className="fw-bold">Sales</span>
+                  <span className="very-small text-muted">All sold items & payment status</span>
                 </div>
               </Link>
+
 
               <Link to="/settings" className="ios-sheet-link-item">
                 <div className="ios-link-icon-box">

@@ -1,47 +1,55 @@
 import mongoose from "mongoose";
 import Counter from "./counterModel.js";
 
+const settlementLogEntrySchema = new mongoose.Schema(
+  {
+    txnObjectId:  { type: mongoose.Schema.Types.ObjectId, ref: "LedgerTransaction", default: null },
+    txnId:        { type: String, default: "" },        // human-readable e.g. LTXN_000003
+    date:         { type: Date,   default: Date.now },
+    assetType:    { type: String, default: "money" },   // original asset ("money"|"gold"|"goods")
+    direction:    { type: String, default: "added" },   // "added" | "settled"
+
+    // ₹ applied (either added to debt or settled against debt)
+    moneyApplied:  { type: Number, default: 0 },
+
+    // Gold specifics (populated even when using valuation for ₹ netting)
+    goldGrams:     { type: Number, default: 0 },
+    goldValuation: { type: Number, default: 0 },
+
+    description: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const ledgerObligationSchema = new mongoose.Schema(
   {
     // ── Auto-generated ID ──────────────────────────────────────
     obligationId: { type: String, unique: true }, // e.g. LOB_000001
 
     // ── Who owes whom (null = Business Owner) ─────────────────
-    // The person who owes the asset
     debtorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessContact",
       default: null,
     },
-    // The person who is owed the asset
     creditorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessContact",
       default: null,
     },
 
-    // ── Asset type ────────────────────────────────────────────
-    assetType: {
-      type: String,
-      enum: ["money", "gold", "goods"],
-      required: true,
-    },
+    // ── UNIFIED BALANCE TRACKING ───────────────────────────────
+    // All cash, goods, and gold (with ₹ valuation) are unified into moneyBalance.
+    // Pure gold (with no ₹ valuation entered) is tracked separately in goldBalance.
+    // These two balances are independent — cash/goods don't cross-settle raw gold grams.
 
-    // ── Money obligation ──────────────────────────────────────
-    money: {
-      originalAmount:    { type: Number, default: 0 },
-      settledAmount:     { type: Number, default: 0 },
-      outstandingAmount: { type: Number, default: 0 },
-      currency:          { type: String, default: "INR" },
-    },
+    moneyBalance: { type: Number, default: 0 },        // net ₹ outstanding
+    goldBalance:  { type: Number, default: 0 },        // net grams outstanding (pure gold, no valuation)
+    goldBalanceValuation: { type: Number, default: 0 },// ₹ value of goldBalance if known
 
-    // ── Gold obligation ───────────────────────────────────────
-    gold: {
-      purity:           { type: String, default: "" },  // e.g. "22K"
-      originalWeight:   { type: Number, default: 0 },   // grams
-      settledWeight:    { type: Number, default: 0 },
-      outstandingWeight:{ type: Number, default: 0 },
-    },
+    // Running totals for analytics/display
+    totalDebtMoney:    { type: Number, default: 0 },   // total ₹ ever added as debt
+    totalSettledMoney: { type: Number, default: 0 },   // total ₹ ever settled
 
     // ── Status ────────────────────────────────────────────────
     status: {
@@ -50,28 +58,26 @@ const ledgerObligationSchema = new mongoose.Schema(
       default: "outstanding",
     },
 
-    // ── Source transactions that created/affected this ────────
+    // ── Settlement audit trail ─────────────────────────────────
+    settlementLog: [settlementLogEntrySchema],
+
+    // ── Source transactions ────────────────────────────────────
     sourceTransactionIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "LedgerTransaction",
-      },
+      { type: mongoose.Schema.Types.ObjectId, ref: "LedgerTransaction" },
     ],
 
     // ── Optional context ──────────────────────────────────────
     description: { type: String, default: "" },
     notes:        { type: String, default: "" },
-
-    // ── Void audit ────────────────────────────────────────────
-    voidReason: { type: String, default: "" },
+    voidReason:   { type: String, default: "" },
   },
   { timestamps: true, versionKey: false }
 );
 
-// Indexes for fast querying of who owes what
+// Indexes
+ledgerObligationSchema.index({ debtorId: 1, creditorId: 1, status: 1 });
 ledgerObligationSchema.index({ debtorId: 1, status: 1 });
 ledgerObligationSchema.index({ creditorId: 1, status: 1 });
-ledgerObligationSchema.index({ assetType: 1, status: 1 });
 
 // Auto-generate obligationId
 ledgerObligationSchema.pre("validate", async function (next) {

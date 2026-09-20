@@ -1,139 +1,200 @@
 /**
- * OBLIGATION ENGINE
- * =================
- * Core business logic: given a physical transaction, determine which
- * obligations are created, updated, or settled.
+ * OBLIGATION ENGINE — UNIFIED CROSS-ASSET LEDGER
+ * ================================================
+ * ONE obligation per (debtorId, creditorId) pair.
+ * All asset types (money, goods, gold-with-valuation) settle against the same
+ * moneyBalance. Pure gold (no ₹ valuation) is tracked separately in goldBalance.
  *
  * GROUND RULES:
- *   null = Business Owner (the shop itself)
+ *   null = Business Owner
  *
- * THE 4 QUESTIONS EVERY TRANSACTION MUST ANSWER:
- *   1. Who PROVIDED the asset?       → providerId  (null = Owner)
- *   2. Who RECEIVED the asset?       → receiverId  (null = Owner)
- *   3. On whose BEHALF?              → onBehalfOfId (null = Owner)
- *   4. What was the ASSET?           → assetType + amount/weight
+ * ENGINE RULES (unchanged):
+ *   Rule A — Provider ≠ OnBehalfOf → OnBehalfOf OWES Provider
+ *   Rule B — Receiver ≠ OnBehalfOf → Receiver OWES OnBehalfOf
+ *     EXCEPTION: expense | wage → skip Rule B
  *
- * OBLIGATION CREATION RULES:
- *   Rule A — Provider ≠ OnBehalfOf:
- *     OnBehalfOf OWES Provider the asset.
- *     Example: Wholeseller(provider) pays Worker on behalf of Owner(onBehalfOf)
- *              → Owner owes Wholeseller
- *
- *   Rule B — Receiver ≠ OnBehalfOf:
- *     Receiver OWES OnBehalfOf the asset.
- *     Example: Owner(onBehalfOf) gives advance to Worker(receiver)
- *              → Worker owes Owner
- *     EXCEPTION: transactionType = "expense" | "wage" → skip Rule B
- *     (Wages/expenses are not loans; the worker doesn't owe their wages back)
- *
- *   SETTLEMENT / REPAYMENT:
- *     Find the matching existing outstanding obligation and reduce it.
+ * SETTLEMENT:
+ *   Any asset's ₹ value can settle any ₹ debt.
+ *   Pure gold grams (no valuation) only settle other pure gold gram debts.
  */
 
 import LedgerObligation from "../models/LedgerObligation.js";
 
-const OWNER = null; // null always means the business owner
-
-// Transaction types that do NOT create a receivable from the receiver
 const NON_RECEIVABLE_TYPES = ["expense", "wage"];
 
-/**
- * Stringify a participant ID for comparison.
- * Both null/undefined map to "OWNER".
- */
 function pid(id) {
   if (id === null || id === undefined) return "OWNER";
   return id.toString();
 }
 
-/**
- * Check whether two participant IDs refer to the same entity.
- */
 function same(a, b) {
   return pid(a) === pid(b);
 }
 
 /**
- * Find an existing active obligation between debtor and creditor for an asset type.
- * Used when adding to or settling against an existing obligation.
+ * Find the single unified obligation between a debtor and creditor.
  */
-async function findExistingObligation(debtorId, creditorId, assetType, session) {
+async function findObligation(debtorId, creditorId, session) {
   return LedgerObligation.findOne({
-    debtorId:   debtorId ?? null,
+    debtorId:   debtorId   ?? null,
     creditorId: creditorId ?? null,
-    assetType,
     status: { $in: ["outstanding", "partially_settled"] },
   }).session(session);
 }
 
 /**
- * Create a new obligation or add to an existing one.
- * Returns the obligation document.
+ * Compute the running status from the balances.
+ */
+function computeStatus(ob) {
+  const hasBalance = ob.moneyBalance > 0.001 || ob.goldBalance > 0.001;
+  if (!hasBalance) return "settled";
+  if (ob.totalSettledMoney > 0 || ob.settlementLog.some(e => e.direction === "settled")) {
+    return "partially_settled";
+  }
+  return "outstanding";
+}
+
+/**
+ * Core upsert function.
+ *
+ * @param debtorId    — who owes
+ * @param creditorId  — who is owed
+ * @param effectiveMoney — ₹ value being added to obligation (cash, goods val, or gold val)
+ * @param pureGoldGrams  — grams added as PURE gold (no valuation) only
+ * @param assetType   — original asset type of the source transaction
+ * @param goldGrams   — raw gold grams (for audit log)
+ * @param goldValuation — ₹ value of gold (for audit log)
+ * @param transactionId — Mongo ObjectId of the transaction
+ * @param txnId         — human-readable txnId string
+ * @param txnDate       — date of the transaction
+ * @param description
+ * @param session
  */
 async function upsertObligation({
   debtorId,
   creditorId,
+  effectiveMoney = 0,
+  pureGoldGrams = 0,
   assetType,
-  moneyAmount = 0,
-  goldWeight = 0,
-  goldPurity = "",
+  goldGrams = 0,
+  goldValuation = 0,
   transactionId,
+  txnId = "",
+  txnDate,
   description = "",
   session,
 }) {
-  const existing = await findExistingObligation(debtorId, creditorId, assetType, session);
+  let remainingMoney     = effectiveMoney;
+  let remainingGoldGrams = pureGoldGrams;
 
-  if (existing) {
-    // Add to existing obligation
-    if (assetType === "money") {
-      existing.money.originalAmount    += moneyAmount;
-      existing.money.outstandingAmount += moneyAmount;
-    } else if (assetType === "gold") {
-      existing.gold.originalWeight    += goldWeight;
-      existing.gold.outstandingWeight += goldWeight;
+  // ── STEP 1: Check for REVERSE obligation and OFFSET (netting) ──────────
+  const reverseOb = await findObligation(creditorId, debtorId, session);
+
+  if (reverseOb) {
+    let moneySettled   = 0;
+    let goldGramsSettled = 0;
+
+    // Offset ₹ balance on the reverse obligation
+    if (remainingMoney > 0 && reverseOb.moneyBalance > 0) {
+      const offset = Math.min(reverseOb.moneyBalance, remainingMoney);
+      reverseOb.moneyBalance  -= offset;
+      reverseOb.totalSettledMoney = (reverseOb.totalSettledMoney || 0) + offset;
+      remainingMoney          -= offset;
+      moneySettled            += offset;
     }
-    existing.sourceTransactionIds.push(transactionId);
-    existing.status = existing.money.outstandingAmount > 0 || existing.gold.outstandingWeight > 0
-      ? "outstanding"
-      : "settled";
-    await existing.save({ session });
-    return existing;
+
+    // Offset pure gold gram balance on the reverse (only for pure gold transactions)
+    if (remainingGoldGrams > 0 && reverseOb.goldBalance > 0) {
+      const offset = Math.min(reverseOb.goldBalance, remainingGoldGrams);
+      reverseOb.goldBalance  -= offset;
+      if (reverseOb.goldBalance <= 0.001) {
+        reverseOb.goldBalance = 0;
+        reverseOb.goldBalanceValuation = 0;
+      }
+      remainingGoldGrams -= offset;
+      goldGramsSettled   += offset;
+    }
+
+    if (moneySettled > 0 || goldGramsSettled > 0) {
+      reverseOb.settlementLog.push({
+        txnObjectId:  transactionId,
+        txnId,
+        date:         txnDate || new Date(),
+        assetType,
+        direction:    "settled",
+        moneyApplied: moneySettled,
+        goldGrams:    assetType === "gold" ? goldGrams : 0,
+        goldValuation: assetType === "gold" ? goldValuation : 0,
+        description,
+      });
+      reverseOb.sourceTransactionIds.push(transactionId);
+      reverseOb.status = computeStatus(reverseOb);
+      await reverseOb.save({ session });
+    }
   }
 
-  // Create new obligation
-  const obligation = new LedgerObligation({
-    debtorId:    debtorId ?? null,
-    creditorId:  creditorId ?? null,
+  // ── STEP 2: If fully netted, done ──────────────────────────────────────
+  if (remainingMoney <= 0.001 && remainingGoldGrams <= 0.001) {
+    return reverseOb;
+  }
+
+  // ── STEP 3: Add remaining to existing or create a new forward obligation ─
+  let ob = await findObligation(debtorId, creditorId, session);
+
+  if (!ob) {
+    ob = new LedgerObligation({
+      debtorId:   debtorId   ?? null,
+      creditorId: creditorId ?? null,
+      moneyBalance:         0,
+      goldBalance:          0,
+      goldBalanceValuation: 0,
+      totalDebtMoney:       0,
+      totalSettledMoney:    0,
+      status:               "outstanding",
+      settlementLog:        [],
+      sourceTransactionIds: [],
+    });
+  }
+
+  if (remainingMoney > 0) {
+    ob.moneyBalance    += remainingMoney;
+    ob.totalDebtMoney   = (ob.totalDebtMoney || 0) + remainingMoney;
+    // For gold, also track the raw grams alongside the money balance
+    if (assetType === "gold" && goldGrams > 0 && goldValuation > 0) {
+      ob.goldBalance          += goldGrams;
+      ob.goldBalanceValuation += goldValuation;
+    }
+  }
+  if (remainingGoldGrams > 0) {
+    ob.goldBalance += remainingGoldGrams;
+  }
+
+  ob.settlementLog.push({
+    txnObjectId:  transactionId,
+    txnId,
+    date:         txnDate || new Date(),
     assetType,
-    money: assetType === "money" ? {
-      originalAmount:    moneyAmount,
-      settledAmount:     0,
-      outstandingAmount: moneyAmount,
-      currency: "INR",
-    } : { originalAmount: 0, settledAmount: 0, outstandingAmount: 0 },
-    gold: assetType === "gold" ? {
-      purity:            goldPurity,
-      originalWeight:    goldWeight,
-      settledWeight:     0,
-      outstandingWeight: goldWeight,
-    } : { originalWeight: 0, settledWeight: 0, outstandingWeight: 0 },
-    sourceTransactionIds: [transactionId],
+    direction:    "added",
+    moneyApplied: remainingMoney,
+    goldGrams:    assetType === "gold" ? goldGrams : 0,
+    goldValuation: assetType === "gold" ? goldValuation : 0,
     description,
-    status: "outstanding",
   });
 
-  await obligation.save({ session });
-  return obligation;
+  ob.sourceTransactionIds.push(transactionId);
+  ob.status = computeStatus(ob);
+  await ob.save({ session });
+  return ob;
 }
 
 /**
- * Main engine function.
- * Called after a LedgerTransaction has been saved.
- * Returns array of obligation documents that were created or updated.
+ * Main engine — called after a LedgerTransaction is saved.
  */
 export async function processTransaction(transaction, session) {
   const {
-    _id: transactionId,
+    _id:              transactionId,
+    txnId,
+    transactionDate,
     providerId,
     receiverId,
     onBehalfOfId,
@@ -141,98 +202,128 @@ export async function processTransaction(transaction, session) {
     assetType,
     money,
     gold,
+    goods,
     isSettlement,
     settledObligationId,
   } = transaction;
 
   const obligations = [];
 
-  // ── SETTLEMENT PATH ─────────────────────────────────────────────────
-  // If this is a settlement transaction, it is handled separately by
-  // ledgerSettlementService. The engine does NOT re-process it.
-  if (isSettlement && settledObligationId) {
-    return obligations;
+  // Settlement transactions are handled by ledgerSettlementService — skip.
+  if (isSettlement && settledObligationId) return obligations;
+
+  // ── Resolve effective ₹ value and gold grams ───────────────────────────
+  const moneyAmount     = money?.amount    || 0;
+  const goldGrams       = gold?.weight     || 0;
+  const goldPurity      = gold?.purity     || "";
+  const goldValuation   = gold?.valuation  || 0;
+  const goodsValuation  = goods?.valuation || 0;
+
+  let effectiveMoney = 0;
+  let pureGoldGrams  = 0;
+
+  if (assetType === "money") {
+    effectiveMoney = moneyAmount;
+  } else if (assetType === "goods") {
+    effectiveMoney = goodsValuation;
+  } else if (assetType === "gold") {
+    if (goldValuation > 0) {
+      effectiveMoney = goldValuation; // valued gold → net against ₹ balance
+    } else {
+      pureGoldGrams = goldGrams;      // no valuation → track in gold grams
+    }
   }
 
-  const moneyAmount = money?.amount || 0;
-  const goldWeight  = gold?.weight  || 0;
-  const goldPurity  = gold?.purity  || "";
+  const txnDate = transactionDate || new Date();
+  const logDesc = `${transactionType} — ${assetType}`;
 
-  // ── REPAYMENT PATH ───────────────────────────────────────────────────
-  // If transactionType is "repayment", find the inverse obligation and
-  // reduce it (same logic as partial settlement).
+  // ── REPAYMENT PATH ────────────────────────────────────────────────────
   if (transactionType === "repayment") {
-    // Provider is paying back to receiver — reduce receiver-owes-provider obligation
-    // Or: Provider owes Receiver → provider is paying back
-    const existing = await findExistingObligation(
-      providerId ?? null,   // debtor = the one who was paying back (they owed)
-      receiverId ?? null,   // creditor = the one being paid back
-      assetType,
+    // Provider is paying back creditor — find obligation where provider is the debtor
+    const ob = await findObligation(
+      providerId  ?? null,
+      receiverId  ?? null,
       session
     );
-    if (existing) {
-      if (assetType === "money") {
-        existing.money.settledAmount     += moneyAmount;
-        existing.money.outstandingAmount  = Math.max(0, existing.money.originalAmount - existing.money.settledAmount);
-      } else if (assetType === "gold") {
-        existing.gold.settledWeight     += goldWeight;
-        existing.gold.outstandingWeight  = Math.max(0, existing.gold.originalWeight - existing.gold.settledWeight);
+    if (ob) {
+      let moneySettled    = 0;
+      let goldGramsSettled = 0;
+
+      if (effectiveMoney > 0 && ob.moneyBalance > 0) {
+        const offset = Math.min(ob.moneyBalance, effectiveMoney);
+        ob.moneyBalance       -= offset;
+        ob.totalSettledMoney   = (ob.totalSettledMoney || 0) + offset;
+        moneySettled           += offset;
       }
-      existing.status =
-        (assetType === "money" && existing.money.outstandingAmount <= 0) ||
-        (assetType === "gold"  && existing.gold.outstandingWeight  <= 0)
-          ? "settled"
-          : "partially_settled";
-      existing.sourceTransactionIds.push(transactionId);
-      await existing.save({ session });
-      obligations.push(existing);
+      if (pureGoldGrams > 0 && ob.goldBalance > 0) {
+        const offset = Math.min(ob.goldBalance, pureGoldGrams);
+        ob.goldBalance -= offset;
+        if (ob.goldBalance <= 0.001) { ob.goldBalance = 0; ob.goldBalanceValuation = 0; }
+        goldGramsSettled += offset;
+      }
+
+      if (moneySettled > 0 || goldGramsSettled > 0) {
+        ob.settlementLog.push({
+          txnObjectId:  transactionId,
+          txnId,
+          date:         txnDate,
+          assetType,
+          direction:    "settled",
+          moneyApplied: moneySettled,
+          goldGrams:    assetType === "gold" ? goldGrams : 0,
+          goldValuation: assetType === "gold" ? goldValuation : 0,
+          description:  logDesc,
+        });
+        ob.sourceTransactionIds.push(transactionId);
+        ob.status = computeStatus(ob);
+        await ob.save({ session });
+        obligations.push(ob);
+      }
     }
     return obligations;
   }
 
-  // ── NORMAL TRANSACTION PATH ──────────────────────────────────────────
+  // ── NORMAL TRANSACTION PATH ───────────────────────────────────────────
 
-  // ── RULE A: Provider ≠ OnBehalfOf → OnBehalfOf owes Provider ────────
-  // e.g. Wholeseller(provider) pays Worker on Owner's(onBehalfOf) behalf
-  //      → Owner owes Wholeseller
+  // Rule A: Provider ≠ OnBehalfOf → OnBehalfOf owes Provider
   if (!same(providerId, onBehalfOfId)) {
     const ob = await upsertObligation({
-      debtorId:    onBehalfOfId ?? null,   // the one on whose behalf (OWNER or contact)
-      creditorId:  providerId   ?? null,   // the one who provided the asset
+      debtorId:    onBehalfOfId ?? null,
+      creditorId:  providerId   ?? null,
+      effectiveMoney,
+      pureGoldGrams,
       assetType,
-      moneyAmount,
-      goldWeight,
-      goldPurity,
+      goldGrams,
+      goldValuation,
       transactionId,
-      description: `From transaction ${transactionId}: ${transactionType}`,
+      txnId,
+      txnDate,
+      description: logDesc,
       session,
     });
-    obligations.push(ob);
+    if (ob) obligations.push(ob);
   }
 
-  // ── RULE B: Receiver ≠ OnBehalfOf → Receiver owes OnBehalfOf ────────
-  // e.g. Owner gives advance to Worker → Worker owes Owner
-  // EXCEPTION: expense / wage types skip this — those are not loans
+  // Rule B: Receiver ≠ OnBehalfOf → Receiver owes OnBehalfOf (not for expense/wage)
   if (!same(receiverId, onBehalfOfId) && !NON_RECEIVABLE_TYPES.includes(transactionType)) {
     const ob = await upsertObligation({
-      debtorId:    receiverId   ?? null,   // the receiver owes
-      creditorId:  onBehalfOfId ?? null,   // the one on behalf of whom (OWNER)
+      debtorId:    receiverId   ?? null,
+      creditorId:  onBehalfOfId ?? null,
+      effectiveMoney,
+      pureGoldGrams,
       assetType,
-      moneyAmount,
-      goldWeight,
-      goldPurity,
+      goldGrams,
+      goldValuation,
       transactionId,
-      description: `From transaction ${transactionId}: ${transactionType}`,
+      txnId,
+      txnDate,
+      description: logDesc,
       session,
     });
-    obligations.push(ob);
+    if (ob) obligations.push(ob);
   }
 
   return obligations;
 }
 
-/**
- * Exported helper: find existing obligation between two parties.
- * Used by the settlement service.
- */
-export { findExistingObligation };
+export { findObligation as findExistingObligation };

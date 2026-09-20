@@ -14,5 +14,6 @@ router.post("/", validateRequest(createSoldSchema), createSold);
 router.get("/", getAllSoldItems);
 router.get("/:id", getSoldItemById);
 router.post("/:id/payments", validateRequest(addPaymentSchema), addPaymentToSold);
+router.post("/:id/payment", validateRequest(addPaymentSchema), addPaymentToSold);
 
 export default router;

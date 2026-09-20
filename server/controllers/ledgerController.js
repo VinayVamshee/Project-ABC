@@ -127,7 +127,6 @@ export const getObligationsHandler = async (req, res) => {
       if (debtorId)   query.debtorId   = debtorId   === "OWNER" ? null : debtorId;
       if (creditorId) query.creditorId = creditorId === "OWNER" ? null : creditorId;
     }
-    if (assetType) query.assetType = assetType;
     if (status)    query.status    = status;
 
     const obligations = await LedgerObligation.find(query)

@@ -84,7 +84,7 @@ export default function LedgerTransactions() {
   const fetchTransactions = useCallback(async () => {
     setLoadingTxns(true);
     try {
-      const res = await api.get("/ledger/transactions?limit=30");
+      const res = await api.get("/ledger/transactions?limit=20");
       if (res.data.success) setTransactions(res.data.transactions || []);
     } catch {} finally { setLoadingTxns(false); }
   }, []);

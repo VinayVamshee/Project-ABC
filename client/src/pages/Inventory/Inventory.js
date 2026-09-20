@@ -36,6 +36,7 @@ import {
 } from "react-icons/fa";
 import LogoLoader from "../../components/Loader/LogoLoader";
 import BulkImportModal from "../../components/BulkImport/BulkImportModal";
+import SellItemModal from "../../components/SellItemModal";
 
 // Visual Barcode SVG Component
 const BarcodeSvg = ({ value }) => {
@@ -90,6 +91,7 @@ export default function Inventory() {
   const [mobileSortBy, setMobileSortBy] = useState("recent");
   const [mobileSortOrder, setMobileSortOrder] = useState("desc");
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
 
 
 
@@ -691,9 +693,7 @@ export default function Inventory() {
                   <div className="expanded-action-single-row">
                     <button
                       className="btn btn-gold flex-fill"
-                      onClick={() =>
-                        navigate(`/sales/new?productId=${selectedItem.productID}`)
-                      }
+                      onClick={() => setIsSellModalOpen(true)}
                     >
                       Sell Item Now
                     </button>
@@ -717,9 +717,7 @@ export default function Inventory() {
                   <div className="side-footer-actions">
                     <button
                       className="btn-gold full-width"
-                      onClick={() =>
-                        navigate(`/sales/new?productId=${selectedItem.productID}`)
-                      }
+                      onClick={() => setIsSellModalOpen(true)}
                     >
                       Sell Item Now
                     </button>
@@ -733,6 +731,7 @@ export default function Inventory() {
                       <FaEdit />
                     </button>
                   </div>
+
                 )}
 
                 {/* Quick Specs 2x2 Grid */}
@@ -1731,6 +1730,7 @@ export default function Inventory() {
 
 
             <BulkImportModal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} />
+      <SellItemModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} inventoryItem={selectedItem} />
     </div>
   );
 }

@@ -20,6 +20,7 @@ export const createSold = async (req, res) => {
       sellingPrice = 0,
       discount = 0,
       payments = [],
+      soldAt,
     } = req.body;
 
     let finalCustomerId = customerId;
@@ -49,46 +50,44 @@ export const createSold = async (req, res) => {
     const finalPriceCalc = Math.max(Number(sellingPrice) - Number(discount), 0);
     const pointsEarned = Math.floor(finalPriceCalc * 0.001);
 
-    // Handle Customer
+    // Handle Customer (now truly optional — walkIn allowed)
     if (!finalCustomerId && (customerName || customerPhone)) {
       let customer = null;
       if (customerPhone) {
         customer = await BusinessContact.findOne({ phone: customerPhone }).session(session);
       }
-      if (!customer && customerName) {
+      if (!customer && customerName && customerName !== "Walk-in Customer") {
         customer = await BusinessContact.findOne({ name: customerName }).session(session);
       }
       if (customer) {
         finalCustomerId = customer._id;
         if (!customer.customerDetails) customer.customerDetails = {};
         if (!customer.categories.includes("Customer")) customer.categories.push("Customer");
-
         customer.customerDetails.loyaltyPoints = (customer.customerDetails.loyaltyPoints || 0) + pointsEarned;
         await customer.save({ session });
-      } else {
+      } else if (customerName && customerName !== "Walk-in Customer") {
+        // Create a new customer record
         const newCustomer = new BusinessContact({
-          name: customerName || "Unknown",
-          phone: customerPhone || `UNKNOWN_${Date.now()}`,
+          name: customerName,
+          phone: customerPhone || undefined,
           categories: ["Customer"],
           customerDetails: { loyaltyPoints: pointsEarned },
         });
         await newCustomer.save({ session });
         finalCustomerId = newCustomer._id;
       }
+      // Walk-in Customer: finalCustomerId stays null — that's OK
     } else if (finalCustomerId) {
        const customer = await BusinessContact.findById(finalCustomerId).session(session);
        if (customer) {
         if (!customer.customerDetails) customer.customerDetails = {};
         if (!customer.categories.includes("Customer")) customer.categories.push("Customer");
-
           customer.customerDetails.loyaltyPoints = (customer.customerDetails.loyaltyPoints || 0) + pointsEarned;
           await customer.save({ session });
        }
     }
+    // Note: if no customer info at all AND no customerId — sale recorded as anonymous walk-in (finalCustomerId = null)
 
-    if (!finalCustomerId) {
-      throw new Error("Customer information or ID is required");
-    }
 
     const soldRecord = new Sold({
       inventoryId: inventoryId || null,
@@ -99,6 +98,7 @@ export const createSold = async (req, res) => {
       discount: Number(discount),
       finalPrice: finalPriceCalc,
       payments: payments,
+      soldAt: soldAt ? new Date(soldAt) : new Date(),
     });
 
     await soldRecord.save({ session });
@@ -188,7 +188,7 @@ export const getSoldItemById = async (req, res) => {
 export const addPaymentToSold = async (req, res) => {
   try {
     const { id } = req.params;
-    const { amount, mode, notes, reference, paidBy, recordedBy } = req.body;
+    const { amount, mode, notes, reference, paidBy, recordedBy, date } = req.body;
 
     if (!amount || isNaN(amount)) {
       return res.status(400).json({ success: false, message: "Valid payment amount is required" });
@@ -201,20 +201,25 @@ export const addPaymentToSold = async (req, res) => {
 
     soldRecord.payments.push({
       amount: Number(amount),
-      mode,
-      notes,
-      reference,
-      paidBy,
-      recordedBy,
-      date: new Date(),
+      mode: mode || "cash",
+      notes: notes || "",
+      reference: reference || "",
+      paidBy: paidBy || "customer",
+      recordedBy: recordedBy || "",
+      date: date ? new Date(date) : new Date(),
     });
 
     await soldRecord.save();
 
+    const populatedRecord = await Sold.findById(id)
+      .populate("inventoryId")
+      .populate("orderId")
+      .populate("customerId");
+
     res.status(200).json({
       success: true,
       message: "Payment recorded successfully",
-      data: soldRecord,
+      data: populatedRecord || soldRecord,
     });
   } catch (error) {
     console.error("Error updating payment:", error);

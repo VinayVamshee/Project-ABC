@@ -1,55 +1,37 @@
 /**
  * LEDGER SETTLEMENT SERVICE
- * Handles partial, full, and cross-asset settlement of obligations.
- * All operations run inside MongoDB sessions for atomicity.
+ * Manual settlement of an obligation via a dedicated settlement transaction.
+ * Applies the payment to the unified moneyBalance / goldBalance.
  */
 
 import LedgerTransaction from "../models/LedgerTransaction.js";
-import LedgerObligation from "../models/LedgerObligation.js";
+import LedgerObligation  from "../models/LedgerObligation.js";
 
-/**
- * Settle an obligation (partially or fully).
- *
- * Cross-asset settlement is supported:
- *   - Money obligation settled with gold → gold.valuation reduces money.outstandingAmount
- *   - Gold obligation settled with money → amount reduces gold outstanding proportionally
- *
- * @param {Object} params
- * @param {string} params.obligationId   - _id of the LedgerObligation
- * @param {string} params.settleAsset    - "money" | "gold"
- * @param {number} params.moneyAmount    - if settling with money
- * @param {number} params.goldWeight     - if settling with gold
- * @param {number} params.goldValuation  - gold value in INR (for cross-asset)
- * @param {string} params.paymentMethod
- * @param {string} params.notes
- * @param {Object} session               - mongoose session
- */
 export async function settleObligation(params, session) {
   const {
     obligationId,
-    settleAsset,
-    moneyAmount = 0,
-    goldWeight  = 0,
-    goldValuation = 0,
-    goldPurity  = "",
-    goldRate    = 0,
-    paymentMethod = "Cash",
-    notes = "",
+    settleAsset    = "money",
+    moneyAmount    = 0,
+    goldWeight     = 0,
+    goldValuation  = 0,
+    goldPurity     = "",
+    goldRate       = 0,
+    paymentMethod  = "Cash",
+    notes          = "",
   } = params;
 
   const obligation = await LedgerObligation.findById(obligationId).session(session);
   if (!obligation) throw new Error("Obligation not found");
-  if (obligation.status === "settled") throw new Error("This obligation is already fully settled");
-  if (obligation.status === "void")    throw new Error("This obligation has been voided");
+  if (obligation.status === "settled") throw new Error("Already fully settled");
+  if (obligation.status === "void")    throw new Error("Obligation is void");
 
-  // ── Build the settlement transaction ────────────────────────
+  // ── Record a settlement transaction ────────────────────────────────────
   const settlementTxn = new LedgerTransaction({
-    transactionType: "settlement",
-    // Debtor pays creditor
-    providerId:   obligation.debtorId,
-    receiverId:   obligation.creditorId,
-    onBehalfOfId: obligation.debtorId,
-    assetType:    settleAsset,
+    transactionType:  "settlement",
+    providerId:       obligation.debtorId,
+    receiverId:       obligation.creditorId,
+    onBehalfOfId:     obligation.debtorId,
+    assetType:        settleAsset,
     money: {
       amount:   settleAsset === "money" ? Number(moneyAmount) : 0,
       currency: "INR",
@@ -61,56 +43,63 @@ export async function settleObligation(params, session) {
       valuation:   settleAsset === "gold" ? Number(goldValuation) : 0,
     },
     paymentMethod,
-    isSettlement:        true,
-    settledObligationId: obligation._id,
+    isSettlement:         true,
+    settledObligationId:  obligation._id,
     notes,
     description: `Settlement of ${obligation.obligationId}`,
     status: "active",
   });
-
   await settlementTxn.save({ session });
 
-  // ── Apply to obligation ──────────────────────────────────────
-  if (obligation.assetType === "money") {
-    let settledValue = 0;
-    if (settleAsset === "money") {
-      settledValue = Number(moneyAmount);
-    } else if (settleAsset === "gold") {
-      // Cross-asset: use gold valuation to reduce money obligation
-      settledValue = Number(goldValuation);
-    }
-    obligation.money.settledAmount     += settledValue;
-    obligation.money.outstandingAmount  = Math.max(
-      0,
-      obligation.money.originalAmount - obligation.money.settledAmount
-    );
+  // ── Apply settlement to unified obligation ─────────────────────────────
+  // Determine effective ₹ value of the settlement payment
+  let effectiveMoney = 0;
+  let goldGramsSettled = 0;
 
-  } else if (obligation.assetType === "gold") {
-    let settledGrams = 0;
-    if (settleAsset === "gold") {
-      settledGrams = Number(goldWeight);
-    } else if (settleAsset === "money") {
-      // Cross-asset: convert cash to grams using rate
-      if (goldRate > 0) {
-        settledGrams = Number(moneyAmount) / Number(goldRate);
-      }
+  if (settleAsset === "money") {
+    effectiveMoney = Number(moneyAmount);
+  } else if (settleAsset === "gold") {
+    if (goldValuation > 0) {
+      effectiveMoney = Number(goldValuation);
+    } else {
+      // No valuation → settle grams against goldBalance
+      goldGramsSettled = Number(goldWeight);
     }
-    obligation.gold.settledWeight     += settledGrams;
-    obligation.gold.outstandingWeight  = Math.max(
-      0,
-      obligation.gold.originalWeight - obligation.gold.settledWeight
-    );
   }
 
-  // ── Update status ────────────────────────────────────────────
-  const isMoneyObligation = obligation.assetType === "money";
-  const outstanding = isMoneyObligation
-    ? obligation.money.outstandingAmount
-    : obligation.gold.outstandingWeight;
+  // Reduce moneyBalance
+  if (effectiveMoney > 0 && obligation.moneyBalance > 0) {
+    const settled = Math.min(obligation.moneyBalance, effectiveMoney);
+    obligation.moneyBalance       -= settled;
+    obligation.totalSettledMoney   = (obligation.totalSettledMoney || 0) + settled;
+  }
 
-  obligation.status = outstanding <= 0 ? "settled" : "partially_settled";
+  // Reduce goldBalance (for pure gold gram settlements)
+  if (goldGramsSettled > 0 && obligation.goldBalance > 0) {
+    const settled = Math.min(obligation.goldBalance, goldGramsSettled);
+    obligation.goldBalance -= settled;
+    if (obligation.goldBalance <= 0.001) { obligation.goldBalance = 0; obligation.goldBalanceValuation = 0; }
+  }
+
+  // Log the settlement entry
+  obligation.settlementLog.push({
+    txnObjectId:  settlementTxn._id,
+    txnId:        settlementTxn.txnId,
+    date:         settlementTxn.transactionDate || new Date(),
+    assetType:    settleAsset,
+    direction:    "settled",
+    moneyApplied: effectiveMoney,
+    goldGrams:    settleAsset === "gold" ? Number(goldWeight)    : 0,
+    goldValuation: settleAsset === "gold" ? Number(goldValuation) : 0,
+    description:  `Manual settlement`,
+  });
+
+  const stillOwes = obligation.moneyBalance > 0.001 || obligation.goldBalance > 0.001;
+  obligation.status = stillOwes
+    ? "partially_settled"
+    : "settled";
+
   obligation.sourceTransactionIds.push(settlementTxn._id);
-
   await obligation.save({ session });
 
   return { transaction: settlementTxn, obligation };
