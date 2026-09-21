@@ -1319,7 +1319,7 @@ export default function People() {
               <div className="mobile-summary-box">
                 <span className="mobile-summary-lbl">Total Value</span>
                 <span className="mobile-summary-val">
-                  ₹ {computeTotalValue(mobileTransactions).toLocaleString()}
+                  ₹ {Math.round(computeTotalValue(mobileTransactions) || 0).toLocaleString("en-IN")}
                 </span>
               </div>
               <div className="mobile-summary-box">

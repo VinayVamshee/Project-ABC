@@ -313,15 +313,19 @@ export default function TopPanel({
                     <button
                         className="btn barcode-btn"
                         onClick={() => searchInputRef.current?.focus()}
+                        title="Scan QR Code or Barcode"
                     >
                         <span className="barcode-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M4 6v12M7 6v12M10 8v8M13 6v12M16 8v8M19 6v12" />
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                                <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19v2h2" />
                             </svg>
                         </span>
 
                         <span className="barcode-label">
-                            Scan Barcode
+                            Scan QR / Code
                         </span>
                     </button>
                 </div>

@@ -164,6 +164,45 @@ export default function LedgerDashboard() {
   const [obFilterDirection, setObFilterDirection] = useState("all"); // "all" | "receivable" | "payable"
   const [obFilterOpen, setObFilterOpen] = useState(false);
 
+  // Write-off modal state (Obligations tab)
+  const [writingOff,    setWritingOff]   = useState(null);
+  const [writeOffForm,  setWriteOffForm] = useState({ amount: "", reason: "" });
+  const [savingWriteOff, setSavingWriteOff] = useState(false);
+
+  // Track which obligation cards have their log expanded (Set of obligation _id strings)
+  const [expandedLogs, setExpandedLogs] = useState(new Set());
+
+  const toggleLog = (obId) => {
+    setExpandedLogs(prev => {
+      const next = new Set(prev);
+      if (next.has(obId)) next.delete(obId);
+      else next.add(obId);
+      return next;
+    });
+  };
+
+  const handleWriteOff = async () => {
+    if (!writingOff) return;
+    if (!writeOffForm.reason.trim()) { notify.error("Please enter a reason for the write-off"); return; }
+    if (!writeOffForm.amount || parseFloat(writeOffForm.amount) <= 0) { notify.error("Enter a valid write-off amount"); return; }
+    setSavingWriteOff(true);
+    try {
+      const res = await api.post(`/ledger/obligations/${writingOff._id}/writeoff`, {
+        amount: parseFloat(writeOffForm.amount),
+        reason: writeOffForm.reason.trim(),
+      });
+      if (res.data.success) {
+        notify.success("Write-off recorded!");
+        setWritingOff(null);
+        setWriteOffForm({ amount: "", reason: "" });
+        loadObligations();
+        loadLedgerData();
+      }
+    } catch (err) {
+      notify.error(err.response?.data?.message || "Write-off failed");
+    } finally { setSavingWriteOff(false); }
+  };
+
   // Load Real Data from Backend
   const loadLedgerData = useCallback(async () => {
     try {
@@ -2124,44 +2163,79 @@ export default function LedgerDashboard() {
                     )}
                   </div>
 
-                  {/* Settlement Log Timeline */}
+                  {/* Settlement Log Timeline — capped at 4, expandable */}
                   {ob.settlementLog && ob.settlementLog.length > 0 && (
                     <div className="mt-2" style={{ borderTop: "1px solid var(--border-light)", paddingTop: "8px" }}>
                       <div className="very-small fw-semibold text-muted mb-1">Transaction History</div>
                       <div className="d-flex flex-column gap-1">
-                        {[...(ob.settlementLog || [])].reverse().map((entry, i) => {
-                          const isAdded    = entry.direction === "added";
-                          const entryMoney = entry.moneyApplied || 0;
-                          const entryGold  = entry.goldGrams    || 0;
-                          const dateStr    = entry.date
-                            ? new Date(entry.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })
-                            : "";
-
-                          let amtLabel = "";
-                          if (entry.assetType === "gold" && entryGold > 0) {
-                            amtLabel = `${entryGold.toFixed(3)}g gold`;
-                            if (entryMoney > 0) amtLabel += ` (₹${entryMoney.toLocaleString("en-IN")})`;
-                          } else {
-                            amtLabel = entryMoney > 0 ? `₹${entryMoney.toLocaleString("en-IN")}` : entry.assetType;
-                          }
-
+                        {(() => {
+                          const log = [...(ob.settlementLog || [])].reverse();
+                          const isExpanded = expandedLogs.has(ob._id);
+                          const visible = isExpanded ? log : log.slice(0, 4);
+                          const hiddenCount = log.length - 4;
                           return (
-                            <div key={i} className="d-flex align-items-center gap-2 very-small">
-                              <span style={{ color: isAdded ? "#EF4444" : "#22C55E", fontWeight: 700, width: "12px" }}>{isAdded ? "+" : "−"}</span>
-                              <span className="text-muted" style={{ minWidth: "60px" }}>{dateStr}</span>
-                              <span className={isAdded ? "text-danger" : "text-success"}>{amtLabel}</span>
-                              <span className="text-muted" style={{ fontSize: "10px" }}>{entry.txnId || ""}</span>
-                            </div>
+                            <>
+                              {visible.map((entry, i) => {
+                                const isAdded    = entry.direction === "added";
+                                const isWriteOff = entry.direction === "writeoff";
+                                const entryMoney = entry.moneyApplied || 0;
+                                const entryGold  = entry.goldGrams    || 0;
+                                const dateStr    = entry.date
+                                  ? new Date(entry.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })
+                                  : "";
+                                let amtLabel = "";
+                                if (entry.assetType === "gold" && entryGold > 0) {
+                                  amtLabel = `${entryGold.toFixed(3)}g gold`;
+                                  if (entryMoney > 0) amtLabel += ` (₹${entryMoney.toLocaleString("en-IN")})`;
+                                } else {
+                                  amtLabel = entryMoney > 0 ? `₹${entryMoney.toLocaleString("en-IN")}` : entry.assetType;
+                                }
+                                const color  = isWriteOff ? "#D97706" : isAdded ? "#EF4444" : "#22C55E";
+                                const prefix = isWriteOff ? "✍" : isAdded ? "+" : "−";
+                                return (
+                                  <div key={i} className="d-flex flex-column gap-0 very-small">
+                                    <div className="d-flex align-items-center gap-2">
+                                      <span style={{ color, fontWeight: 700, width: "12px" }}>{prefix}</span>
+                                      <span className="text-muted" style={{ minWidth: "60px" }}>{dateStr}</span>
+                                      <span style={{ color }}>{amtLabel}</span>
+                                      <span className="text-muted" style={{ fontSize: "10px" }}>{entry.txnId || ""}</span>
+                                    </div>
+                                    {isWriteOff && entry.description && (
+                                      <span className="text-muted" style={{ fontSize: "10px", paddingLeft: "26px" }}>↳ {entry.description}</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {hiddenCount > 0 && (
+                                <button className="ob-log-expand-btn" onClick={(e) => { e.stopPropagation(); toggleLog(ob._id); }}>
+                                  {isExpanded ? "Show less ↑" : `+ ${hiddenCount} more transactions ↓`}
+                                </button>
+                              )}
+                            </>
                           );
-                        })}
+                        })()}
                       </div>
                     </div>
                   )}
 
-                  {/* Action Link */}
-                  <div className="mobile-ob-view-link mt-2" onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}&from=ledger`)}>
-                    <span>View Full Ledger</span>
-                    <FaChevronRight className="very-small" />
+                  {/* Action Row */}
+                  <div className="d-flex align-items-center justify-content-between mt-2 gap-2">
+                    <div className="mobile-ob-view-link" onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}&from=ledger`)}>
+                      <span>View Full Ledger</span>
+                      <FaChevronRight className="very-small" />
+                    </div>
+                    {ob.status !== "settled" && ob.status !== "void" && (
+                      <button
+                        className="ob-writeoff-btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWritingOff(ob);
+                          setWriteOffForm({ amount: String(Math.round(ob.moneyBalance || 0)), reason: "" });
+                        }}
+                      >
+                        ✍ Write Off
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -2180,6 +2254,7 @@ export default function LedgerDashboard() {
                   <th>Settled</th>
                   <th>Status</th>
                   <th>Settlement Log</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2192,6 +2267,11 @@ export default function LedgerDashboard() {
                     : hasGold
                     ? `${(ob.goldBalance || 0).toFixed(3)}g Gold`
                     : "₹0";
+                  const log = [...(ob.settlementLog || [])].reverse();
+                  const isExpanded = expandedLogs.has(ob._id);
+                  const visibleLog = isExpanded ? log : log.slice(0, 4);
+                  const hiddenCount = log.length - 4;
+                  const isActive = ob.status !== "settled" && ob.status !== "void";
                   return (
                     <tr key={ob._id} onClick={() => otherParty?._id && navigate(`/people?contactId=${otherParty._id}&from=ledger`)} style={{ cursor: "pointer" }}>
                       <td className="fw-bold text-danger">{ob.debtorId?.name || "Business Owner (You)"}</td>
@@ -2206,8 +2286,9 @@ export default function LedgerDashboard() {
                       </td>
                       <td style={{ maxWidth: "260px" }}>
                         <div className="d-flex flex-column gap-1 very-small">
-                          {[...(ob.settlementLog || [])].reverse().slice(0, 4).map((entry, i) => {
-                            const isAdded  = entry.direction === "added";
+                          {visibleLog.map((entry, i) => {
+                            const isAdded    = entry.direction === "added";
+                            const isWriteOff = entry.direction === "writeoff";
                             const entryMoney = entry.moneyApplied || 0;
                             const entryGold  = entry.goldGrams    || 0;
                             const dateStr    = entry.date
@@ -2220,13 +2301,41 @@ export default function LedgerDashboard() {
                             } else {
                               amtLabel = entryMoney > 0 ? `₹${entryMoney.toLocaleString("en-IN")}` : entry.assetType;
                             }
+                            const color  = isWriteOff ? "#D97706" : isAdded ? "#EF4444" : "#22C55E";
+                            const prefix = isWriteOff ? "✍" : isAdded ? "+" : "−";
                             return (
-                              <span key={i} className={isAdded ? "text-danger" : "text-success"}>
-                                {isAdded ? "+" : "−"} {amtLabel} <span className="text-muted">({dateStr} · {entry.txnId})</span>
-                              </span>
+                              <div key={i} className="d-flex flex-column gap-0">
+                                <span style={{ color }}>
+                                  {prefix} {amtLabel} <span className="text-muted">({dateStr}{entry.txnId ? ` · ${entry.txnId}` : ""})</span>
+                                </span>
+                                {isWriteOff && entry.description && (
+                                  <span className="text-muted" style={{ fontSize: "10px", paddingLeft: "14px" }}>↳ {entry.description}</span>
+                                )}
+                              </div>
                             );
                           })}
+                          {hiddenCount > 0 && (
+                            <button
+                              className="ob-log-expand-btn"
+                              onClick={(e) => { e.stopPropagation(); toggleLog(ob._id); }}
+                            >
+                              {isExpanded ? "Show less ↑" : `+ ${hiddenCount} more ↓`}
+                            </button>
+                          )}
                         </div>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {isActive && (
+                          <button
+                            className="ob-writeoff-btn-sm"
+                            onClick={() => {
+                              setWritingOff(ob);
+                              setWriteOffForm({ amount: String(Math.round(ob.moneyBalance || 0)), reason: "" });
+                            }}
+                          >
+                            ✍ Write Off
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -2258,6 +2367,59 @@ export default function LedgerDashboard() {
         </div>
       )}
 
+
+      {/* ============================================================
+         WRITE-OFF MODAL
+         ============================================================ */}
+      {writingOff && (
+        <div className="settle-overlay" onClick={() => setWritingOff(null)}>
+          <div className="settle-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="settle-modal-header">
+              <h3>✍ Write Off Debt</h3>
+              <button className="settle-close" onClick={() => setWritingOff(null)}>✕</button>
+            </div>
+            <div className="settle-modal-body">
+              <div className="settle-info">
+                <strong>{writingOff.debtorId?.name || "Business Owner (You)"}</strong> owes{" "}
+                <strong>{writingOff.creditorId?.name || "Business Owner (You)"}</strong>
+                <span className="settle-outstanding">
+                  Outstanding: ₹{(writingOff.moneyBalance || 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="writeoff-note">
+                No money changes hands — this reduces the outstanding debt with a reason (e.g. salary, concession, work done in lieu).
+              </div>
+
+              <div className="txn-field">
+                <label>Amount to Write Off (₹) *</label>
+                <input
+                  type="number"
+                  value={writeOffForm.amount}
+                  onChange={(e) => setWriteOffForm((f) => ({ ...f, amount: e.target.value }))}
+                  placeholder={`Max ₹${(writingOff.moneyBalance || 0).toLocaleString("en-IN")}`}
+                />
+              </div>
+
+              <div className="txn-field">
+                <label>Reason *</label>
+                <input
+                  type="text"
+                  value={writeOffForm.reason}
+                  onChange={(e) => setWriteOffForm((f) => ({ ...f, reason: e.target.value }))}
+                  placeholder="e.g. Salary for Sept, Concession granted, Work done in lieu…"
+                />
+              </div>
+
+              <div className="settle-footer">
+                <button className="ldg-btn outline" onClick={() => setWritingOff(null)}>Cancel</button>
+                <button className="ldg-btn amber" disabled={savingWriteOff} onClick={handleWriteOff}>
+                  {savingWriteOff ? "Recording…" : "Confirm Write-Off"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ============================================================
          CONTACT PICKER MODAL (FOR PROVIDER / RECEIVER / ON BEHALF OF)

@@ -84,8 +84,8 @@ export default function LedgerContacts() {
                       <span key={cat} className="badge bg-secondary me-1">{cat}</span>
                     ))}
                   </td>
-                  <td className="text-danger fw-bold">₹{c.balances?.moneyOwnerOwes?.toLocaleString() || 0}</td>
-                  <td className="text-success fw-bold">₹{c.balances?.moneyOwedToOwner?.toLocaleString() || 0}</td>
+                  <td className="text-danger fw-bold">₹{Math.round(c.balances?.moneyOwnerOwes || 0).toLocaleString("en-IN")}</td>
+                  <td className="text-success fw-bold">₹{Math.round(c.balances?.moneyOwedToOwner || 0).toLocaleString("en-IN")}</td>
                   <td>
                     <Link to={`/ledger/contacts/${c._id}`} className="btn btn-sm btn-outline-primary">
                       View Ledger

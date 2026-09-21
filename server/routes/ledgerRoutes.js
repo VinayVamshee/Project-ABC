@@ -10,6 +10,7 @@ import {
   getObligationsHandler,
   getObligationByIdHandler,
   settleObligationHandler,
+  writeOffObligationHandler,
   getBalancesHandler,
   getContactBalanceHandler,
 } from "../controllers/ledgerController.js";
@@ -30,7 +31,8 @@ router.get("/groups/:id",           getGroupByIdHandler);
 // ── Obligations ────────────────────────────────────────────
 router.get("/obligations",          getObligationsHandler);
 router.get("/obligations/:id",      getObligationByIdHandler);
-router.post("/obligations/:id/settle", settleObligationHandler);
+router.post("/obligations/:id/settle",   settleObligationHandler);
+router.post("/obligations/:id/writeoff", writeOffObligationHandler);
 
 // ── Balances (replaces old /ledger/contacts) ───────────────
 router.get("/balances",             getBalancesHandler);

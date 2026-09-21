@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as XLSX from "xlsx";
-import JsBarcode from "jsbarcode";
 import api from "../../api/axios";
 import { notify } from "../../components/Toast/toast";
 import "./Inventory.css";
@@ -11,7 +10,7 @@ import {
   FaWeightHanging,
   FaMoneyBillWave,
   FaSearch,
-  FaBarcode,
+  FaQrcode,
   FaFileExport,
   FaCloudUploadAlt,
   FaPlus,
@@ -37,32 +36,12 @@ import {
 import LogoLoader from "../../components/Loader/LogoLoader";
 import BulkImportModal from "../../components/BulkImport/BulkImportModal";
 import SellItemModal from "../../components/SellItemModal";
+import QRCodeSvg, { getQRCodeSvgString } from "../../components/QRCodeSvg";
 
-// Visual Barcode SVG Component
-const BarcodeSvg = ({ value }) => {
-  const svgRef = useRef(null);
-  useEffect(() => {
-    if (svgRef.current && value) {
-      try {
-        JsBarcode(svgRef.current, value, {
-          format: "CODE128",
-          width: 1.5,
-          height: 38,
-          displayValue: true,
-          fontSize: 11,
-          font: "Inter, -apple-system, sans-serif",
-          textMargin: 3,
-          lineColor: "#1C1917",
-          background: "transparent",
-        });
-      } catch (e) {
-        console.error("Barcode render error", e);
-      }
-    }
-  }, [value]);
 
-  return <svg ref={svgRef} className="barcode-svg" />;
-};
+// Indian Currency Formatter (e.g. 99,11,833)
+const formatINR = (val) => Math.round(Number(val) || 0).toLocaleString("en-IN");
+
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -277,39 +256,37 @@ export default function Inventory() {
   const currentGallery = selectedItem ? getProductImageGallery(selectedItem) : [];
   const activeImage = currentGallery[activeImageIndex] || selectedItem?.productImage || "";
 
-  // Print Barcode Label
-  const handlePrintBarcode = (item) => {
+  // Print Jewellery Tag with QR Code
+  const handlePrintQRCode = (item) => {
     if (!item) return;
-    const printWindow = window.open("", "_blank", "width=400,height=300");
+    const printWindow = window.open("", "_blank", "width=400,height=360");
     if (!printWindow) return;
+
+    const qrSvg = getQRCodeSvgString(item.barcode || item.productID, 100);
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Barcode - ${item.productID}</title>
+          <title>QR Tag - ${item.productID}</title>
           <style>
-            body { font-family: sans-serif; text-align: center; padding: 20px; }
-            .tag { border: 1px dashed #333; padding: 12px; border-radius: 8px; max-width: 280px; margin: auto; }
-            .title { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
-            .meta { font-size: 11px; color: #555; margin-bottom: 8px; }
-            .price { font-size: 13px; font-weight: bold; color: #111; margin-top: 6px; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #fff; margin: 0; }
+            .tag { border: 1.5px dashed #333; padding: 14px; border-radius: 10px; max-width: 240px; margin: auto; background: #fff; }
+            .brand { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #C8A14B; margin-bottom: 2px; }
+            .title { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #111; }
+            .meta { font-size: 11px; color: #555; margin-bottom: 8px; line-height: 1.35; }
+            .qr-wrap { display: flex; justify-content: center; margin: 6px 0; }
+            .price { font-size: 11px; font-weight: 700; color: #111; margin-top: 6px; letter-spacing: 0.04em; }
           </style>
         </head>
         <body>
           <div class="tag">
+            <div class="brand">ABC JEWELS</div>
             <div class="title">${item.productName}</div>
-            <div class="meta">${item.category} | ${item.metalType} ${item.purity}% | Net: ${item.netWeight}g</div>
-            <svg id="print-barcode"></svg>
-            <div class="price">ID: ${item.productID}</div>
+            <div class="meta">${item.category} • ${item.metalType} ${item.purity}%<br/>Net: ${item.netWeight}g | Gross: ${item.grossWeight || item.netWeight}g</div>
+            <div class="qr-wrap">${qrSvg}</div>
+            <div class="price">${item.productID}</div>
           </div>
-          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <script>
-            JsBarcode("#print-barcode", "${item.barcode || item.productID}", {
-              format: "CODE128",
-              width: 1.8,
-              height: 40,
-              displayValue: true
-            });
             window.onload = function() { window.print(); window.close(); }
           </script>
         </body>
@@ -346,10 +323,10 @@ export default function Inventory() {
           </button>
           <button
             className="btn-outline"
-            onClick={() => notify.info("Ready for barcode scanning")}
-            title="Scan Barcode"
+            onClick={() => notify.info("Ready for QR code scanning")}
+            title="Scan QR Code"
           >
-            <FaBarcode /> Scan Barcode
+            <FaQrcode /> Scan QR Code
           </button>
           <button
             className="btn-outline"
@@ -402,7 +379,7 @@ export default function Inventory() {
           </div>
           <div className="stat-info">
             <span className="stat-label">Total Value (Cost Price)</span>
-            <span className="stat-value">₹{totals.totalCost.toLocaleString()}</span>
+            <span className="stat-value">₹{formatINR(totals.totalCost)}</span>
             <span className="stat-sub">Invested value</span>
           </div>
         </div>
@@ -421,7 +398,7 @@ export default function Inventory() {
               <FaSearch />
               <input
                 type="text"
-                placeholder="Search products, IDs or barcodes..."
+                placeholder="Search products, IDs or QR codes..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -491,8 +468,7 @@ export default function Inventory() {
                             )}
                           </div>
                           <div className="product-info-mini">
-                            <span className="prod-id">{item.productID}</span>
-                            <span className="prod-name">{item.productName || "Unknown Item"}</span>
+                            <span className="prod-name-title">{item.productName || "Unknown Item"}</span>
                           </div>
                         </div>
                       </td>
@@ -505,7 +481,7 @@ export default function Inventory() {
                       <td>{item.grossWeight || 0} g</td>
                       <td>{item.stoneWeight || 0} g</td>
                       <td className="cost-price-cell">
-                        ₹{(item.baseCostPrice || 0).toLocaleString()}
+                        ₹{formatINR(item.baseCostPrice)}
                       </td>
                       <td>
                         <div className="action-btns">
@@ -545,7 +521,7 @@ export default function Inventory() {
                   <td className="total-val-cell">{totals.totalGross.toFixed(1)} g</td>
                   <td className="total-val-cell">{totals.totalStone.toFixed(1)} g</td>
                   <td className="total-val-cell total-cost-val">
-                    ₹{totals.totalCost.toLocaleString()}
+                    ₹{formatINR(totals.totalCost)}
                   </td>
                   <td></td>
                 </tr>
@@ -599,8 +575,7 @@ export default function Inventory() {
           >
             <div className="side-preview-header">
               <div>
-                <h3 className="side-prod-id">{selectedItem.productID}</h3>
-                <h4 className="side-prod-name">{selectedItem.productName}</h4>
+                <h3 className="side-prod-name mb-1">{selectedItem.productName}</h3>
                 <div className="d-flex align-items-center gap-2 mt-1">
                   <span
                     className={`category-badge-small ${getCategoryColorClass(
@@ -670,21 +645,21 @@ export default function Inventory() {
                   </div>
                 )}
 
-                {/* Scannable Barcode Box */}
-                <div className="side-barcode-box">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <span className="very-small fw-bold text-muted text-uppercase">
-                      Scannable Barcode
+                {/* Scannable QR Code Box */}
+                <div className="side-barcode-box side-qrcode-box">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <span className="very-small fw-bold text-muted text-uppercase d-flex align-items-center gap-1">
+                      <FaQrcode className="text-gold" /> Scannable QR Code
                     </span>
                     <button
                       className="btn btn-link btn-sm p-0 text-decoration-none very-small text-gold"
-                      onClick={() => handlePrintBarcode(selectedItem)}
+                      onClick={() => handlePrintQRCode(selectedItem)}
                     >
                       <FaPrint /> Print Tag
                     </button>
                   </div>
-                  <div className="d-flex justify-content-center py-1">
-                    <BarcodeSvg value={selectedItem.barcode || selectedItem.productID} />
+                  <div className="d-flex justify-content-center py-2 qr-container">
+                    <QRCodeSvg value={selectedItem.barcode || selectedItem.productID} size={115} />
                   </div>
                 </div>
 
@@ -816,7 +791,7 @@ export default function Inventory() {
                           Total Procurement Cost
                         </span>
                         <span className="expanded-large-cost">
-                          ₹{(selectedItem.baseCostPrice || 0).toLocaleString()}
+                          ₹{formatINR(selectedItem.baseCostPrice)}
                         </span>
                         <span className="expanded-spec-sub">
                           Inclusive of metal &amp; stones
@@ -907,7 +882,7 @@ export default function Inventory() {
                               <td>{st.cut || "Brilliant Cut"} / {st.color || "Fine"}</td>
                               <td>{st.pieces || st.count || 1} pcs</td>
                               <td>{st.carats || st.weight || 0} ct</td>
-                              <td className="fw-bold text-success">₹{(st.value || st.price || 0).toLocaleString()}</td>
+                              <td className="fw-bold text-success">₹{formatINR(st.value || st.price)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1074,7 +1049,7 @@ export default function Inventory() {
             </div>
             <div className="mobile-stat-content">
               <span className="mobile-stat-val">
-                ₹{totals.totalCost.toLocaleString()}
+                ₹{formatINR(totals.totalCost)}
               </span>
               <span className="mobile-stat-lbl">Total Value</span>
             </div>
@@ -1088,7 +1063,7 @@ export default function Inventory() {
             <FaSearch />
             <input
               type="text"
-              placeholder="Search products, IDs or barcodes..."
+              placeholder="Search products, IDs or QR codes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -1156,17 +1131,15 @@ export default function Inventory() {
                     )}
                   </div>
                   <div className="mobile-card-details">
-                    <div className="mobile-card-top-line">
-                      <span className="mobile-card-id">{item.productID}</span>
-                    </div>
-                    <span className="mobile-card-name">{item.productName}</span>
+                    <span className="mobile-card-name fw-bold">{item.productName}</span>
+                    <span className="very-small text-muted">{item.category}</span>
                   </div>
                   <div className="mobile-card-right">
                     <span className="mobile-weight-pill">
                       {item.netWeight || 0} g
                     </span>
                     <span className="mobile-card-price">
-                      ₹{(item.baseCostPrice || 0).toLocaleString()}
+                      ₹{formatINR(item.baseCostPrice)}
                     </span>
                   </div>
                 </div>
@@ -1184,19 +1157,19 @@ export default function Inventory() {
               <table className="mobile-compact-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>#</th>
                     <th>Product</th>
                     <th>Net Wt</th>
                     <th>Cost Price</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((item) => (
+                  {filteredItems.map((item, idx) => (
                     <tr
                       key={item._id}
                       onClick={() => handleMobileCardClick(item)}
                     >
-                      <td className="fw-bold text-gold">{item.productID}</td>
+                      <td className="row-number">{idx + 1}</td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
                           <div className="product-img-mini" style={{ width: 26, height: 26 }}>
@@ -1216,7 +1189,7 @@ export default function Inventory() {
                       </td>
                       <td className="fw-semibold">{item.netWeight || 0} g</td>
                       <td className="fw-bold text-danger">
-                        ₹{(item.baseCostPrice || 0).toLocaleString()}
+                        ₹{formatINR(item.baseCostPrice)}
                       </td>
                     </tr>
                   ))}
@@ -1249,7 +1222,7 @@ export default function Inventory() {
                   TOTAL VALUE
                 </span>
                 <span className="fw-bold fs-6 text-danger">
-                  ₹{totals.totalCost.toLocaleString()}
+                  ₹{formatINR(totals.totalCost)}
                 </span>
                 <span className="very-small text-muted d-block">Total Cost</span>
               </div>
@@ -1269,7 +1242,7 @@ export default function Inventory() {
               className="mobile-detail-back-btn"
               onClick={() => setMobileDetailOpen(false)}
             >
-              <FaChevronLeft /> <span className="fs-6 fw-bold">{selectedItem.productID}</span>
+              <FaChevronLeft /> <span className="fs-6 fw-bold">{selectedItem.productName}</span>
             </button>
             <div className="mobile-detail-header-actions">
               <button
@@ -1369,7 +1342,7 @@ export default function Inventory() {
             <div className="mobile-spec-card">
               <span className="mobile-spec-lbl">Cost Price</span>
               <span className="mobile-spec-val green">
-                ₹{(selectedItem.baseCostPrice || 0).toLocaleString()}
+                ₹{formatINR(selectedItem.baseCostPrice)}
               </span>
             </div>
             <div className="mobile-spec-card">
@@ -1401,9 +1374,9 @@ export default function Inventory() {
                 "Authentic fine jewellery piece crafted with high precision and verified hallmarked purity."}
             </p>
 
-            {/* Barcode & Tags */}
-            <div className="d-flex justify-content-center py-2 bg-light rounded-3">
-              <BarcodeSvg value={selectedItem.barcode || selectedItem.productID} />
+            {/* QR Code & Tags */}
+            <div className="d-flex flex-column align-items-center py-3 bg-light rounded-3">
+              <QRCodeSvg value={selectedItem.barcode || selectedItem.productID} size={100} />
             </div>
           </div>
 
@@ -1626,10 +1599,10 @@ export default function Inventory() {
                 className="mobile-sheet-menu-item"
                 onClick={() => {
                   setMobileQuickMenuOpen(false);
-                  notify.info("Camera barcode scanner ready");
+                  notify.info("Camera QR scanner ready");
                 }}
               >
-                <FaBarcode className="text-primary" /> Scan Barcode
+                <FaQrcode className="text-primary" /> Scan QR Code
               </button>
               <button
                 className="mobile-sheet-menu-item"
@@ -1695,10 +1668,10 @@ export default function Inventory() {
                 className="mobile-sheet-menu-item"
                 onClick={() => {
                   setMobileItemActionsOpen(false);
-                  handlePrintBarcode(selectedItem);
+                  handlePrintQRCode(selectedItem);
                 }}
               >
-                <FaPrint className="text-info" /> Print Barcode Tag
+                <FaPrint className="text-info" /> Print QR Code Tag
               </button>
               <button
                 className="mobile-sheet-menu-item danger mt-2"

@@ -9,6 +9,7 @@ import LedgerObligation       from "../models/LedgerObligation.js";
 import LedgerTransactionGroup from "../models/LedgerTransactionGroup.js";
 import { createTransaction, voidTransaction, getTransactions } from "../services/ledgerTransactionService.js";
 import { settleObligation }   from "../services/ledgerSettlementService.js";
+import { writeOffObligation } from "../services/ledgerWriteoffService.js";
 import { createGroup, getGroups, getGroupById } from "../services/ledgerGroupService.js";
 import { getAllBalances, getContactBalance, getDashboardTotals } from "../services/ledgerBalanceService.js";
 
@@ -168,6 +169,23 @@ export const settleObligationHandler = async (req, res) => {
     await session.abortTransaction();
     console.error("settleObligation error:", err);
     res.status(500).json({ success: false, message: err.message || "Settlement failed" });
+  } finally {
+    session.endSession();
+  }
+};
+
+export const writeOffObligationHandler = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const params = { obligationId: req.params.id, ...req.body };
+    const result = await writeOffObligation(params, session);
+    await session.commitTransaction();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    await session.abortTransaction();
+    console.error("writeOffObligation error:", err);
+    res.status(500).json({ success: false, message: err.message || "Write-off failed" });
   } finally {
     session.endSession();
   }

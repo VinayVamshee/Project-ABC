@@ -360,7 +360,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
     };
 
     const printBarcode = (productID) => {
-        const url = `${api.defaults.baseURL}/inventory/barcode/${productID}`;
+        const url = `${api.defaults.baseURL}/inventory/qrcode/${productID}`;
         const win = window.open(url, "_blank");
         win?.print();
     };
@@ -919,15 +919,15 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                                 );
                                             })()}
                                         </div>
-                                        {/* ================= BARCODE SECTION ================= */}
+                                        {/* ================= QR CODE SECTION ================= */}
                                         {section === "inventory" && selectedItem?.productID && (
                                             <div className="barcode-section">
                                                 <div className="fw-semibold small text-muted mb-2">
-                                                    Barcode
+                                                    QR Code
                                                 </div>
 
                                                 <div className="d-flex flex-column align-items-center gap-2">
-                                                    <Barcode value={selectedItem.productID} />
+                                                    <Barcode value={selectedItem.productID} size={100} />
 
                                                     <div className="small text-muted">
                                                         {selectedItem.productID}
@@ -937,7 +937,7 @@ export default function OverviewPanel({ section, items, onRefresh, onSell, onEdi
                                                         className="btn-outline-action btn-sm"
                                                         onClick={() => printBarcode(selectedItem.productID)}
                                                     >
-                                                        Print Barcode
+                                                        Print QR Code
                                                     </button>
                                                 </div>
                                             </div>

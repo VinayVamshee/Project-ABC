@@ -1,19 +1,6 @@
-import { useEffect, useRef } from "react";
-import JsBarcode from "jsbarcode";
+import React from "react";
+import QRCodeSvg from "./QRCodeSvg";
 
-export default function Barcode({ value }) {
-    const ref = useRef();
-
-    useEffect(() => {
-        if (value) {
-            JsBarcode(ref.current, value, {
-                format: "CODE128",
-                width: 2,
-                height: 40,
-                displayValue: true,
-            });
-        }
-    }, [value]);
-
-    return <svg ref={ref}></svg>;
+export default function Barcode({ value, size = 90 }) {
+  return <QRCodeSvg value={value} size={size} />;
 }

@@ -219,25 +219,24 @@ export const deleteInventoryItem = async (req, res) => {
   }
 };
 
-export const getBarcodeImage = async (req, res) => {
+export const getQRCodeImage = async (req, res) => {
   const { productID } = req.params;
 
   try {
     const png = await bwipjs.toBuffer({
-      bcid: "code128",
+      bcid: "qrcode",
       text: productID,
-      scale: 4,
-      height: 15,
-      includetext: true,
-      textxalign: "center",
+      scale: 5,
     });
 
     res.set("Content-Type", "image/png");
     res.send(png);
   } catch (err) {
-    res.status(500).json({ message: "Failed to generate barcode" });
+    res.status(500).json({ message: "Failed to generate QR code" });
   }
 };
+
+export const getBarcodeImage = getQRCodeImage;
 
 /* -----------------------------------------------------
    📥 DOWNLOAD BULK IMPORT EXCEL TEMPLATE WITH DROPDOWNS

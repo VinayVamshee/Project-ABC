@@ -13,6 +13,7 @@ import {
   updateInventoryItem,
   deleteInventoryItem,
   getBarcodeImage,
+  getQRCodeImage,
   downloadBulkImportTemplate,
 } from "../controllers/inventoryController.js";
 const router = express.Router();
@@ -21,6 +22,7 @@ const router = express.Router();
 router.get("/template", downloadBulkImportTemplate);
 router.post("/bulk", validateRequest(createBulkInventoryItemsSchema), createBulkInventoryItems);
 router.post("/", validateRequest(createInventoryItemSchema), createInventoryItem);
+router.get("/qrcode/:productID", getQRCodeImage);
 router.get("/barcode/:productID", getBarcodeImage);
 router.get("/", getAllInventoryItems);
 router.get("/:id", getInventoryItemById);
