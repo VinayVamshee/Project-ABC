@@ -32,9 +32,6 @@ const TABS = [
   { label: "Customer", value: "Customer", key: "Customer" },
   { label: "Worker", value: "Worker", key: "Worker" },
   { label: "Wholeseller", value: "Wholeseller", key: "Wholeseller" },
-  { label: "Supplier", value: "Supplier", key: "Supplier" },
-  { label: "Financier", value: "Financier", key: "Financier" },
-  { label: "Other", value: "Other", key: "Other" },
 ];
 
 const AVATAR_COLORS = [
@@ -113,6 +110,10 @@ export default function People() {
   const [showAllPersonTxns, setShowAllPersonTxns] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
 
+  // Customer Sales state
+  const [customerSales, setCustomerSales] = useState([]);
+  const [loadingCustomerSales, setLoadingCustomerSales] = useState(false);
+
   // Drawer / Form state (Create and Edit)
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -159,10 +160,6 @@ export default function People() {
           "Customer",
           "Worker",
           "Wholeseller",
-          "Supplier",
-          "Financier",
-          "Businessman",
-          "Other",
         ].forEach((cat) => {
           c[cat] = all.filter((x) => x.categories?.includes(cat)).length;
         });
@@ -220,6 +217,32 @@ export default function People() {
     }
   }, []);
 
+  const fetchCustomerSales = useCallback(async (contactId) => {
+    if (!contactId) return;
+    setLoadingCustomerSales(true);
+    try {
+      const res = await api.get(`/sold?customerId=${contactId}&limit=100`);
+      if (res.data && res.data.success) {
+        setCustomerSales(res.data.data || []);
+      } else {
+        setCustomerSales([]);
+      }
+    } catch {
+      setCustomerSales([]);
+    } finally {
+      setLoadingCustomerSales(false);
+    }
+  }, []);
+
+  const fetchContactData = useCallback((c) => {
+    if (!c) return;
+    if (primaryCat(c) === "Customer") {
+      fetchCustomerSales(c._id);
+    } else {
+      fetchContactLedgerData(c._id);
+    }
+  }, [fetchCustomerSales, fetchContactLedgerData]);
+
   // ── Open contact from URL query param if present (?contactId=...) ──
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -230,11 +253,11 @@ export default function People() {
           setSelected(res.data.contact);
           setMobileSelectedContact(res.data.contact);
           setMobileDetailOpen(true);
-          fetchContactLedgerData(cid);
+          fetchContactData(res.data.contact);
         }
       }).catch(console.error);
     }
-  }, [location.search, fetchContactLedgerData]);
+  }, [location.search, fetchContactData]);
 
 
   const handleCloseContactView = () => {
@@ -267,7 +290,7 @@ export default function People() {
     } else {
       setSelected(c);
       setIsExpanded(false);
-      fetchContactLedgerData(c._id);
+      fetchContactData(c);
     }
     setDrawerOpen(false);
   };
@@ -276,7 +299,7 @@ export default function People() {
     setMobileSelectedContact(c);
     setSelected(c);
     setMobileDetailOpen(true);
-    fetchContactLedgerData(c._id);
+    fetchContactData(c);
   };
 
   const handleOpenCreate = () => {
@@ -423,6 +446,18 @@ export default function People() {
       return acc;
     }, 0);
   };
+
+  // Calculate Customer Sales stats
+  let custTotalItems = 0;
+  let custTotalSpent = 0;
+  let custTotalPaid = 0;
+  customerSales.forEach(s => {
+    custTotalItems += 1;
+    custTotalSpent += s.finalPrice || 0;
+    const p = (s.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+    custTotalPaid += p;
+  });
+  const custTotalRemaining = Math.max(0, custTotalSpent - custTotalPaid);
 
   return (
     <div className="ppl-workspace">
@@ -796,99 +831,170 @@ export default function People() {
                     )}
                   </div>
 
-                  {/* Live Outstanding Summary on Side Panel */}
-                  <div className="sp-section">
-                    <div className="sp-section-title">Ledger Balance Summary</div>
-                    <div className="sp-stats-grid">
-                      <div className="sp-stat">
-                        <label>Money Receivable</label>
-                        <span className="text-success">
-                          ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
+                  {primaryCat(selected) === "Customer" ? (
+                    <div className="sp-section">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="sp-section-title mb-0">Purchase Summary</div>
+                        <span className="text-muted very-small">
+                          {customerSales.length} items
                         </span>
                       </div>
-                      <div className="sp-stat">
-                        <label>Money Payable</label>
-                        <span className="text-danger">
-                          ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
-                        </span>
+                      <div className="sp-stats-grid mb-3">
+                        <div className="sp-stat">
+                          <label>Total Spent</label>
+                          <span className="fw-bold">₹ {custTotalSpent.toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="sp-stat">
+                          <label>Outstanding Balance</label>
+                          <span className={custTotalRemaining > 0 ? "text-danger fw-bold" : "text-success fw-bold"}>
+                            ₹ {custTotalRemaining.toLocaleString("en-IN")}
+                          </span>
+                        </div>
                       </div>
-                      <div className="sp-stat">
-                        <label>Gold Receivable</label>
-                        <span className="text-success">
-                          {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
-                        </span>
-                      </div>
-                      <div className="sp-stat">
-                        <label>Gold Payable</label>
-                        <span className="text-danger">
-                          {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Contact Transaction History (Last 10 by default with Show All toggle) */}
-                  <div className="sp-section">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <div className="sp-section-title mb-0">Transaction History</div>
-                      <span className="text-muted very-small">
-                        {mobileTransactions.length} recorded
-                      </span>
-                    </div>
-
-                    {loadingLedger ? (
-                      <div className="py-2 text-center text-muted small">Loading transactions...</div>
-                    ) : mobileTransactions.length === 0 ? (
-                      <div className="py-2 text-center text-muted small">No transactions recorded yet.</div>
-                    ) : (
-                      <div className="d-flex flex-column gap-2">
-                        {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
-                          const isIncoming =
-                            t.providerId?._id === selected._id ||
-                            t.providerId === selected._id;
-                          const isMoney = t.assetType === "money";
-                          const formattedDate = new Date(t.transactionDate || t.createdAt).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          });
-
-                          return (
-                            <div key={t._id || t.txnId} className="mobile-txn-row">
-                              <div className={`mobile-txn-icon-wrap ${isIncoming ? "in" : "out"}`}>
-                                {isIncoming ? <FaArrowUp /> : <FaArrowDown />}
+                      <div className="d-flex justify-content-between align-items-center mb-2 mt-3">
+                        <div className="sp-section-title mb-0">Recent Purchases</div>
+                      </div>
+                      {loadingCustomerSales ? (
+                        <div className="py-2 text-center text-muted small">Loading purchases...</div>
+                      ) : customerSales.length === 0 ? (
+                        <div className="py-2 text-center text-muted small">No purchases recorded yet.</div>
+                      ) : (
+                        <div className="d-flex flex-column gap-2">
+                          {customerSales.slice(0, 10).map((s) => {
+                            const paid = (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+                            const rem = Math.max(0, (s.finalPrice || 0) - paid);
+                            const isPaid = rem <= 0;
+                            return (
+                              <div key={s._id} className="mobile-txn-row p-2 border rounded" onClick={() => navigate("/sales")} style={{cursor: 'pointer'}}>
+                                <div className="mobile-txn-details">
+                                  <span className="mobile-txn-title text-truncate fw-bold" style={{ maxWidth: "180px", fontSize: '13px' }}>
+                                    {s.inventoryId?.productName || "Product"}
+                                  </span>
+                                  <span className="mobile-txn-sub mt-1">
+                                    {new Date(s.soldAt || s.createdAt).toLocaleDateString("en-IN", {
+                                      day: "numeric", month: "short", year: "numeric"
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="d-flex flex-column align-items-end">
+                                  <span className="fw-bold text-dark" style={{fontSize: '13px'}}>
+                                    ₹ {(s.finalPrice || 0).toLocaleString("en-IN")}
+                                  </span>
+                                  {isPaid ? (
+                                    <span className="badge bg-success mt-1" style={{fontSize: '10px'}}>Paid</span>
+                                  ) : (
+                                    <span className="text-danger fw-semibold mt-1" style={{fontSize: '11px'}}>Due: ₹ {rem.toLocaleString("en-IN")}</span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="mobile-txn-details">
-                                <span className="mobile-txn-title text-truncate" style={{ maxWidth: "210px" }}>
-                                  {t.description || (isIncoming ? "Payment Received" : "Payment Sent")}
-                                </span>
-                                <span className="mobile-txn-sub">
-                                  {formattedDate} • {t.paymentMethod || t.transactionType || "Ledger"}
-                                </span>
-                              </div>
-                              <span className={`mobile-txn-amount ${isIncoming ? "in" : "out"}`}>
-                                {isMoney
-                                  ? `₹ ${(t.money?.amount || 0).toLocaleString("en-IN")}`
-                                  : `${(t.gold?.weight || 0).toFixed(3)} g`}
-                              </span>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                          {customerSales.length > 10 && !isExpanded && (
+                            <button className="btn btn-outline btn-sm w-100 py-1 very-small mt-1" onClick={() => setIsExpanded(true)}>
+                              View All Purchases
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Live Outstanding Summary on Side Panel */}
+                      <div className="sp-section">
+                        <div className="sp-section-title">Ledger Balance Summary</div>
+                        <div className="sp-stats-grid">
+                          <div className="sp-stat">
+                            <label>Money Receivable</label>
+                            <span className="text-success">
+                              ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                          <div className="sp-stat">
+                            <label>Money Payable</label>
+                            <span className="text-danger">
+                              ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                          <div className="sp-stat">
+                            <label>Gold Receivable</label>
+                            <span className="text-success">
+                              {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
+                            </span>
+                          </div>
+                          <div className="sp-stat">
+                            <label>Gold Payable</label>
+                            <span className="text-danger">
+                              {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                        {mobileTransactions.length > 10 && (
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm w-100 py-1 very-small mt-1"
-                            onClick={() => setShowAllPersonTxns(!showAllPersonTxns)}
-                          >
-                            {showAllPersonTxns
-                              ? "Show Last 10 Transactions"
-                              : `Show All ${mobileTransactions.length} Transactions`}
-                          </button>
+                      {/* Contact Transaction History (Last 10 by default with Show All toggle) */}
+                      <div className="sp-section">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <div className="sp-section-title mb-0">Transaction History</div>
+                          <span className="text-muted very-small">
+                            {mobileTransactions.length} recorded
+                          </span>
+                        </div>
+
+                        {loadingLedger ? (
+                          <div className="py-2 text-center text-muted small">Loading transactions...</div>
+                        ) : mobileTransactions.length === 0 ? (
+                          <div className="py-2 text-center text-muted small">No transactions recorded yet.</div>
+                        ) : (
+                          <div className="d-flex flex-column gap-2">
+                            {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
+                              const isIncoming =
+                                t.providerId?._id === selected._id ||
+                                t.providerId === selected._id;
+                              const isMoney = t.assetType === "money";
+                              const formattedDate = new Date(t.transactionDate || t.createdAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              });
+
+                              return (
+                                <div key={t._id || t.txnId} className="mobile-txn-row">
+                                  <div className={`mobile-txn-icon-wrap ${isIncoming ? "in" : "out"}`}>
+                                    {isIncoming ? <FaArrowUp /> : <FaArrowDown />}
+                                  </div>
+                                  <div className="mobile-txn-details">
+                                    <span className="mobile-txn-title text-truncate" style={{ maxWidth: "210px" }}>
+                                      {t.description || (isIncoming ? "Payment Received" : "Payment Sent")}
+                                    </span>
+                                    <span className="mobile-txn-sub">
+                                      {formattedDate} • {t.paymentMethod || t.transactionType || "Ledger"}
+                                    </span>
+                                  </div>
+                                  <span className={`mobile-txn-amount ${isIncoming ? "in" : "out"}`}>
+                                    {isMoney
+                                      ? `₹ ${(t.money?.amount || 0).toLocaleString("en-IN")}`
+                                      : `${(t.gold?.weight || 0).toFixed(3)} g`}
+                                  </span>
+                                </div>
+                              );
+                            })}
+
+                            {mobileTransactions.length > 10 && (
+                              <button
+                                type="button"
+                                className="btn btn-outline btn-sm w-100 py-1 very-small mt-1"
+                                onClick={() => setShowAllPersonTxns(!showAllPersonTxns)}
+                              >
+                                {showAllPersonTxns
+                                  ? "Show Last 10 Transactions"
+                                  : `Show All ${mobileTransactions.length} Transactions`}
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
 
                   {/* Stats grid */}
                   {!isExpanded && (
@@ -929,49 +1035,104 @@ export default function People() {
                   {/* EXPANDED FULL PROFILE */}
                   {isExpanded && (
                     <div className="sp-expanded-body">
-                      <div className="sp-expanded-card">
-                        <h5 className="sp-card-title">Personal Details</h5>
-                        <div className="sp-expanded-grid">
-                          {selected.businessName && (
-                            <div className="sp-exp-row">
-                              <label>Business</label>
-                              <span>{selected.businessName}</span>
-                            </div>
-                          )}
-                          {selected.gstNumber && (
-                            <div className="sp-exp-row">
-                              <label>GST Number</label>
-                              <span className="mono">{selected.gstNumber}</span>
-                            </div>
-                          )}
-                          {selected.panNumber && (
-                            <div className="sp-exp-row">
-                              <label>PAN Number</label>
-                              <span className="mono">{selected.panNumber}</span>
-                            </div>
-                          )}
-                          <div className="sp-exp-row">
-                            <label>Status</label>
-                            <span
-                              className={
-                                "sp-status " +
-                                (selected.status === "Active"
-                                  ? "active"
-                                  : "inactive")
-                              }
-                            >
-                              ● {selected.status || "Active"}
-                            </span>
+                      {primaryCat(selected) === "Customer" ? (
+                        <div className="sp-expanded-card h-100 d-flex flex-column">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="sp-card-title mb-0">Complete Purchase History</h5>
+                            <span className="badge bg-light text-dark">{customerSales.length} total items</span>
                           </div>
+                          
+                          {loadingCustomerSales ? (
+                            <div className="py-4 text-center text-muted">Loading complete history...</div>
+                          ) : customerSales.length === 0 ? (
+                            <div className="py-4 text-center text-muted">No purchases found.</div>
+                          ) : (
+                            <div className="table-responsive flex-grow-1" style={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+                              <table className="table table-hover align-middle mb-0" style={{fontSize: '13px'}}>
+                                <thead className="table-light sticky-top">
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Item</th>
+                                    <th className="text-end">Price (₹)</th>
+                                    <th className="text-end">Paid (₹)</th>
+                                    <th className="text-center">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {customerSales.map((s) => {
+                                    const paid = (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+                                    const rem = Math.max(0, (s.finalPrice || 0) - paid);
+                                    const isPaid = rem <= 0;
+                                    return (
+                                      <tr key={s._id} onClick={() => navigate("/sales")} style={{cursor: 'pointer'}}>
+                                        <td className="text-nowrap">{new Date(s.soldAt || s.createdAt).toLocaleDateString("en-IN", {
+                                          day: "2-digit", month: "short", year: "numeric"
+                                        })}</td>
+                                        <td className="fw-bold">{s.inventoryId?.productName || "Product"}</td>
+                                        <td className="text-end fw-semibold">{(s.finalPrice || 0).toLocaleString("en-IN")}</td>
+                                        <td className="text-end text-success">{paid.toLocaleString("en-IN")}</td>
+                                        <td className="text-center">
+                                          {isPaid ? (
+                                            <span className="badge bg-success">Paid</span>
+                                          ) : (
+                                            <span className="badge bg-danger">Due: {rem.toLocaleString("en-IN")}</span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="sp-expanded-card">
+                            <h5 className="sp-card-title">Personal Details</h5>
+                            <div className="sp-expanded-grid">
+                              {selected.businessName && (
+                                <div className="sp-exp-row">
+                                  <label>Business</label>
+                                  <span>{selected.businessName}</span>
+                                </div>
+                              )}
+                              {selected.gstNumber && (
+                                <div className="sp-exp-row">
+                                  <label>GST Number</label>
+                                  <span className="mono">{selected.gstNumber}</span>
+                                </div>
+                              )}
+                              {selected.panNumber && (
+                                <div className="sp-exp-row">
+                                  <label>PAN Number</label>
+                                  <span className="mono">{selected.panNumber}</span>
+                                </div>
+                              )}
+                              <div className="sp-exp-row">
+                                <label>Status</label>
+                                <span
+                                  className={
+                                    "sp-status " +
+                                    (selected.status === "Active"
+                                      ? "active"
+                                      : "inactive")
+                                  }
+                                >
+                                  ● {selected.status || "Active"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
 
-                      {/* Notes */}
-                      {selected.notes && (
-                        <div className="sp-expanded-card">
-                          <h5 className="sp-card-title">Notes</h5>
-                          <p className="sp-notes-text">{selected.notes}</p>
-                        </div>
+                          {/* Notes */}
+                          {selected.notes && (
+                            <div className="sp-expanded-card">
+                              <h5 className="sp-card-title">Notes</h5>
+                              <p className="sp-notes-text">{selected.notes}</p>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -1013,20 +1174,7 @@ export default function People() {
 
         {/* MOBILE CATEGORY PILL STRIP */}
         <div className="mobile-ppl-tabs-strip">
-          {TABS.slice(0, 4).map((tab) => {
-            const isActive = activeTab === tab.value;
-            return (
-              <button
-                key={tab.label}
-                className={`mobile-ppl-tab ${isActive ? "active" : ""}`}
-                onClick={() => handleTabClick(tab)}
-              >
-                <span className="mobile-tab-lbl">{tab.label}</span>
-                <span className="mobile-tab-cnt">{tabCounts[tab.key] ?? 0}</span>
-              </button>
-            );
-          })}
-          {TABS.slice(4).map((tab) => {
+          {TABS.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
               <button
@@ -1294,174 +1442,254 @@ export default function People() {
             </div>
           )}
 
-          {/* 3. Business Summary Card (Real Computed Totals) */}
-          <div className="mobile-detail-card">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <h4 className="mobile-detail-card-title mb-0">Business Summary</h4>
-              <button
-                className="btn btn-link p-0 very-small text-gold text-decoration-none fw-bold"
-                onClick={() => {
-                  setSelected(mobileSelectedContact);
-                  setIsExpanded(true);
-                  setMobileDetailOpen(false);
-                }}
-              >
-                <FaExternalLinkAlt /> View Full Profile
-              </button>
-            </div>
-            <div className="mobile-summary-grid">
-              <div className="mobile-summary-box">
-                <span className="mobile-summary-lbl">Total Deals</span>
-                <span className="mobile-summary-val">
-                  {mobileTransactions.length}
-                </span>
+          {/* DYNAMIC CONTENT BASED ON CATEGORY */}
+          {primaryCat(mobileSelectedContact) === "Customer" ? (
+            <>
+              {/* Purchase Summary Card */}
+              <div className="mobile-detail-card">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h4 className="mobile-detail-card-title mb-0">Purchase Summary</h4>
+                </div>
+                <div className="mobile-summary-grid">
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Total Items</span>
+                    <span className="mobile-summary-val">{custTotalItems}</span>
+                  </div>
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Total Spent</span>
+                    <span className="mobile-summary-val">₹ {custTotalSpent.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Outstanding</span>
+                    <span className={`mobile-summary-val small ${custTotalRemaining > 0 ? "text-danger" : "text-success"}`}>
+                      ₹ {custTotalRemaining.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="mobile-summary-box">
-                <span className="mobile-summary-lbl">Total Value</span>
-                <span className="mobile-summary-val">
-                  ₹ {Math.round(computeTotalValue(mobileTransactions) || 0).toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div className="mobile-summary-box">
-                <span className="mobile-summary-lbl">Last Transaction</span>
-                <span className="mobile-summary-val small">
-                  {mobileTransactions.length > 0 && mobileTransactions[0]?.createdAt
-                    ? new Date(mobileTransactions[0].createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : mobileSelectedContact.createdAt
-                    ? new Date(mobileSelectedContact.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          </div>
 
-          {/* 4. Recent Transactions Card (Real Transactions) */}
-          <div className="mobile-detail-card">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <h4 className="mobile-detail-card-title mb-0">Recent Transactions</h4>
-              <span className="text-muted very-small">
-                {mobileTransactions.length} recorded
-              </span>
-            </div>
-
-            {loadingLedger ? (
-              <div className="py-3 text-center text-muted small">Loading transactions...</div>
-            ) : mobileTransactions.length === 0 ? (
-              <div className="py-3 text-center text-muted small">
-                No ledger transactions recorded for this contact yet.
-              </div>
-            ) : (
-              <div className="mobile-txns-list">
-                {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
-                  const isIncoming =
-                    t.providerId?._id === mobileSelectedContact._id ||
-                    t.providerId === mobileSelectedContact._id;
-                  const isMoney = t.assetType === "money";
-                  const formattedDate = new Date(t.transactionDate || t.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
-                  return (
-                    <div key={t._id || t.txnId} className="mobile-txn-row">
-                      <div className={`mobile-txn-icon-wrap ${isIncoming ? "in" : "out"}`}>
-                        {isIncoming ? <FaArrowUp /> : <FaArrowDown />}
-                      </div>
-                      <div className="mobile-txn-details">
-                        <span className="mobile-txn-title">
-                          {t.description || (isIncoming ? "Payment Received" : "Payment Sent")}
-                        </span>
-                        <span className="mobile-txn-sub">
-                          {formattedDate} • {t.paymentMethod || t.transactionType || "Ledger"}
-                        </span>
-                      </div>
-                      <span className={`mobile-txn-amount ${isIncoming ? "in" : "out"}`}>
-                        {isMoney
-                          ? `₹ ${(t.money?.amount || 0).toLocaleString("en-IN")}`
-                          : `${(t.gold?.weight || 0).toFixed(3)} g`}
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {mobileTransactions.length > 10 && (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm w-100 py-1 very-small mt-2"
-                    onClick={() => setShowAllPersonTxns(!showAllPersonTxns)}
-                  >
-                    {showAllPersonTxns
-                      ? "Show Last 10 Transactions"
-                      : `Show All ${mobileTransactions.length} Transactions`}
-                  </button>
+              {/* Recent Purchases Card */}
+              <div className="mobile-detail-card">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h4 className="mobile-detail-card-title mb-0">Recent Purchases</h4>
+                  <span className="text-muted very-small">{customerSales.length} items</span>
+                </div>
+                {loadingCustomerSales ? (
+                  <div className="py-3 text-center text-muted small">Loading purchases...</div>
+                ) : customerSales.length === 0 ? (
+                  <div className="py-3 text-center text-muted small">No purchases recorded yet.</div>
+                ) : (
+                  <div className="mobile-txns-list">
+                    {customerSales.slice(0, 10).map((s) => {
+                      const paid = (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+                      const rem = Math.max(0, (s.finalPrice || 0) - paid);
+                      const isPaid = rem <= 0;
+                      return (
+                        <div key={s._id} className="mobile-txn-row p-2 border rounded" onClick={() => navigate("/sales")}>
+                          <div className="mobile-txn-details">
+                            <span className="mobile-txn-title fw-bold" style={{ fontSize: '13px' }}>
+                              {s.inventoryId?.productName || "Product"}
+                            </span>
+                            <span className="mobile-txn-sub mt-1">
+                              {new Date(s.soldAt || s.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>
+                          </div>
+                          <div className="d-flex flex-column align-items-end">
+                            <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>
+                              ₹ {(s.finalPrice || 0).toLocaleString("en-IN")}
+                            </span>
+                            {isPaid ? (
+                              <span className="badge bg-success mt-1" style={{ fontSize: '10px' }}>Paid</span>
+                            ) : (
+                              <span className="text-danger fw-semibold mt-1" style={{ fontSize: '11px' }}>Due: ₹ {rem.toLocaleString("en-IN")}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* 5. Outstanding Summary Card (Real Balances) */}
-          <div className="mobile-detail-card">
-            <h4 className="mobile-detail-card-title">Outstanding Summary</h4>
-            <div className="d-flex flex-column gap-2">
-              <div className="mobile-outstanding-row in">
-                <div className="d-flex align-items-center gap-2">
-                  <div className="mobile-outstanding-icon in">₹</div>
-                  <span className="small fw-semibold">Money Receivable</span>
+              {/* Sticky Bottom Footer */}
+              <div className="mobile-detail-fixed-footer">
+                <button className="btn btn-gold w-100 py-2 fw-bold" onClick={() => navigate("/sales")}>
+                  🛒 Go to Sales
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* 3. Business Summary Card (Real Computed Totals) */}
+              <div className="mobile-detail-card">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h4 className="mobile-detail-card-title mb-0">Business Summary</h4>
+                  <button
+                    className="btn btn-link p-0 very-small text-gold text-decoration-none fw-bold"
+                    onClick={() => {
+                      setSelected(mobileSelectedContact);
+                      setIsExpanded(true);
+                      setMobileDetailOpen(false);
+                    }}
+                  >
+                    <FaExternalLinkAlt /> View Full Profile
+                  </button>
                 </div>
-                <span className="fw-bold">
-                  ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
-                </span>
+                <div className="mobile-summary-grid">
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Total Deals</span>
+                    <span className="mobile-summary-val">
+                      {mobileTransactions.length}
+                    </span>
+                  </div>
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Total Value</span>
+                    <span className="mobile-summary-val">
+                      ₹ {Math.round(computeTotalValue(mobileTransactions) || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="mobile-summary-box">
+                    <span className="mobile-summary-lbl">Last Transaction</span>
+                    <span className="mobile-summary-val small">
+                      {mobileTransactions.length > 0 && mobileTransactions[0]?.createdAt
+                        ? new Date(mobileTransactions[0].createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : mobileSelectedContact.createdAt
+                        ? new Date(mobileSelectedContact.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mobile-outstanding-row out">
-                <div className="d-flex align-items-center gap-2">
-                  <div className="mobile-outstanding-icon out">₹</div>
-                  <span className="small fw-semibold">Money Payable</span>
+              {/* 4. Recent Transactions Card (Real Transactions) */}
+              <div className="mobile-detail-card">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h4 className="mobile-detail-card-title mb-0">Recent Transactions</h4>
+                  <span className="text-muted very-small">
+                    {mobileTransactions.length} recorded
+                  </span>
                 </div>
-                <span className="fw-bold">
-                  ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
-                </span>
+
+                {loadingLedger ? (
+                  <div className="py-3 text-center text-muted small">Loading transactions...</div>
+                ) : mobileTransactions.length === 0 ? (
+                  <div className="py-3 text-center text-muted small">
+                    No ledger transactions recorded for this contact yet.
+                  </div>
+                ) : (
+                  <div className="mobile-txns-list">
+                    {(showAllPersonTxns ? mobileTransactions : mobileTransactions.slice(0, 20)).map((t) => {
+                      const isIncoming =
+                        t.providerId?._id === mobileSelectedContact._id ||
+                        t.providerId === mobileSelectedContact._id;
+                      const isMoney = t.assetType === "money";
+                      const formattedDate = new Date(t.transactionDate || t.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      });
+                      return (
+                        <div key={t._id || t.txnId} className="mobile-txn-row">
+                          <div className={`mobile-txn-icon-wrap ${isIncoming ? "in" : "out"}`}>
+                            {isIncoming ? <FaArrowUp /> : <FaArrowDown />}
+                          </div>
+                          <div className="mobile-txn-details">
+                            <span className="mobile-txn-title">
+                              {t.description || (isIncoming ? "Payment Received" : "Payment Sent")}
+                            </span>
+                            <span className="mobile-txn-sub">
+                              {formattedDate} • {t.paymentMethod || t.transactionType || "Ledger"}
+                            </span>
+                          </div>
+                          <span className={`mobile-txn-amount ${isIncoming ? "in" : "out"}`}>
+                            {isMoney
+                              ? `₹ ${(t.money?.amount || 0).toLocaleString("en-IN")}`
+                              : `${(t.gold?.weight || 0).toFixed(3)} g`}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {mobileTransactions.length > 10 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm w-100 py-1 very-small mt-2"
+                        onClick={() => setShowAllPersonTxns(!showAllPersonTxns)}
+                      >
+                        {showAllPersonTxns
+                          ? "Show Last 10 Transactions"
+                          : `Show All ${mobileTransactions.length} Transactions`}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className="mobile-outstanding-row gold">
-                <div className="d-flex align-items-center gap-2">
-                  <div className="mobile-outstanding-icon in" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
-                  <span className="small fw-semibold">Gold Receivable</span>
-                </div>
-                <span className="fw-bold text-success">
-                  {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
-                </span>
-              </div>
-              
-              <div className="mobile-outstanding-row gold">
-                <div className="d-flex align-items-center gap-2">
-                  <div className="mobile-outstanding-icon out" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
-                  <span className="small fw-semibold">Gold Payable</span>
-                </div>
-                <span className="fw-bold text-danger">
-                  {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
-                </span>
-              </div>
-            </div>
-          </div>
+              {/* 5. Outstanding Summary Card (Real Balances) */}
+              <div className="mobile-detail-card">
+                <h4 className="mobile-detail-card-title">Outstanding Summary</h4>
+                <div className="d-flex flex-column gap-2">
+                  <div className="mobile-outstanding-row in">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="mobile-outstanding-icon in">₹</div>
+                      <span className="small fw-semibold">Money Receivable</span>
+                    </div>
+                    <span className="fw-bold">
+                      ₹ {(mobileBalance?.moneyOwedToOwner || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
 
-          {/* Sticky Bottom Record Transaction Button */}
-          <div className="mobile-detail-fixed-footer">
-            <button
-              className="btn btn-gold w-100 py-2 fw-bold"
-              onClick={() => navigate(`/ledger?contactId=${mobileSelectedContact._id}`)}
-            >
-              <FaPlus /> Record Transaction
-            </button>
-          </div>
+                  <div className="mobile-outstanding-row out">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="mobile-outstanding-icon out">₹</div>
+                      <span className="small fw-semibold">Money Payable</span>
+                    </div>
+                    <span className="fw-bold">
+                      ₹ {(mobileBalance?.moneyOwnerOwes || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="mobile-outstanding-row gold">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="mobile-outstanding-icon in" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
+                      <span className="small fw-semibold">Gold Receivable</span>
+                    </div>
+                    <span className="fw-bold text-success">
+                      {renderGoldValue((mobileBalance?.goldOwedToOwner || 0).toFixed(3), mobileBalance?.goldOwedToOwnerValuation || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="mobile-outstanding-row gold">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="mobile-outstanding-icon out" style={{color: '#d97706', background: 'rgba(217, 119, 6, 0.1)'}}>🪙</div>
+                      <span className="small fw-semibold">Gold Payable</span>
+                    </div>
+                    <span className="fw-bold text-danger">
+                      {renderGoldValue((mobileBalance?.goldOwnerOwes || 0).toFixed(3), mobileBalance?.goldOwnerOwesValuation || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sticky Bottom Record Transaction Button */}
+              <div className="mobile-detail-fixed-footer">
+                <button
+                  className="btn btn-gold w-100 py-2 fw-bold"
+                  onClick={() => navigate(`/ledger?contactId=${mobileSelectedContact._id}`)}
+                >
+                  <FaPlus /> Record Transaction
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -1504,9 +1732,6 @@ export default function People() {
                     <option value="Customer">Customer</option>
                     <option value="Worker">Worker / Karigar</option>
                     <option value="Wholeseller">Wholeseller</option>
-                    <option value="Supplier">Supplier</option>
-                    <option value="Financier">Financier</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>

@@ -131,11 +131,14 @@ export const getAllSoldItems = async (req, res) => {
     const limit = parseInt(req.query.limit) || 1000;
     const skip = (page - 1) * limit;
 
-    const { search, paymentStatus } = req.query;
+    const { search, paymentStatus, customerId } = req.query;
     let filter = {};
 
     if (paymentStatus && paymentStatus !== "all") {
       filter.paymentStatus = paymentStatus;
+    }
+    if (customerId) {
+      filter.customerId = customerId;
     }
     if (search) {
       filter.billingID = { $regex: search, $options: "i" };

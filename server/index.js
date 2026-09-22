@@ -21,14 +21,23 @@ const app = express();
 
 // ✅ MongoDB connection (Serverless Optimized)
 let isConnected = false;
+let connectionPromise = null;
+
 const connectDB = async () => {
     if (isConnected) return;
+    if (connectionPromise) {
+        await connectionPromise;
+        return;
+    }
+
     try {
-        const db = await mongoose.connect(process.env.MONGO_URI);
+        connectionPromise = mongoose.connect(process.env.MONGO_URI);
+        const db = await connectionPromise;
         isConnected = db.connections[0].readyState === 1;
         console.log("✅ MongoDB connected (Serverless mode)");
     } catch (err) {
         console.error("❌ MongoDB connection failed:", err.message);
+        connectionPromise = null;
     }
 };
 

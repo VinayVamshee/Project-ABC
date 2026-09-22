@@ -13,7 +13,7 @@ import {
   FiChevronRight,
   FiLayers,
 } from "react-icons/fi";
-import { FaBarcode } from "react-icons/fa";
+
 import LogoLoader from "../../components/Loader/LogoLoader";
 
 const CATEGORIES = [
@@ -116,7 +116,7 @@ export default function AddInventoryItem() {
   });
 
   // Fetch item data if in edit mode
-  const { data: itemData, error: itemError } = useQuery({
+  const { data: itemData, isLoading: itemLoading, error: itemError } = useQuery({
     queryKey: ['inventory', id],
     queryFn: async () => {
       const res = await api.get(`/inventory/${id}`);
@@ -360,6 +360,12 @@ export default function AddInventoryItem() {
 
   return (
     <div className="add-inventory-page">
+      {isEditMode && itemLoading && (
+        <LogoLoader
+          fullScreen={true}
+          text="Loading product details..."
+        />
+      )}
       {(loading || uploading) && (
         <LogoLoader 
           fullScreen={true} 
@@ -419,7 +425,7 @@ export default function AddInventoryItem() {
 
               <div className="col-md-6">
                 <label className="form-label">
-                  <FaBarcode className="me-1 text-gold" /> Barcode
+                  🔲 Barcode / QR
                 </label>
                 <input
                   type="text"

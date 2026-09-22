@@ -92,7 +92,50 @@ export const getAllInventoryItems = async (req, res) => {
     const skip = (page - 1) * limit;
     
     const search = req.query.search || "";
-    const filter = { inStock: true };
+    const stockStatus = req.query.stockStatus;
+    const category = req.query.category;
+    const purity = req.query.purity;
+    const minWeight = req.query.minWeight;
+    const maxWeight = req.query.maxWeight;
+    const minPrice = req.query.minPrice;
+    const maxPrice = req.query.maxPrice;
+    
+    // Sort
+    const sortBy = req.query.sortBy || "recent";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+    const sortOptions = {};
+    if (sortBy === "netWeight") sortOptions.netWeight = sortOrder;
+    else if (sortBy === "price") sortOptions.baseCostPrice = sortOrder;
+    else if (sortBy === "name") sortOptions.productName = sortOrder;
+    else sortOptions.createdAt = sortOrder; // recent
+
+    const filter = {};
+    
+    // Stock Status
+    if (stockStatus === "out_of_stock") filter.inStock = false;
+    else if (stockStatus !== "all") filter.inStock = true;
+
+    // Category
+    if (category && category !== "All") filter.category = category;
+
+    // Purity
+    if (purity && purity !== "all") filter.purity = Number(purity);
+
+    // Weights
+    if (minWeight || maxWeight) {
+      filter.netWeight = {};
+      if (minWeight) filter.netWeight.$gte = Number(minWeight);
+      if (maxWeight) filter.netWeight.$lte = Number(maxWeight);
+    }
+
+    // Price
+    if (minPrice || maxPrice) {
+      filter.baseCostPrice = {};
+      if (minPrice) filter.baseCostPrice.$gte = Number(minPrice);
+      if (maxPrice) filter.baseCostPrice.$lte = Number(maxPrice);
+    }
+
+    // Search
     if (search) {
       filter.$or = [
         { productID: { $regex: search, $options: "i" } },
@@ -102,17 +145,44 @@ export const getAllInventoryItems = async (req, res) => {
       ];
     }
 
-    const items = await Inventory.find(filter)
-      .populate("wholeSellerId")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // Fetch Paginated Data & Aggregated Totals concurrently
+    const [items, totalResult] = await Promise.all([
+      Inventory.find(filter)
+        .populate("wholeSellerId")
+        .collation({ locale: "en", strength: 2 }) // For case-insensitive sorting by name
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit),
+      
+      Inventory.aggregate([
+        { $match: filter },
+        { 
+          $group: { 
+            _id: null, 
+            totalGross: { $sum: "$grossWeight" }, 
+            totalNet: { $sum: "$netWeight" }, 
+            totalStone: { $sum: "$stoneWeight" }, 
+            totalCost: { $sum: "$baseCostPrice" }, 
+            count: { $sum: 1 },
+            categories: { $addToSet: "$category" }
+          } 
+        }
+      ])
+    ]);
 
-    const total = await Inventory.countDocuments(filter);
+    const aggregates = totalResult[0] || { totalGross: 0, totalNet: 0, totalStone: 0, totalCost: 0, count: 0, categories: [] };
+    const total = aggregates.count;
 
     res.status(200).json({ 
       success: true, 
       items,
+      totals: {
+        totalGross: aggregates.totalGross,
+        totalNet: aggregates.totalNet,
+        totalStone: aggregates.totalStone,
+        totalCost: aggregates.totalCost
+      },
+      categories: aggregates.categories || [],
       pagination: {
         total,
         page,
