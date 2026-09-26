@@ -55,7 +55,6 @@ const inventorySchema = new mongoose.Schema(
     // =========================================================
     productID: {
       type: String,
-      required: true,
       unique: true,
       index: true,
     },
@@ -271,7 +270,7 @@ inventorySchema.index({ category: 1, inStock: 1 });
 // =============================================================
 // AUTO-GENERATE PRODUCT ID & UNIQUE BARCODE
 // =============================================================
-inventorySchema.pre("validate", async function (next) {
+inventorySchema.pre("save", async function (next) {
   if (this.isNew) {
     try {
       if (!this.productID) {
@@ -287,6 +286,10 @@ inventorySchema.pre("validate", async function (next) {
       if (!this.barcode) {
         const timestamp = Date.now().toString(36).toUpperCase();
         this.barcode = `BC_${this.productID}_${timestamp}`;
+      }
+
+      if (!this.productID || !this.barcode) {
+        throw new Error("CRITICAL: Failed to attach Product ID or Barcode.");
       }
 
       next();

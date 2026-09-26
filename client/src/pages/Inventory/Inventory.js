@@ -463,6 +463,7 @@ export default function Inventory() {
                           </div>
                           <div className="product-info-mini">
                             <span className="prod-name-title">{item.productName || "Unknown Item"}</span>
+                            <span className="text-muted fw-normal" style={{ fontSize: "0.75rem", display: "block" }}>{item.productID}</span>
                           </div>
                         </div>
                       </td>
@@ -1126,6 +1127,7 @@ export default function Inventory() {
                   </div>
                   <div className="mobile-card-details">
                     <span className="mobile-card-name fw-bold">{item.productName}</span>
+                    <span className="very-small text-muted fw-semibold" style={{ display: "block" }}>{item.productID}</span>
                     <span className="very-small text-muted">{item.category}</span>
                   </div>
                   <div className="mobile-card-right">
@@ -1173,12 +1175,17 @@ export default function Inventory() {
                               <FaGem className="text-muted very-small" />
                             )}
                           </div>
-                          <span
-                            className="text-truncate"
-                            style={{ maxWidth: 110, display: "inline-block" }}
-                          >
-                            {item.productName}
-                          </span>
+                          <div className="d-flex flex-column">
+                            <span
+                              className="text-truncate"
+                              style={{ maxWidth: 110, display: "inline-block" }}
+                            >
+                              {item.productName}
+                            </span>
+                            <span className="text-muted" style={{ fontSize: "0.65rem" }}>
+                              {item.productID}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="fw-semibold">{item.netWeight || 0} g</td>
@@ -1223,6 +1230,28 @@ export default function Inventory() {
             </div>
           </div>
         )}
+
+        {/* MOBILE PAGINATION */}
+        <div className="d-flex justify-content-between align-items-center p-3 mt-3 mb-5 bg-white border rounded shadow-sm">
+          <button
+            className="btn btn-outline-primary btn-sm px-3 fw-bold"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </button>
+          <span className="small fw-bold text-muted">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            className="btn btn-outline-primary btn-sm px-3 fw-bold"
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </button>
+        </div>
+
       </div>
 
       {/* ============================================================

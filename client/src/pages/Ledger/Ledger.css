@@ -1795,7 +1795,7 @@ body.theme-dark .ldg-section-card {
 
   .new-txn-actions-row {
     position: fixed;
-    bottom: 0;
+    bottom: 80px;
     left: 0;
     right: 0;
     background: var(--ldg-card);
