@@ -300,6 +300,7 @@ export default function LedgerDashboard() {
   useEffect(() => {
     if (activeTab === "transactions") loadTransactions();
     if (activeTab === "obligations") loadObligations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Auto-calculate gold valuation
