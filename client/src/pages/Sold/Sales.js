@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { notify } from "../../components/Toast/toast";
@@ -139,6 +139,11 @@ export default function Sales() {
 
   // Filters
   const [searchTerm, setSearchTerm]     = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFrom, setDateFrom]         = useState("");
   const [dateTo, setDateTo]             = useState("");
@@ -155,51 +160,41 @@ export default function Sales() {
   const [addPaymentFor, setAddPaymentFor] = useState(null);
 
   // ── Fetch ──────────────────────────────────────────────────
-  const { data: rawItems = [], isLoading } = useQuery({
-    queryKey: ["sales"],
+  const { data, isLoading } = useQuery({
+    queryKey: ["sales", currentPage, rowsPerPage, debouncedSearch, statusFilter, dateFrom, dateTo],
     queryFn: async () => {
-      const res = await api.get("/sold?limit=5000");
-      return res.data.data || [];
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: rowsPerPage
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (statusFilter && statusFilter !== "all") params.append("paymentStatus", statusFilter);
+      if (dateFrom) params.append("dateFrom", dateFrom);
+      if (dateTo) params.append("dateTo", dateTo);
+
+      const res = await api.get("/sold?" + params.toString());
+      return res.data;
     },
   });
 
-  // ── Filter / sort ───────────────────────────────────────────
-  const filtered = rawItems
-    .filter((s) => {
-      if (statusFilter !== "all" && s.paymentStatus !== statusFilter) return false;
-
-      if (dateFrom || dateTo) {
-        const d = new Date(s.soldAt || s.createdAt);
-        if (dateFrom && d < new Date(dateFrom)) return false;
-        if (dateTo   && d > new Date(dateTo + "T23:59:59")) return false;
-      }
-
-      if (searchTerm.trim()) {
-        const q = searchTerm.toLowerCase();
-        const custName  = s.customerId?.name?.toLowerCase() || "";
-        const prodName  = s.inventoryId?.productName?.toLowerCase() || "";
-        const billId    = s.billingID?.toLowerCase() || "";
-        const prodId    = (s.inventoryId?.productID || s.productID || "").toLowerCase();
-        const dateStr   = fmtDate(s.soldAt || s.createdAt).toLowerCase();
-        if (!custName.includes(q) && !prodName.includes(q) && !billId.includes(q)
-            && !prodId.includes(q) && !dateStr.includes(q)) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => new Date(b.soldAt || b.createdAt) - new Date(a.soldAt || a.createdAt));
-
-  // ── Stats ───────────────────────────────────────────────────
-  const statPaid    = rawItems.filter(s => s.paymentStatus === "paid");
-  const statPartial = rawItems.filter(s => s.paymentStatus === "partial");
-  const statPending = rawItems.filter(s => s.paymentStatus === "pending");
-  const totalRevenue     = statPaid.reduce((s, x) => s + (x.finalPrice || 0), 0);
-  const totalPartialPaid = statPartial.reduce((s, x) => s + x.payments.reduce((a, p) => a + (p.amount || 0), 0), 0);
-  const totalOutstanding = [...statPartial, ...statPending].reduce((s, x) =>
-    s + Math.max((x.finalPrice || 0) - x.payments.reduce((a, p) => a + (p.amount || 0), 0), 0), 0);
-
-  // ── Pagination ──────────────────────────────────────────────
-  const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
-  const paginated  = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  // ── Server-Side Data ───────────────────────────────────────
+  const paginated = data?.data || [];
+  const totals = data?.totals || {
+    totalItems: 0,
+    paidCount: 0,
+    totalRevenue: 0,
+    partialCount: 0,
+    totalPartialPaid: 0,
+    pendingCount: 0,
+    totalOutstanding: 0
+  };
+  const totalPages = data?.pagination?.pages || 1;
+  const statPaid = { length: totals.paidCount };
+  const statPartial = { length: totals.partialCount };
+  const statPending = { length: totals.pendingCount };
+  const totalRevenue = totals.totalRevenue;
+  const totalPartialPaid = totals.totalPartialPaid;
+  const totalOutstanding = totals.totalOutstanding;
 
   const handleRowClick = useCallback((item) => {
     setSelectedItem(item);
@@ -232,7 +227,7 @@ export default function Sales() {
           <FaReceipt className="sales-header-icon" />
           <div>
             <h2 className="sales-heading">Sales</h2>
-            <span className="sales-heading-sub">{rawItems.length} total transactions</span>
+            <span className="sales-heading-sub">{totals.totalItems} total transactions</span>
           </div>
         </div>
       </div>
@@ -243,7 +238,7 @@ export default function Sales() {
           <div className="sales-stat-icon sales-stat-icon--total"><FaBoxOpen /></div>
           <div className="sales-stat-info">
             <span className="sales-stat-label">Total Sales</span>
-            <span className="sales-stat-value">{rawItems.length}</span>
+            <span className="sales-stat-value">{totals.totalItems}</span>
             <span className="sales-stat-sub">All transactions</span>
           </div>
         </div>
@@ -375,12 +370,12 @@ export default function Sales() {
                   );
                 })}
               </tbody>
-              {filtered.length > 0 && (
+              {paginated.length > 0 && (
                 <tfoot className="sales-table-tfoot">
                   <tr>
                     <td colSpan={4} className="total-title-cell"><span className="total-text">TOTAL —</span></td>
-                    <td className="total-val-cell total-cost-val">₹{fmt(filtered.reduce((s, x) => s + (x.finalPrice || 0), 0))}</td>
-                    <td className="total-val-cell">₹{fmt(filtered.reduce((s, x) => s + x.payments.reduce((a, p) => a + (p.amount || 0), 0), 0))}</td>
+                    <td className="total-val-cell total-cost-val">₹{fmt(totalRevenue)}</td>
+                    <td className="total-val-cell">₹{fmt(totalPartialPaid)}</td>
                     <td colSpan={2}></td>
                   </tr>
                 </tfoot>
@@ -580,7 +575,7 @@ export default function Sales() {
 
       {/* ── Mobile Cards ── */}
       <div className="sales-mobile-list d-md-none">
-        {filtered.length === 0 ? (
+        {paginated.length === 0 ? (
           <div className="sales-empty-mobile">No sales found.</div>
         ) : paginated.map((item) => {
           const totalPaid = (item.payments || []).reduce((s, p) => s + (p.amount || 0), 0);

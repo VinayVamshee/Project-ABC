@@ -35,13 +35,19 @@ export const createTransactionHandler = async (req, res) => {
 
 export const getTransactionsHandler = async (req, res) => {
   try {
-    const { contactId, groupId, assetType, status, limit, skip } = req.query;
-    const transactions = await getTransactions({
-      contactId, groupId, assetType, status,
-      limit: Number(limit) || 50,
-      skip:  Number(skip)  || 0,
+    const { contactId, groupId, assetType, status, search, limit, page, sortField, sortOrder } = req.query;
+    
+    const parsedLimit = Number(limit) || 50;
+    const parsedPage = Number(page) || 1;
+    const skip = (parsedPage - 1) * parsedLimit;
+    
+    const { transactions, totals } = await getTransactions({
+      contactId, groupId, assetType, status, search,
+      sortField, sortOrder,
+      limit: parsedLimit,
+      skip,
     });
-    res.json({ success: true, transactions });
+    res.json({ success: true, transactions, totals, pagination: { total: totals.totalItems, page: parsedPage, pages: Math.ceil(totals.totalItems / parsedLimit) } });
   } catch (err) {
     console.error("getTransactions error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch transactions" });

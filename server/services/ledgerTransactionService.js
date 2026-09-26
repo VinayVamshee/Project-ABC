@@ -119,9 +119,9 @@ export async function voidTransaction(txnId, reason, session) {
 }
 
 /**
- * Get transactions with optional filters + population.
+ * Get transactions with optional filters + population + dual-query totals
  */
-export async function getTransactions({ contactId, groupId, assetType, status, limit = 50, skip = 0 } = {}) {
+export async function getTransactions({ contactId, groupId, assetType, status, search, limit = 50, skip = 0, sortField = "transactionDate", sortOrder = "desc" } = {}) {
   const query = {};
 
   if (contactId) {
@@ -136,13 +136,37 @@ export async function getTransactions({ contactId, groupId, assetType, status, l
   if (status)     query.status     = status;
   else            query.status     = "active"; // default: exclude voided
 
-  return LedgerTransaction.find(query)
+  // 1. Get exact paginated items
+  const transactions = await LedgerTransaction.find(query)
     .populate("providerId",   "name categories")
     .populate("receiverId",   "name categories")
     .populate("onBehalfOfId", "name categories")
     .populate("groupId",      "title groupId")
-    .sort({ transactionDate: -1, createdAt: -1 })
+    .sort({ [sortField]: sortOrder === "asc" ? 1 : -1, _id: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
+
+  // 2. Aggregate totals
+  const totalsAgg = await LedgerTransaction.aggregate([
+    { $match: query },
+    {
+      $group: {
+        _id: null,
+        totalItems: { $sum: 1 },
+        totalMoneyAmount: { $sum: { $cond: [{ $eq: ["$assetType", "money"] }, "$money.amount", 0] } },
+        totalGoldWeight:  { $sum: { $cond: [{ $eq: ["$assetType", "gold"] }, "$gold.weight", 0] } },
+        totalGoldValue:   { $sum: { $cond: [{ $eq: ["$assetType", "gold"] }, "$gold.valuation", 0] } }
+      }
+    }
+  ]);
+
+  const totals = totalsAgg[0] || {
+    totalItems: 0,
+    totalMoneyAmount: 0,
+    totalGoldWeight: 0,
+    totalGoldValue: 0
+  };
+
+  return { transactions, totals };
 }

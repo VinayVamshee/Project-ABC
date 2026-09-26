@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import Home from "./pages/Home/Home";
-import Settings from "./pages/Settings/Settings";
 import Inventory from "./pages/Inventory/Inventory";
 import AddInventoryItem from "./pages/Inventory/AddInventoryItem";
 import OverviewPanel from "./pages/Overview/OverviewPanel";
@@ -59,14 +58,7 @@ function App() {
 
             {/* 🔐 PROTECTED with Sidebar Layout */}
             <Route element={<Layout />}>
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
+              
               <Route
                 path="/inventory"
                 element={

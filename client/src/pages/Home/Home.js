@@ -13,7 +13,7 @@ import {
   FiSun,
   FiMoon,
   FiShield,
-  FiCheckCircle,
+  
 } from "react-icons/fi";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Home.css";
@@ -74,12 +74,7 @@ export default function Home() {
     }
   };
 
-  const handleQuickFill = () => {
-    setEmail("SVLJ1983");
-    setPassword("ANee12345");
-    setError("");
-  };
-
+  
   return (
     <div className="login-portal-wrapper">
       {/* Background Ambient Glow Circles */}
@@ -183,15 +178,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Quick Demo Credentials Chip */}
-            <div className="login-demo-helper" onClick={handleQuickFill}>
-              <span className="login-demo-badge">
-                <FiCheckCircle size={13} /> Quick Fill
-              </span>
-              <span className="login-demo-text">
-                Demo Account: <strong>SVLJ1983</strong> / <strong>ANee12345</strong>
-              </span>
-            </div>
+            
 
             {/* Submit CTA Button */}
             <button

@@ -3,7 +3,7 @@ import api from "../../api/axios";
 import "./OverviewPanel.css";
 import Barcode from "../../components/Barcode";
 
-export default function OverviewPanel({ section, items, onRefresh, onSell, onEdit }) {
+export default function OverviewPanel({ section, items, onRefresh, onSell, onEdit, serverPagination }) {
 
     const formatIndianNumber = (value, { isCurrency = false } = {}) => {
         const num = Number(value);

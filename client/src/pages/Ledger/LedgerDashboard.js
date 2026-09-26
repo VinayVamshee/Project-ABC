@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -108,8 +109,7 @@ export default function LedgerDashboard() {
     totalGoldReceivable: 0,
     totalGoldPayable: 0,
   });
-  const [transactions, setTransactions] = useState([]);
-  const [obligations, setObligations] = useState([]);
+    const [obligations, setObligations] = useState([]);
   const [saving, setSaving] = useState(false);
 
   // Form State
@@ -252,17 +252,34 @@ export default function LedgerDashboard() {
     }
   }, [receiver]);
 
-  // Load Transactions when tab changes (Last 100 entries)
-  const loadTransactions = async () => {
-    try {
-      const res = await api.get("/ledger/transactions?limit=5000");
-      if (res.data.success) {
-        setTransactions(res.data.transactions || []);
-      }
-    } catch (err) {
-      console.error("Error fetching transactions:", err);
-    }
-  };
+  const { data: txnData, refetch: loadTransactions } = useQuery({
+    queryKey: ["ledger-transactions", txnPage, txnPerPage, txnSort, txnFilterAsset, txnFilterType],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: txnPage,
+        limit: txnPerPage,
+      });
+      if (txnFilterAsset !== "all") params.append("assetType", txnFilterAsset);
+      if (txnFilterType !== "all") params.append("transactionType", txnFilterType);
+      
+      let sortField = "transactionDate";
+      let sortOrder = "desc";
+      if (txnSort === "newest") { sortField = "transactionDate"; sortOrder = "desc"; }
+      if (txnSort === "oldest") { sortField = "transactionDate"; sortOrder = "asc"; }
+      if (txnSort === "amount_high") { sortField = "money.amount"; sortOrder = "desc"; } // simplified
+      if (txnSort === "amount_low") { sortField = "money.amount"; sortOrder = "asc"; }
+      
+      params.append("sortField", sortField);
+      params.append("sortOrder", sortOrder);
+
+      const res = await api.get("/ledger/transactions?" + params.toString());
+      return res.data;
+    },
+    keepPreviousData: true
+  });
+  
+  const transactions = txnData?.transactions || [];
+      
 
   // Load Obligations when tab changes
   const loadObligations = async () => {

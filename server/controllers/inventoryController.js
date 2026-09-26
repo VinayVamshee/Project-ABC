@@ -1,4 +1,5 @@
 import Inventory from "../models/Inventory.js";
+import exceljs from "exceljs";
 import BusinessContact from "../models/BusinessContact.js";
 import bwipjs from "bwip-js";
 import ExcelJS from "exceljs";
@@ -535,5 +536,62 @@ export const downloadBulkImportTemplate = async (req, res) => {
       message: "Failed to generate Excel template",
       error: error.message,
     });
+  }
+};
+export const exportInventoryHandler = async (req, res) => {
+  try {
+    const { search, category, stockStatus, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+
+    let query = {};
+    if (category && category !== "all") query.category = category;
+    if (stockStatus === "in_stock") query.inStock = true;
+    if (stockStatus === "out_of_stock") query.inStock = false;
+    if (search) {
+      query.$or = [
+        { productID: { $regex: search, $options: "i" } },
+        { productName: { $regex: search, $options: "i" } },
+        { barcode: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const items = await Inventory.find(query).sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 }).lean();
+
+    const workbook = new exceljs.Workbook();
+    const worksheet = workbook.addWorksheet("Inventory");
+
+    worksheet.columns = [
+      { header: "Product ID", key: "productID", width: 15 },
+      { header: "Product Name", key: "productName", width: 30 },
+      { header: "Category", key: "category", width: 15 },
+      { header: "Gross Weight", key: "grossWeight", width: 15 },
+      { header: "Net Weight", key: "netWeight", width: 15 },
+      { header: "Stone Weight", key: "stoneWeight", width: 15 },
+      { header: "Cost Price", key: "baseCostPrice", width: 15 },
+      { header: "In Stock", key: "inStock", width: 10 },
+      { header: "Barcode", key: "barcode", width: 20 },
+    ];
+
+    items.forEach((item) => {
+      worksheet.addRow({
+        productID: item.productID,
+        productName: item.productName,
+        category: item.category,
+        grossWeight: item.grossWeight,
+        netWeight: item.netWeight,
+        stoneWeight: item.stoneWeight,
+        baseCostPrice: item.baseCostPrice,
+        inStock: item.inStock ? "Yes" : "No",
+        barcode: item.barcode,
+      });
+    });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=Inventory_Export_${Date.now()}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Export Error:", error);
+    res.status(500).json({ success: false, message: "Export failed" });
   }
 };

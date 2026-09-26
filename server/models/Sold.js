@@ -23,7 +23,7 @@ const paymentSchema = new mongoose.Schema(
 /* ---------------- SOLD ---------------- */
 const soldSchema = new mongoose.Schema(
   {
-    billingID: { type: String, required: true, unique: true },
+    billingID: { type: String, unique: true },
 
     inventoryId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -81,17 +81,30 @@ soldSchema.pre("validate", function (next) {
 });
 
 /* 🔢 BILLING ID */
-soldSchema.pre("validate", async function (next) {
-  if (this.isNew && !this.billingID) {
-    const counter = await Counter.findOneAndUpdate(
-      { name: "sold" },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    );
+soldSchema.pre("save", async function (next) {
+  if (this.isNew) {
+    try {
+      if (!this.billingID) {
+        const counter = await Counter.findOneAndUpdate(
+          { name: "sold" },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
 
-    this.billingID = `BILL_ID_${counter.seq.toString().padStart(7, "0")}`;
+        this.billingID = `BILL_ID_${counter.seq.toString().padStart(7, "0")}`;
+      }
+
+      if (!this.billingID) {
+        throw new Error("CRITICAL: Failed to attach Billing ID.");
+      }
+      next();
+    } catch (err) {
+      console.error("❌ Error generating Billing ID:", err);
+      next(err);
+    }
+  } else {
+    next();
   }
-  next();
 });
 
 /* 💰 AUTO CALCS */

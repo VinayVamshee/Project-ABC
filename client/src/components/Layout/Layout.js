@@ -12,8 +12,9 @@ import {
   FiSun,
   FiMoon,
   FiUsers,
+  FiDatabase,
   FiCheckCircle,
-  FiSettings,
+  
   FiLogOut,
   FiX,
 } from "react-icons/fi";
@@ -241,16 +242,34 @@ export default function Layout() {
               </Link>
 
 
-              <Link to="/settings" className="ios-sheet-link-item">
-                <div className="ios-link-icon-box">
-                  <FiSettings />
-                </div>
-                <div className="d-flex flex-column flex-fill">
-                  <span className="fw-bold">System Settings</span>
-                  <span className="very-small text-muted">Gold rate, taxes &amp; preferences</span>
-                </div>
-              </Link>
+              
             </div>
+
+
+            {/* BACKUP BUTTON */}
+            <button
+              type="button"
+              className="ios-logout-btn mb-2"
+              style={{ color: "var(--portal-gold-dark)", background: "var(--portal-gold-soft)" }}
+              onClick={() => {
+                import("../../api/axios").then((api) => {
+                  api.default.get("/system/backup", { responseType: "blob" })
+                    .then((res) => {
+                      const url = window.URL.createObjectURL(new Blob([res.data]));
+                      const link = document.createElement("a");
+                      link.href = url;
+                      link.setAttribute("download", `ABC_Full_Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                    })
+                    .catch(() => alert("Backup failed"));
+                });
+              }}
+            >
+              <FiDatabase size={20} />
+              <span>Download Database Backup</span>
+            </button>
 
             {/* LOGOUT BUTTON */}
             <button

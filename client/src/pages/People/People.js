@@ -95,6 +95,13 @@ export default function People() {
   const [tabCounts, setTabCounts] = useState({});
   const [activeTab, setActiveTab] = useState(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -128,7 +135,7 @@ export default function People() {
     try {
       const params = new URLSearchParams({ page, limit: ROWS_PER_PAGE });
       if (activeTab) params.append("category", activeTab);
-      if (search) params.append("search", search);
+      if (debouncedSearch) params.append("search", debouncedSearch);
       const res = await api.get("/contacts?" + params.toString());
       if (res.data.success) {
         let items = res.data.contacts || [];
@@ -143,7 +150,7 @@ export default function People() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, page, search, sortAsc]);
+  }, [activeTab, page, debouncedSearch, sortAsc]);
 
   useEffect(() => {
     fetchContacts();

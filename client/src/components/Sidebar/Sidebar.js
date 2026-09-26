@@ -6,9 +6,9 @@ import {
   FiFileText,
   FiCheckCircle,
   FiUsers,
+  FiDatabase,
   FiBookOpen,
-  FiSettings,
-  FiLogOut,
+    FiLogOut,
   FiMenu,
   FiChevronRight,
   FiSun,
@@ -41,13 +41,21 @@ export default function Sidebar({
       icon: <FiBookOpen />,
       roles: ["admin"],
     },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: <FiSettings />,
-      roles: ["admin"],
-    },
-  ];
+      ];
+
+  const handleBackup = () => {
+    api.get("/system/backup", { responseType: "blob" })
+      .then((res) => {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `ABC_Full_Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      })
+      .catch(() => alert("Backup failed"));
+  };
 
   const handleLogout = async () => {
     try {
@@ -113,8 +121,18 @@ export default function Sidebar({
         </ul>
       </nav>
 
-      {/* FOOTER: THEME TOGGLE & LOGOUT */}
+      {/* FOOTER: THEME TOGGLE & LOGOUT & BACKUP */}
       <div className="sidebar-footer-container">
+        <button
+          type="button"
+          className="sidebar-logout-btn mb-2 d-flex justify-content-center align-items-center"
+          style={{ background: "var(--portal-gold-soft)", color: "var(--portal-gold-dark)", border: "1px dashed var(--portal-gold)" }}
+          onClick={handleBackup}
+          title="Download Full Database Backup"
+        >
+          <span className="sidebar-nav-icon"><FiDatabase /></span>
+          {!isCollapsed && <span className="sidebar-nav-label ms-2">Download Backup</span>}
+        </button>
         {/* THEME TOGGLE BUTTON */}
         <div className="sidebar-theme-wrapper">
           {!isCollapsed ? (

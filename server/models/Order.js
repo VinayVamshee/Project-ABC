@@ -5,7 +5,7 @@ import "./BusinessContact.js";
 
 
 const orderSchema = new mongoose.Schema({
-  orderID: { type: String, unique: true, required: true },
+  orderID: { type: String, unique: true },
 
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: "BusinessContact", default: null },
   
@@ -39,19 +39,26 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ status: 1, createdAt: -1 });
 
 // Auto-increment orderID like ORD_ID_0000001
-orderSchema.pre("validate", async function (next) {
-  if (this.isNew && !this.orderID) {
+orderSchema.pre("save", async function (next) {
+  if (this.isNew) {
     try {
-      const counter = await Counter.findOneAndUpdate(
-        { name: "orders" },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-      );
+      if (!this.orderID) {
+        const counter = await Counter.findOneAndUpdate(
+          { name: "orders" },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
 
-      const count = counter.seq.toString().padStart(6, "0");
-      this.orderID = `ORD_ID_${count}`;
+        const count = counter.seq.toString().padStart(6, "0");
+        this.orderID = `ORD_ID_${count}`;
+      }
+
+      if (!this.orderID) {
+        throw new Error("CRITICAL: Failed to attach Order ID.");
+      }
       next();
     } catch (err) {
+      console.error("❌ Error generating Order ID:", err);
       next(err);
     }
   } else {

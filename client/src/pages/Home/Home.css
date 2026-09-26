@@ -338,51 +338,6 @@ body.theme-dark .login-ambient-glow--1 {
   color: var(--portal-text);
 }
 
-/* Quick Demo Account Helper */
-.login-demo-helper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 14px;
-  background: var(--portal-gold-soft);
-  border: 1px dashed var(--portal-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.login-demo-helper:hover {
-  border-style: solid;
-  border-color: var(--portal-gold);
-  transform: translateY(-1px);
-}
-
-.login-demo-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--portal-gold-dark);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-body.theme-dark .login-demo-badge {
-  color: #FBBF24;
-}
-
-.login-demo-text {
-  font-size: 0.76rem;
-  color: var(--portal-text);
-}
-
-.login-demo-text strong {
-  font-family: monospace;
-  color: var(--portal-gold);
-}
-
-/* Submit Button */
 .login-submit-btn {
   display: flex;
   align-items: center;

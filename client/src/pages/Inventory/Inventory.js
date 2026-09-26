@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import * as XLSX from "xlsx";
 import api from "../../api/axios";
 import { notify } from "../../components/Toast/toast";
 import "./Inventory.css";
@@ -170,65 +169,28 @@ export default function Inventory() {
   };
 
   // EXPORT FULL FILTERED INVENTORY TO EXCEL (Bypass Pagination)
-  const handleExportExcel = async () => {
-    try {
-      notify.info("Fetching matching items for export...");
-      
-      const params = new URLSearchParams({
-        limit: 100000,
-        stockStatus: showInStockOnly ? "in_stock" : "all",
-        sortBy: mobileSortBy,
-        sortOrder: mobileSortOrder
-      });
-      if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
-      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
-      if (mobilePurityFilter && mobilePurityFilter !== "all") params.append("purity", mobilePurityFilter);
-      if (mobileMinWeight) params.append("minWeight", mobileMinWeight);
-      if (mobileMaxWeight) params.append("maxWeight", mobileMaxWeight);
-      if (mobileMinPrice) params.append("minPrice", mobileMinPrice);
-      if (mobileMaxPrice) params.append("maxPrice", mobileMaxPrice);
-
-      const res = await api.get(`/inventory?${params.toString()}`);
-      if (!res.data.success || !res.data.items || res.data.items.length === 0) {
-        notify.error("No items found to export.");
-        return;
-      }
-
-      const allItems = res.data.items;
-      
-      const dataToExport = allItems.map((item, idx) => ({
-        "#": idx + 1,
-        "Product ID": item.productID || "",
-        Barcode: item.barcode || "",
-        "Product Name": item.productName || "",
-        Category: item.category || "",
-        Gender: item.gender || "Unisex",
-        "Metal Type": item.metalType || "Gold",
-        "Purity (%)": item.purity || 91.6,
-        "Gross Weight (g)": item.grossWeight || 0,
-        "Stone Weight (g)": item.stoneWeight || 0,
-        "Other Weight (g)": item.otherWeight || 0,
-        "Net Weight (g)": item.netWeight || 0,
-        "Buying Cost Price (₹)": item.baseCostPrice || 0,
-        "Stone Composition": item.stoneComposition || "",
-        Description: item.description || "",
-        "Primary Image URL": item.productImage || "",
-        Status: item.inStock ? "In Stock" : "Out of Stock",
-      }));
-
-      const ws = XLSX.utils.json_to_sheet(dataToExport);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Inventory_Stock");
-      XLSX.writeFile(
-        wb,
-        `ABC_Inventory_Export_${new Date().toISOString().slice(0, 10)}.xlsx`
-      );
-      
-      notify.success(`Exported ${allItems.length} items to Excel successfully!`);
-    } catch (err) {
-      console.error("Export error:", err);
-      notify.error("Failed to export inventory.");
-    }
+  const handleExportExcel = () => {
+    notify.info("Downloading Excel file...");
+    const params = new URLSearchParams({
+      stockStatus: showInStockOnly ? "in_stock" : "all",
+      sortBy: mobileSortBy,
+      sortOrder: mobileSortOrder
+    });
+    if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
+    if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
+    
+        api.get(`/inventory/export?${params.toString()}`, { responseType: "blob" })
+      .then((res) => {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "Inventory_Export.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        notify.success("Export successful!");
+      })
+      .catch(() => notify.error("Export failed"));
   };
 
   

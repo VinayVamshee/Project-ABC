@@ -35,6 +35,7 @@ const connectDB = async () => {
         const db = await connectionPromise;
         isConnected = db.connections[0].readyState === 1;
         console.log("✅ MongoDB connected (Serverless mode)");
+        await seedAdminUser();
     } catch (err) {
         console.error("❌ MongoDB connection failed:", err.message);
         connectionPromise = null;
@@ -49,8 +50,8 @@ app.use(async (req, res, next) => {
 
 
 // ✅ Middleware
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 
 // ✅ CORS FIX — allow frontend (React) to talk to backend
@@ -81,11 +82,13 @@ app.use(
 );
 
 import { verifyToken } from "./middleware/auth.middleware.js";
+import { seedAdminUser } from "./controllers/auth.controller.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
 import ratesRoutes from "./routes/ratesRoutes.js";
 import ledgerRoutes from "./routes/ledgerRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import systemRoutes from "./routes/systemRoutes.js";
 
 // ✅ Register routes
 app.use("/api/auth", authRoutes); // Auth must be public
@@ -97,6 +100,7 @@ app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/sold", verifyToken, soldRoutes);
 app.use("/api/ledger", verifyToken, ledgerRoutes);
 app.use("/api/contacts", verifyToken, contactRoutes);
+app.use("/api/system", verifyToken, systemRoutes);
 
 // Default route
 app.get("/", (req, res) => {

@@ -15,11 +15,13 @@ import {
   getBarcodeImage,
   getQRCodeImage,
   downloadBulkImportTemplate,
+  exportInventoryHandler
 } from "../controllers/inventoryController.js";
 const router = express.Router();
 
 // Routes
 router.get("/template", downloadBulkImportTemplate);
+router.get("/export", exportInventoryHandler);
 router.post("/bulk", validateRequest(createBulkInventoryItemsSchema), createBulkInventoryItems);
 router.post("/", validateRequest(createInventoryItemSchema), createInventoryItem);
 router.get("/qrcode/:productID", getQRCodeImage);

@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
-import OverviewPanel from "../Overview/OverviewPanel";
-import TopPanel from "../TopPanel/TopPanel";
 import "./Order.css";
 
 export default function Order() {
   /* =======================
      STATE
   ======================= */
-  const [orderFields, setOrderFields] = useState([]);
+    const [orderFields] = useState([]);
   const [formValues, setFormValues] = useState({});
-  const [orders, setOrders] = useState([]);
+
   const [uploadingField, setUploadingField] = useState(null);
 
   const [sellModalOrder, setSellModalOrder] = useState(null);
@@ -32,88 +31,15 @@ export default function Order() {
   const [sellSoldValues, setSellSoldValues] = useState({});
 
   const [searchText, setSearchText] = useState("");
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [sortField, setSortField] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchText), 500);
+    return () => clearTimeout(handler);
+  }, [searchText]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [statusFilter, setStatusFilter] = useState("");
-
-  const handleTopPanelChange = (filters, sortF, sortO, status) => {
-    setActiveFilters(filters);
-    setSortField(sortF);
-    setSortOrder(sortO);
-    setStatusFilter(status);
-  };
-
-  const filteredOrders = orders
-    .filter(order => {
-      // 🔍 SEARCH
-      if (searchText) {
-        const search = searchText.toLowerCase();
-        const values = [
-          ...(order.orderFields || []).map(f => String(f.value || "").toLowerCase()),
-          String(order.orderID || "").toLowerCase(),
-          String(order._id || "").toLowerCase(),
-        ];
-        if (!values.some(v => v?.includes(search))) return false;
-      }
-
-      // 🏷 STATUS FILTER
-      if (statusFilter && order.status !== statusFilter) return false;
-
-      // 📌 FIELD FILTERS
-      for (const f of activeFilters) {
-
-        // Backend field (not dynamic)
-        if (f.fieldId === "buyingCostPrice") {
-          if (Number(order.buyingCostPrice || 0) !== Number(f.value)) {
-            return false;
-          }
-          continue;
-        }
-
-        const field = order.orderFields?.find(
-          x => String(x.fieldRef?._id) === String(f.fieldId)
-        );
-
-        if (!field) return false;
-
-        // Checkbox
-        if (f.type === "checkbox") {
-          const expected = f.value === "true";
-          if (Boolean(field.value) !== expected) return false;
-          continue;
-        }
-
-        // Number / currency
-        if (["number", "currency", "weight"].includes(f.type)) {
-          if (Number(field.value) !== Number(f.value)) return false;
-          continue;
-        }
-
-        // Text / select / mcq
-        if (
-          String(field.value).toLowerCase() !==
-          String(f.value).toLowerCase()
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      if (!sortField) return 0;
-
-      const getVal = (item) => {
-        if (item[sortField] !== undefined) return Number(item[sortField] || 0);
-        const f = item.orderFields?.find(x => x.fieldRef === sortField);
-        return Number(f?.value || 0);
-      };
-
-      const diff = getVal(a) - getVal(b);
-      return sortOrder === "asc" ? diff : -diff;
-    });
-
   const fetchSoldFields = async () => {
     setSoldFieldsDefs([]);
   };
@@ -167,29 +93,30 @@ export default function Order() {
   /* =======================
      FETCH ORDER FIELDS
   ======================= */
-  const fetchFields = async () => {
-    setOrderFields([]);
-  };
-
+  
   /* =======================
      FETCH ORDERS
   ======================= */
-  const fetchOrders = async () => {
-    try {
-      const res = await api.get("/orders");
-      if (res.data.success) {
-        setOrders(res.data.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch orders", err);
-    }
-  };
+  const { data, refetch: fetchOrders } = useQuery({
+    queryKey: ["orders", currentPage, rowsPerPage, debouncedSearch, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: currentPage, limit: rowsPerPage });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
+      const res = await api.get("/orders?" + params.toString());
+      return res.data;
+    },
+    keepPreviousData: true
+  });
+  
+  const orders = data?.data || [];
+  const totalPages = data?.pagination?.pages || 1;
+  const totals = data?.totals || {};
+  
 
   useEffect(() => {
-    fetchFields();
-    fetchOrders();
-    fetchSoldFields();
-  }, []);
+        fetchSoldFields();
+  }, []); // eslint-disable-line
 
   /* =======================
      FORM HANDLING
@@ -270,28 +197,20 @@ export default function Order() {
      UI
   ======================= */
   return (
-    <div className="order-page p-4">
+    <div className="orders-workspace">
 
       {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold text-gold">🧾 Orders</h4>
-
-        <div className="flex-grow-1 ms-4">
-          <TopPanel
-            section="orders"
-            fields={orderFields}
-            onSearchChange={setSearchText}
-            onFiltersChange={handleTopPanelChange}
-          />
+        <h4 className="fw-bold text-gold m-0">🧾 Orders</h4>
+        <div className="orders-actions d-flex gap-2">
+          <button
+            className="btn btn-gold"
+            data-bs-toggle="modal"
+            data-bs-target="#addOrderModal"
+          >
+            + Create New Order
+          </button>
         </div>
-
-        <button
-          className="btn btn-gold"
-          data-bs-toggle="modal"
-          data-bs-target="#addOrderModal"
-        >
-          + Create New Order
-        </button>
       </div>
 
 
@@ -744,14 +663,176 @@ export default function Order() {
       </div>
 
       {/* =======================
-         ORDERS OVERVIEW
+         ORDERS OVERVIEW (SEXY SPLIT-PANE UI)
       ======================= */}
-      <OverviewPanel
-        section="orders"
-        items={filteredOrders}
-        onRefresh={fetchOrders}
-        onSell={handleSellFromOrder}
-      />
+      
+      {/* ── Stat Cards ── */}
+      <div className="orders-stat-cards mb-4">
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon orders-stat-icon--total">🧾</div>
+          <div className="orders-stat-info">
+            <span className="orders-stat-label">Total Orders</span>
+            <span className="orders-stat-value">{totals?.totalOrders || 0}</span>
+            <span className="orders-stat-sub">Across system</span>
+          </div>
+        </div>
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon orders-stat-icon--pending">⏳</div>
+          <div className="orders-stat-info">
+            <span className="orders-stat-label">Pending</span>
+            <span className="orders-stat-value">{totals?.pendingCount || 0}</span>
+            <span className="orders-stat-sub">In progress</span>
+          </div>
+        </div>
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon orders-stat-icon--paid">✅</div>
+          <div className="orders-stat-info">
+            <span className="orders-stat-label">Completed</span>
+            <span className="orders-stat-value">{totals?.completedCount || 0}</span>
+            <span className="orders-stat-sub">Sold</span>
+          </div>
+        </div>
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon orders-stat-icon--partial">💰</div>
+          <div className="orders-stat-info">
+            <span className="orders-stat-label">Gold Given</span>
+            <span className="orders-stat-value">{totals?.totalGoldGiven || 0}g</span>
+            <span className="orders-stat-sub">To workers</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={`orders-content-grid ${selectedItem ? "has-preview" : "no-preview"}`}>
+        <div className="orders-main">
+          {/* SEARCH AND FILTERS */}
+          <div className="d-flex gap-3 mb-3 bg-white p-2 rounded shadow-sm border align-items-center">
+            <div className="position-relative flex-grow-1">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search by Order ID, Customer, or Order For..."
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{ paddingLeft: "35px" }}
+              />
+              <span className="position-absolute text-muted" style={{ left: "12px", top: "50%", transform: "translateY(-50%)" }}>🔍</span>
+            </div>
+            
+            <select
+              className="form-select"
+              style={{ width: "200px" }}
+              value={statusFilter || "all"}
+              onChange={(e) => {
+                setStatusFilter(e.target.value === "all" ? "" : e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          
+          <div className="orders-table-wrapper">
+            <table className="orders-table table-hover w-100">
+              <thead>
+                <tr>
+                  <th className="ps-3 py-3">#</th>
+                  <th className="py-3">Order Info</th>
+                  <th className="py-3">Status</th>
+                  <th className="py-3">Order For</th>
+                  <th className="py-3">Gold Given</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length === 0 ? (
+                  <tr><td colSpan="5" className="text-center py-4 text-muted">No orders found.</td></tr>
+                ) : orders.map((order, idx) => {
+                  const globalIdx = (currentPage - 1) * rowsPerPage + idx + 1;
+                  return (
+                    <tr key={order._id} onClick={() => setSelectedItem(order)} className={selectedItem?._id === order._id ? "selected-row" : ""} style={{ cursor: "pointer" }}>
+                      <td className="ps-3 fw-bold text-muted">{globalIdx}</td>
+                      <td>
+                        <div className="d-flex align-items-center gap-3">
+                          <div style={{ width: 40, height: 40, borderRadius: 8, background: "#f5ebc9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                            {order.modelImage ? <img src={order.modelImage} alt="" style={{width: '100%', height: '100%', borderRadius: 8, objectFit: "cover"}} /> : "🧾"}
+                          </div>
+                          <div className="d-flex flex-column">
+                            <span className="fw-bold text-gold">{order.orderID}</span>
+                            <span className="small text-muted">{order.customerId?.name || "Walk-in"}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                         <span className={`badge bg-${order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'danger'}`}>{order.status.toUpperCase()}</span>
+                      </td>
+                      <td className="text-muted fw-medium">{order.orderFor || "—"}</td>
+                      <td className="text-muted fw-medium">{order.goldGivenToWorker || 0}g</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="d-flex justify-content-between align-items-center mt-3 bg-white p-2 rounded shadow-sm border">
+             <div className="d-flex align-items-center gap-2">
+               <span className="small text-muted fw-medium">Rows per page:</span>
+               <select className="form-select form-select-sm" style={{width: 70}} value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                 <option value={10}>10</option>
+                 <option value={20}>20</option>
+                 <option value={50}>50</option>
+               </select>
+             </div>
+             <div className="d-flex align-items-center gap-3">
+               <button className="btn btn-sm btn-outline-secondary" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+               <span className="small fw-bold">Page {currentPage} of {totalPages}</span>
+               <button className="btn btn-sm btn-outline-secondary" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+             </div>
+          </div>
+        </div>
+
+        {selectedItem && (
+          <div className="orders-detail bg-white rounded shadow-sm border p-4 position-relative" style={{ height: 'fit-content' }}>
+            <button className="btn-close position-absolute top-0 end-0 m-3" onClick={() => setSelectedItem(null)}></button>
+            <div className="text-center mb-4">
+              {selectedItem.modelImage ? (
+                 <img src={selectedItem.modelImage} alt="Order Preview" className="img-fluid rounded shadow-sm mb-3" style={{ maxHeight: 200, objectFit: "cover" }} />
+              ) : (
+                 <div className="mx-auto rounded d-flex align-items-center justify-content-center bg-light mb-3" style={{ width: 120, height: 120, fontSize: 40 }}>🧾</div>
+              )}
+              <h4 className="fw-bold text-gold m-0">{selectedItem.orderID}</h4>
+              <span className={`badge bg-${selectedItem.status === 'completed' ? 'success' : selectedItem.status === 'pending' ? 'warning' : 'danger'} mt-2`}>{selectedItem.status.toUpperCase()}</span>
+            </div>
+            
+            <hr className="text-muted" />
+            
+            <div className="d-flex flex-column gap-2 mb-4">
+              <div className="d-flex justify-content-between"><span className="text-muted">Customer:</span><strong className="text-dark">{selectedItem.customerId?.name || "-"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Worker:</span><strong className="text-dark">{selectedItem.workerId?.name || "-"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Order For:</span><strong className="text-dark">{selectedItem.orderFor || "-"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Ordered To:</span><strong className="text-dark">{selectedItem.orderedTo || "-"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Home Delivery:</span><strong className="text-dark">{selectedItem.homeDelivery ? "Yes" : "No"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Address:</span><strong className="text-dark">{selectedItem.orderedAddress || "-"}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Cost Price:</span><strong className="text-dark">₹{selectedItem.buyingCostPrice || 0}</strong></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Gold Given:</span><strong className="text-dark">{selectedItem.goldGivenToWorker || 0}g ({selectedItem.goldPurity || 0}%)</strong></div>
+            </div>
+            
+            {selectedItem.status !== "completed" && selectedItem.status !== "cancelled" && (
+              <button 
+                className="btn btn-gold w-100 py-2 fw-bold" 
+                onClick={() => handleSellFromOrder(selectedItem)}
+              >
+                Complete & Sell Order
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
